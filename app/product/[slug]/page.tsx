@@ -68,7 +68,11 @@ export default function ProductDetailPage() {
                 <div className="text-center">
                   <div className="text-5xl md:text-8xl">🖱️</div>
                   <p className="mt-4 text-[10px] font-semibold text-slate-400 md:text-sm">
-                    FOTO PRODUK UTAMA
+                    <img
+  src="/images/products/logitech-g102.png"
+  alt="Logitech G102"
+  className="h-full w-full object-contain p-10"
+/>
                   </p>
                 </div>
                 <span className="absolute bottom-3 right-3 text-[9px] text-slate-400">
@@ -77,15 +81,19 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mt-3 grid grid-cols-4 gap-2 md:mt-4 md:gap-3">
-                {[1, 2, 3, 4].map((item) => (
-                  <button
-                    key={item}
-                    className="flex aspect-square items-center justify-center rounded-lg border border-slate-200 bg-white text-[8px] text-slate-400 hover:border-orange-500 md:rounded-xl"
-                  >
-                    FOTO
-                  </button>
-                ))}
-              </div>
+  {[1, 2, 3, 4].map((item) => (
+    <button
+      key={item}
+      className="overflow-hidden rounded-lg border border-slate-200 bg-white hover:border-orange-500 md:rounded-xl"
+    >
+      <img
+        src="/images/products/logitech-g102.png"
+        alt={`Thumbnail ${item}`}
+        className="h-full w-full object-contain p-2"
+      />
+    </button>
+  ))}
+</div>
             </div>
 
             {/* Desktop product info */}
