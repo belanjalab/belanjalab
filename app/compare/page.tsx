@@ -44,9 +44,17 @@ export default function ComparePage() {
             ‹
           </a>
 
-          <a href="/" className="text-sm font-black md:text-xl">
-            Compare
-          </a>
+          <a href="/" className="flex items-center gap-2">
+  <img
+    src="/images/logo-belanjalab.png"
+    alt="BelanjaLab"
+    className="h-7 w-7 rounded-full object-cover md:h-10 md:w-10"
+  />
+
+  <span className="text-sm font-black md:text-xl">
+    Belanja<span className="text-orange-500">Lab</span>
+  </span>
+</a>
 
           <button
             type="button"
