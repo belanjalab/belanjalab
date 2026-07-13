@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabaseClient } from "./supabase";
 
 export type FeaturedProduct = {
   id: string;
@@ -19,7 +19,12 @@ function formatRupiah(value: number | null) {
     maximumFractionDigits: 0,
   }).format(value);
 }
+const supabase = getSupabaseClient();
 
+if (!supabase) {
+  console.error("Konfigurasi Supabase belum tersedia.");
+  return [];
+}
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
   const { data, error } = await supabase
     .from("products")
@@ -68,6 +73,12 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       price: formatRupiah(lowestPrice),
     };
   });
+}
+const supabase = getSupabaseClient();
+
+if (!supabase) {
+  console.error("Konfigurasi Supabase belum tersedia.");
+  return null;
 }
 export async function getProductBySlug(slug: string) {
   const { data, error } = await supabase
