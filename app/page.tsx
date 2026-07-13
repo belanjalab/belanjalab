@@ -189,7 +189,11 @@ export default function Home() {
             </div>
 
             <div className="mt-5 flex h-52 items-center justify-center rounded-2xl bg-slate-100 text-xs font-semibold text-slate-400 md:hidden">
-              FOTO PRODUK HERO
+              <img
+  src="/images/products/logitech-g102.png"
+  alt="Logitech G102"
+  className="h-full w-full object-contain p-6"
+/>
             </div>
           </div>
 
@@ -296,7 +300,11 @@ export default function Home() {
               >
                 <div className="p-2 md:p-3">
                   <div className="flex h-24 items-center justify-center rounded-lg bg-slate-100 text-[9px] font-semibold text-slate-400 md:h-44 md:rounded-xl md:text-xs">
-                    FOTO
+                    <img
+  src="/images/products/logitech-g102.png"
+  alt="Logitech G102"
+  className="h-full w-full object-contain p-3"
+/>
                   </div>
                 </div>
 
