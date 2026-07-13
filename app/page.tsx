@@ -93,12 +93,17 @@ export default function Home() {
             </nav>
           </details>
 
-          <a
-            href="#"
-            className="shrink-0 text-base font-black tracking-tight md:text-xl"
-          >
-            Belanja<span className="text-orange-500">Lab</span>
-          </a>
+         <a href="/" className="flex items-center gap-2">
+  <img
+    src="/images/logo-belanjalab.png"
+    alt="BelanjaLab"
+    className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
+  />
+
+  <span className="text-base font-black tracking-tight md:text-xl">
+    Belanja<span className="text-orange-500">Lab</span>
+  </span>
+</a>
 
           <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
             <a href="#kategori" className="hover:text-slate-950">
