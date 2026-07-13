@@ -449,11 +449,10 @@ export default function Home() {
               <p>Kebijakan Privasi</p>
               <p>Syarat Penggunaan</p>
               <p>Disclaimer</p>
+           </div>
             </div>
-          </div>
-        </div>
 
-        <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
+          <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
           © {new Date().getFullYear()} BelanjaLab. All rights reserved.
         </div>
       </footer>
