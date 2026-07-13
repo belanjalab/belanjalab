@@ -1,6 +1,6 @@
 # BelanjaLab
 
-BelanjaLab adalah platform rekomendasi dan perbandingan produk untuk membantu masyarakat Indonesia mengambil keputusan belanja yang lebih cerdas..
+BelanjaLab adalah platform rekomendasi dan perbandingan produk untuk membantu masyarakat Indonesia mengambil keputusan belanja yang lebih cerdas...
 
 ## Status
 
