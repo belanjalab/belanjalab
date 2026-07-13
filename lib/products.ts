@@ -63,7 +63,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       name: product.name,
       slug: product.slug,
       imageUrl: product.image_url ?? "/images/products/logitech-g102.png",
-      category: product.categories?.name ?? "Produk",
+      category: product.categories?.[0]?.name ?? "Produk",
       score: score ? `${Number(score).toFixed(1)}/10` : "Belum dinilai",
       price: formatRupiah(lowestPrice),
     };
