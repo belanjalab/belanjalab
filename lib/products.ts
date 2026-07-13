@@ -11,7 +11,9 @@ export type FeaturedProduct = {
 };
 
 function formatRupiah(value: number | null) {
-  if (value === null) return "Harga belum tersedia";
+  if (value === null) {
+    return "Harga belum tersedia";
+  }
 
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -19,13 +21,15 @@ function formatRupiah(value: number | null) {
     maximumFractionDigits: 0,
   }).format(value);
 }
-const supabase = getSupabaseClient();
 
-if (!supabase) {
-  console.error("Konfigurasi Supabase belum tersedia.");
-  return [];
-}
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    console.error("Konfigurasi Supabase belum tersedia.");
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("products")
     .select(`
@@ -67,20 +71,25 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      imageUrl: product.image_url ?? "/images/products/logitech-g102.png",
+      imageUrl:
+        product.image_url ?? "/images/products/logitech-g102.png",
       category: product.categories?.[0]?.name ?? "Produk",
-      score: score ? `${Number(score).toFixed(1)}/10` : "Belum dinilai",
+      score: score
+        ? `${Number(score).toFixed(1)}/10`
+        : "Belum dinilai",
       price: formatRupiah(lowestPrice),
     };
   });
 }
-const supabase = getSupabaseClient();
 
-if (!supabase) {
-  console.error("Konfigurasi Supabase belum tersedia.");
-  return null;
-}
 export async function getProductBySlug(slug: string) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    console.error("Konfigurasi Supabase belum tersedia.");
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("products")
     .select(`
