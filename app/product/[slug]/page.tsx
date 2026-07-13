@@ -1,5 +1,6 @@
 import { getProductBySlug } from "@/lib/products";
 import { notFound } from "next/navigation";
+export const dynamic = "force-dynamic";
 const specs = [
   ["Sensor 8.000 DPI", "Akurasi dan responsivitas tinggi"],
   ["RGB Lightsync", "Efek RGB yang bisa dikustomisasi"],
