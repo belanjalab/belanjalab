@@ -1,3 +1,5 @@
+import { getProductBySlug } from "@/lib/products";
+import { notFound } from "next/navigation";
 const specs = [
   ["Sensor 8.000 DPI", "Akurasi dan responsivitas tinggi"],
   ["RGB Lightsync", "Efek RGB yang bisa dikustomisasi"],
@@ -11,7 +13,17 @@ const alternatives = [
   { name: "Logitech G203", price: "Rp299.000", score: "9.0/10" },
 ];
 
-export default function ProductDetailPage() {
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    notFound();
+  }
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
       {/* Header */}
