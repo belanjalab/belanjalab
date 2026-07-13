@@ -404,58 +404,89 @@ export default function Home() {
       </section>
 
       {/* Footer desktop */}
-      <footer
-        id="tentang"
-        className="hidden bg-slate-950 px-5 py-12 text-white md:block"
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-4">
-          <a href="/" className="flex items-center gap-3">
-  <img
-    src="/images/logo-belanjalab.png"
-    alt="BelanjaLab"
-    className="h-10 w-10 rounded-full object-cover"
-  />
+     {/* Footer desktop */}
+<footer
+  id="tentang"
+  className="hidden bg-slate-950 px-5 py-12 text-white md:block"
+>
+  <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
+    <div>
+      <a href="/" className="flex items-center gap-3">
+        <img
+          src="/images/logo-belanjalab.png"
+          alt="BelanjaLab"
+          className="h-10 w-10 rounded-full object-cover"
+        />
 
-  <span className="text-xl font-black">
-    Belanja<span className="text-orange-500">Lab</span>
-  </span>
-</a>
-            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
-              Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
-            </p>
-          </div>
+        <span className="text-xl font-black">
+          Belanja<span className="text-orange-500">Lab</span>
+        </span>
+      </a>
 
-          <div>
-            <h3 className="text-sm font-bold">Produk</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <p>Rekomendasi</p>
-              <p>Perbandingan</p>
-              <p>Kategori</p>
-            </div>
-          </div>
+      <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
+        Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
+      </p>
+    </div>
 
-          <div>
-            <h3 className="text-sm font-bold">Perusahaan</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <p>Tentang Kami</p>
-              <p>Kontak</p>
-              <p>Karier</p>
-            </div>
-          </div>
+    <div>
+      <h3 className="text-sm font-bold">Produk</h3>
 
-          <div>
-            <h3 className="text-sm font-bold">Legal</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <p>Kebijakan Privasi</p>
-              <p>Syarat Penggunaan</p>
-              <p>Disclaimer</p>
-           </div>
-            </div>
+      <div className="mt-4 space-y-3 text-sm text-slate-400">
+        <a href="#produk" className="block hover:text-white">
+          Rekomendasi
+        </a>
 
-          <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
-          © {new Date().getFullYear()} BelanjaLab. All rights reserved.
-        </div>
-      </footer>
+        <a href="/compare" className="block hover:text-white">
+          Perbandingan
+        </a>
+
+        <a href="#kategori" className="block hover:text-white">
+          Kategori
+        </a>
+      </div>
+    </div>
+
+    <div>
+      <h3 className="text-sm font-bold">Perusahaan</h3>
+
+      <div className="mt-4 space-y-3 text-sm text-slate-400">
+        <a href="#tentang" className="block hover:text-white">
+          Tentang Kami
+        </a>
+
+        <a href="#" className="block hover:text-white">
+          Kontak
+        </a>
+
+        <a href="#" className="block hover:text-white">
+          Karier
+        </a>
+      </div>
+    </div>
+
+    <div>
+      <h3 className="text-sm font-bold">Legal</h3>
+
+      <div className="mt-4 space-y-3 text-sm text-slate-400">
+        <a href="#" className="block hover:text-white">
+          Kebijakan Privasi
+        </a>
+
+        <a href="#" className="block hover:text-white">
+          Syarat Penggunaan
+        </a>
+
+        <a href="#" className="block hover:text-white">
+          Disclaimer
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
+    © {new Date().getFullYear()} BelanjaLab. All rights reserved.
+  </div>
+</footer>
 
       {/* Bottom navigation mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
