@@ -409,10 +409,17 @@ export default function Home() {
         className="hidden bg-slate-950 px-5 py-12 text-white md:block"
       >
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-4">
-          <div>
-            <div className="text-xl font-black">
-              Belanja<span className="text-orange-500">Lab</span>
-            </div>
+          <a href="/" className="flex items-center gap-3">
+  <img
+    src="/images/logo-belanjalab.png"
+    alt="BelanjaLab"
+    className="h-10 w-10 rounded-full object-cover"
+  />
+
+  <span className="text-xl font-black">
+    Belanja<span className="text-orange-500">Lab</span>
+  </span>
+</a>
             <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
               Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
             </p>
