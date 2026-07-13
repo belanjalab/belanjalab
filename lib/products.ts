@@ -69,3 +69,46 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
     };
   });
 }
+export async function getProductBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("products")
+    .select(`
+      id,
+      name,
+      slug,
+      short_description,
+      description,
+      image_url,
+      categories (
+        name
+      ),
+      brands (
+        name
+      ),
+      product_scores (
+        performance,
+        design,
+        features,
+        value,
+        ease_of_use,
+        overall_score
+      ),
+      product_prices (
+        price,
+        affiliate_url,
+        marketplaces (
+          name
+        )
+      )
+    `)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error) {
+    console.error("Gagal mengambil detail produk:", error.message);
+    return null;
+  }
+
+  return data;
+}
