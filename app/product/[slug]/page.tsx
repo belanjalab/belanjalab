@@ -66,7 +66,6 @@ export default function ProductDetailPage() {
             <div>
               <div className="relative flex h-72 items-center justify-center rounded-2xl bg-slate-100 md:min-h-[420px] md:rounded-3xl">
                 <div className="text-center">
-                  <div className="text-5xl md:text-8xl">🖱️</div>
                   <p className="mt-4 text-[10px] font-semibold text-slate-400 md:text-sm">
                     <img
   src="/images/products/logitech-g102.png"
