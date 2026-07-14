@@ -1,0 +1,217 @@
+import Link from "next/link";
+import { getAdminProducts } from "@/lib/admin-products";
+
+export const dynamic = "force-dynamic";
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return "Tanggal tidak tersedia";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+export default async function AdminPage() {
+  const products = await getAdminProducts();
+
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center px-4 py-4 md:px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <img
+              src="/images/logo-belanjalab.png"
+              alt="BelanjaLab"
+              className="h-9 w-9 rounded-full object-cover"
+            />
+
+            <div>
+              <p className="text-sm font-black">
+                Belanja<span className="text-orange-500">Lab</span>
+              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                Admin
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/"
+            className="ml-auto rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+          >
+            Lihat Website
+          </Link>
+        </div>
+      </header>
+
+      <section className="px-4 py-8 md:px-6 md:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
+                CMS Admin
+              </p>
+
+              <h1 className="mt-2 text-3xl font-black md:text-4xl">
+                Daftar Produk
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Tampilan ini masih read-only. Fitur tambah, edit, hapus, dan
+                autentikasi admin akan ditambahkan pada tahap berikutnya.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <p className="text-xs text-slate-500">Total produk aktif</p>
+              <p className="mt-1 text-2xl font-black">{products.length}</p>
+            </div>
+          </div>
+
+          {products.length > 0 ? (
+            <>
+              <div className="mt-8 hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_120px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                  <span>Produk</span>
+                  <span>Kategori</span>
+                  <span>Harga</span>
+                  <span>Skor</span>
+                  <span>Status</span>
+                  <span>Aksi</span>
+                </div>
+
+                {products.map((product) => (
+                  <div
+                    key={product.id}
+                    className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_120px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="h-full w-full object-contain p-2"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black">
+                          {product.name}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-slate-500">
+                          {product.brand} · {product.slug}
+                        </p>
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          {formatDate(product.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-sm font-medium text-slate-600">
+                      {product.category}
+                    </p>
+
+                    <p className="text-sm font-bold">
+                      {product.formattedPrice}
+                    </p>
+
+                    <p className="text-sm font-black text-green-600">
+                      {product.score !== null
+                        ? `${product.score.toFixed(1)}/10`
+                        : "—"}
+                    </p>
+
+                    <div>
+                      <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-bold capitalize text-green-700">
+                        {product.status}
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/product/${product.slug}`}
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                    >
+                      Preview
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 space-y-3 md:hidden">
+                {products.map((product) => (
+                  <article
+                    key={product.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex gap-3">
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="h-full w-full object-contain p-2"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="text-sm font-black leading-5">
+                            {product.name}
+                          </h2>
+
+                          <span className="shrink-0 rounded-full bg-green-50 px-2 py-1 text-[9px] font-bold capitalize text-green-700">
+                            {product.status}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-[10px] text-slate-500">
+                          {product.brand} · {product.category}
+                        </p>
+
+                        <p className="mt-3 text-sm font-black text-orange-500">
+                          {product.formattedPrice}
+                        </p>
+
+                        <p className="mt-1 text-xs font-bold text-green-600">
+                          Skor{" "}
+                          {product.score !== null
+                            ? `${product.score.toFixed(1)}/10`
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                      <p className="text-[10px] text-slate-400">
+                        {formatDate(product.createdAt)}
+                      </p>
+
+                      <Link
+                        href={`/product/${product.slug}`}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600"
+                      >
+                        Preview
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+              <p className="text-sm font-black">
+                Belum ada produk yang dapat ditampilkan.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Periksa koneksi Supabase dan data pada tabel products.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
