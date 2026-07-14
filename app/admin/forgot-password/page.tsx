@@ -16,13 +16,15 @@ async function sendResetEmail(formData: FormData) {
 
   const email = String(formData.get("email") ?? "").trim();
 
-  if (!email) {
-    redirect(
-      `/admin/forgot-password?error=${encodeURIComponent(
-        "Email wajib diisi.",
-      )}`,
-    );
-  }
+  if (error) {
+  console.error("Reset password error:", error);
+
+  redirect(
+    `/admin/forgot-password?error=${encodeURIComponent(
+      `${error.message}${error.code ? ` (${error.code})` : ""}`,
+    )}`,
+  );
+}
 
   const supabase = await createSupabaseServerClient();
 
