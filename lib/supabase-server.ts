@@ -5,7 +5,7 @@ const supabaseUrl =
   "https://sosfbgtcquphgdnzulvk.supabase.co";
 
 const supabasePublishableKey =
-  "TEMPEL_KEY_SB_PUBLISHABLE_YANG_SAMA_DENGAN_LIB_SUPABASE_TS";
+  "sb_publishable_F_6xoAaLgsO1YPT8hkq4Pg_Jw-6iL6S";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
