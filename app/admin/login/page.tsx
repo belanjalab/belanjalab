@@ -8,6 +8,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     next?: string;
+    message?: string;
   }>;
 };
 
@@ -70,6 +71,7 @@ export default async function AdminLoginPage({
 }: LoginPageProps) {
   const params = await searchParams;
   const errorMessage = params.error;
+  const successMessage = params.message;
   const nextPath = params.next ?? "/admin";
 
   return (
@@ -115,6 +117,15 @@ export default async function AdminLoginPage({
           </div>
         )}
 
+        {successMessage && (
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+          >
+            {successMessage}
+          </div>
+        )}
+
         <form action={login} className="mt-6 space-y-4">
           <input type="hidden" name="next" value={nextPath} />
 
@@ -138,12 +149,21 @@ export default async function AdminLoginPage({
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="text-sm font-bold text-slate-700"
-            >
-              Password
-            </label>
+            <div className="flex items-center justify-between gap-4">
+              <label
+                htmlFor="password"
+                className="text-sm font-bold text-slate-700"
+              >
+                Password
+              </label>
+
+              <Link
+                href="/admin/forgot-password"
+                className="text-xs font-bold text-orange-500 hover:text-orange-600"
+              >
+                Lupa password?
+              </Link>
+            </div>
 
             <input
               id="password"
