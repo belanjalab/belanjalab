@@ -132,3 +132,91 @@ export async function getProductBySlug(slug: string) {
 
   return data;
 }
+export type CompareProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string;
+  category: string;
+  score: number;
+  price: number | null;
+  formattedPrice: string;
+};
+
+export async function getCompareProducts(): Promise<CompareProduct[]> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    console.error("Konfigurasi Supabase belum tersedia.");
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(`
+      id,
+      name,
+      slug,
+      image_url,
+      categories (
+        name
+      ),
+      product_scores (
+        overall_score
+      ),
+      product_prices (
+        price
+      )
+    `)
+    .eq("status", "published")
+    .in("slug", [
+      "logitech-g102-lightsync",
+      "fantech-x9-thor",
+      "rexus-daxa-air-iv"
+    ]);
+
+  if (error) {
+    console.error("Gagal mengambil produk compare:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((product) => {
+    const categoryRelation = Array.isArray(product.categories)
+      ? product.categories[0]
+      : product.categories;
+
+    const scoreRelation = Array.isArray(product.product_scores)
+      ? product.product_scores[0]
+      : product.product_scores;
+
+    const prices = Array.isArray(product.product_prices)
+      ? product.product_prices
+      : [];
+
+    const numericPrices = prices
+      .map((item) => Number(item.price))
+      .filter((price) => Number.isFinite(price));
+
+    const lowestPrice =
+      numericPrices.length > 0 ? Math.min(...numericPrices) : null;
+
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      imageUrl:
+        product.image_url ?? "/images/products/logitech-g102.png",
+      category: categoryRelation?.name ?? "Produk",
+      score: Number(scoreRelation?.overall_score ?? 0),
+      price: lowestPrice,
+      formattedPrice:
+        lowestPrice !== null
+          ? new Intl.NumberFormat("id-ID", {
+              style: "currency",
+              currency: "IDR",
+              maximumFractionDigits: 0,
+            }).format(lowestPrice)
+          : "Harga belum tersedia",
+    };
+  });
+}
