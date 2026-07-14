@@ -30,6 +30,22 @@ export default async function ProductDetailPage({
 const formattedScore = overallScore
   ? Number(overallScore).toFixed(1)
   : "—";
+  const prices = product.product_prices ?? [];
+
+const numericPrices = prices
+  .map((item) => Number(item.price))
+  .filter((price) => Number.isFinite(price));
+
+const lowestPrice =
+  numericPrices.length > 0 ? Math.min(...numericPrices) : null;
+
+const formattedPrice = lowestPrice
+  ? new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(lowestPrice)
+  : "Harga belum tersedia";
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
       {/* Header */}
