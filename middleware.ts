@@ -7,7 +7,7 @@ const supabaseUrl =
 const supabasePublishableKey =
   "sb_publishable_F_6xoAaLgsO1YPT8hkq4Pg_Jw-6iL6S";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
