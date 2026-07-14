@@ -16,15 +16,13 @@ async function sendResetEmail(formData: FormData) {
 
   const email = String(formData.get("email") ?? "").trim();
 
-  if (error) {
-  console.error("Reset password error:", error);
-
-  redirect(
-    `/admin/forgot-password?error=${encodeURIComponent(
-      `${error.message}${error.code ? ` (${error.code})` : ""}`,
-    )}`,
-  );
-}
+  if (!email) {
+    redirect(
+      `/admin/forgot-password?error=${encodeURIComponent(
+        "Email wajib diisi.",
+      )}`,
+    );
+  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -34,9 +32,11 @@ async function sendResetEmail(formData: FormData) {
   });
 
   if (error) {
+    console.error("Reset password error:", error);
+
     redirect(
       `/admin/forgot-password?error=${encodeURIComponent(
-        "Gagal mengirim email reset password.",
+        `${error.message}${error.code ? ` (${error.code})` : ""}`,
       )}`,
     );
   }
@@ -54,7 +54,7 @@ export default async function ForgotPasswordPage({
   const params = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10 text-slate-900">
       <section className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl md:p-8">
         <Link href="/" className="inline-flex items-center gap-3">
           <img
@@ -89,13 +89,19 @@ export default async function ForgotPasswordPage({
         </div>
 
         {params.error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div
+            role="alert"
+            className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+          >
             {params.error}
           </div>
         )}
 
         {params.message && (
-          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+          >
             {params.message}
           </div>
         )}
@@ -130,7 +136,7 @@ export default async function ForgotPasswordPage({
 
         <Link
           href="/admin/login"
-          className="mt-6 block text-center text-sm font-bold text-orange-500"
+          className="mt-6 block text-center text-sm font-bold text-orange-500 hover:text-orange-600"
         >
           Kembali ke login
         </Link>
