@@ -25,6 +25,11 @@ export default async function ProductDetailPage({
   if (!product) {
     notFound();
   }
+  const overallScore = product.product_scores?.[0]?.overall_score;
+
+const formattedScore = overallScore
+  ? Number(overallScore).toFixed(1)
+  : "—";
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
       {/* Header */}
@@ -123,7 +128,7 @@ alt={product.name}
                     Skor BelanjaLab
                   </p>
                   <p className="mt-1 text-3xl font-black text-green-600">
-                    9.2/10
+                    {formattedScore}/10
                   </p>
                 </div>
                 <div>
