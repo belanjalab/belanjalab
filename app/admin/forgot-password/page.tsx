@@ -28,7 +28,7 @@ async function sendResetEmail(formData: FormData) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo:
-      "https://belanjalab.dik-julyan.workers.dev/admin/update-password",
+      "https://belanjalab.dik-julyan.workers.dev/auth/callback?next=/admin/update-password",
   });
 
   if (error) {
