@@ -42,23 +42,25 @@ export async function middleware(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
+  const pathname = request.nextUrl.pathname;
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginRoute =
-    request.nextUrl.pathname === "/admin/login";
+  const isPublicAdminRoute =
+    pathname === "/admin/login" ||
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/update-password";
 
-  if (isAdminRoute && !isLoginRoute && !userId) {
+  const isProtectedAdminRoute =
+    pathname.startsWith("/admin") && !isPublicAdminRoute;
+
+  if (isProtectedAdminRoute && !userId) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/admin/login";
-    loginUrl.searchParams.set(
-      "next",
-      request.nextUrl.pathname,
-    );
+    loginUrl.searchParams.set("next", pathname);
 
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoginRoute && userId) {
+  if (pathname === "/admin/login" && userId) {
     const adminUrl = request.nextUrl.clone();
     adminUrl.pathname = "/admin";
     adminUrl.search = "";
@@ -72,6 +74,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/auth/:path*",
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
