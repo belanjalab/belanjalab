@@ -46,6 +46,28 @@ const formattedPrice = lowestPrice
       maximumFractionDigits: 0,
     }).format(lowestPrice)
   : "Harga belum tersedia";
+
+const storePrices = prices
+  .map((item) => {
+    const marketplace = Array.isArray(item.marketplaces)
+      ? item.marketplaces[0]
+      : item.marketplaces;
+
+    const price = Number(item.price);
+
+    return {
+      name: marketplace?.name ?? "Marketplace",
+      price,
+      formattedPrice: new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(price),
+      url: item.affiliate_url ?? "#",
+    };
+  })
+  .filter((item) => Number.isFinite(item.price))
+  .sort((a, b) => a.price - b.price);
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
       {/* Header */}
@@ -316,20 +338,34 @@ alt={product.name}
 
       {/* Store prices desktop */}
       <section id="harga" className="hidden px-5 py-16 lg:block">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="text-3xl font-black">Bandingkan Harga</h2>
-          <div className="mt-7 grid gap-4">
-            {["Tokopedia", "Shopee", "Blibli"].map((store, index) => (
-              <div
-                key={store}
-                className="flex items-center rounded-2xl border border-slate-200 p-5"
-              >
-                <div className="flex-1">
-                  <p className="text-lg font-black">{store}</p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    {index === 0 ? "Gratis ongkir" : index === 1 ? "Voucher tersedia" : "Official store"}
-                  </p>
-                </div>
+        <div className="mt-7 grid gap-4">
+  {storePrices.map((store) => (
+    <div
+      key={store.name}
+      className="flex items-center gap-5 rounded-2xl border border-slate-200 p-5"
+    >
+      <div className="flex-1">
+        <p className="text-lg font-black">{store.name}</p>
+        <p className="mt-1 text-xs text-slate-400">
+          Harga terakhir diperbarui
+        </p>
+      </div>
+
+      <p className="text-xl font-black text-orange-500">
+        {store.formattedPrice}
+      </p>
+
+      <a
+        href={store.url}
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white"
+      >
+        Kunjungi Toko
+      </a>
+    </div>
+  ))}
+</div>
                 <p className="text-xl font-black text-orange-500">
                   {index === 0 ? "Rp179.000" : index === 1 ? "Rp185.000" : "Rp199.000"}
                 </p>
