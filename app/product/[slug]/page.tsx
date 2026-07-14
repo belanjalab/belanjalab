@@ -81,8 +81,8 @@ export default async function ProductDetailPage({
                 <div className="text-center">
                   <p className="mt-4 text-[10px] font-semibold text-slate-400 md:text-sm">
                     <img
-  src="/images/products/logitech-g102.png"
-  alt="Logitech G102"
+src={product.image_url ?? "/images/products/logitech-g102.png"}
+alt={product.name}
   className="h-full w-full object-contain p-10"
 />
                   </p>
@@ -112,11 +112,10 @@ export default async function ProductDetailPage({
             <div className="hidden flex-col justify-center lg:flex">
               <p className="text-sm font-semibold text-orange-500">Mouse Gaming</p>
               <h1 className="mt-3 text-5xl font-black leading-tight">
-                Logitech G102 Lightsync
+                {product.name}
               </h1>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Mouse gaming populer dengan sensor responsif, desain klasik, dan
-                pencahayaan RGB yang dapat dikustomisasi.
+                {product.short_description ?? product.description}
               </p>
               <div className="mt-6 flex items-center gap-4">
                 <div className="rounded-xl bg-green-50 px-4 py-3">
@@ -163,7 +162,7 @@ export default async function ProductDetailPage({
       <section className="px-4 pt-4 lg:hidden">
         <div className="mx-auto max-w-7xl">
           <p className="text-sm font-black leading-5">
-            Logitech G102 Lightsync
+            {product.name}
             <br />
             Gaming Mouse
           </p>
@@ -275,7 +274,7 @@ export default async function ProductDetailPage({
 
           <h2 className="mt-4 text-sm font-black md:text-2xl">Ringkasan</h2>
           <p className="mt-2 text-[10px] leading-5 text-slate-600 md:text-sm md:leading-7">
-            Logitech G102 Lightsync adalah mouse gaming entry-level terbaik di
+            {product.name} adalah mouse gaming entry-level terbaik di
             kelasnya. Sensor akurat, desain nyaman, dan RGB Lightsync membuatnya
             cocok untuk gamer kasual maupun kebutuhan harian.
           </p>
