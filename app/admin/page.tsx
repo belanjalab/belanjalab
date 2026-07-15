@@ -63,10 +63,18 @@ async function updateBulkProductStatus(formData: FormData) {
   );
 
   const requestedAction = String(formData.get("bulk_action") ?? "");
+  const categoryName = String(formData.get("category_name") ?? "").trim();
+  const brandName = String(formData.get("brand_name") ?? "").trim();
 
   if (
     productIds.length === 0 ||
-    !["published", "draft", "delete"].includes(requestedAction)
+    ![
+      "published",
+      "draft",
+      "delete",
+      "assign_category",
+      "assign_brand",
+    ].includes(requestedAction)
   ) {
     redirect(
       `/admin?error=${encodeURIComponent(
@@ -95,6 +103,88 @@ async function updateBulkProductStatus(formData: FormData) {
     redirect(
       `/admin/login?error=${encodeURIComponent(
         "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  if (requestedAction === "assign_category") {
+    if (!categoryName) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          "Pilih kategori sebelum menerapkan perubahan massal.",
+        )}`,
+      );
+    }
+
+    const { data: categoryRecord, error: categoryError } = await supabase
+      .from("categories")
+      .select("id, name")
+      .eq("name", categoryName)
+      .maybeSingle();
+
+    if (categoryError || !categoryRecord) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          categoryError?.message ?? "Kategori tidak ditemukan.",
+        )}`,
+      );
+    }
+
+    const { error: updateCategoryError } = await supabase
+      .from("products")
+      .update({ category_id: categoryRecord.id })
+      .in("id", productIds);
+
+    if (updateCategoryError) {
+      redirect(
+        `/admin?error=${encodeURIComponent(updateCategoryError.message)}`,
+      );
+    }
+
+    redirect(
+      `/admin?bulk_updated=${encodeURIComponent(
+        `${productIds.length} produk dipindahkan ke kategori ${categoryRecord.name}.`,
+      )}`,
+    );
+  }
+
+  if (requestedAction === "assign_brand") {
+    if (!brandName) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          "Pilih merek sebelum menerapkan perubahan massal.",
+        )}`,
+      );
+    }
+
+    const { data: brandRecord, error: brandError } = await supabase
+      .from("brands")
+      .select("id, name")
+      .eq("name", brandName)
+      .maybeSingle();
+
+    if (brandError || !brandRecord) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          brandError?.message ?? "Merek tidak ditemukan.",
+        )}`,
+      );
+    }
+
+    const { error: updateBrandError } = await supabase
+      .from("products")
+      .update({ brand_id: brandRecord.id })
+      .in("id", productIds);
+
+    if (updateBrandError) {
+      redirect(
+        `/admin?error=${encodeURIComponent(updateBrandError.message)}`,
+      );
+    }
+
+    redirect(
+      `/admin?bulk_updated=${encodeURIComponent(
+        `${productIds.length} produk dipindahkan ke merek ${brandRecord.name}.`,
       )}`,
     );
   }
@@ -658,6 +748,8 @@ export default async function AdminPage({
                   name: product.name,
                   status: product.status,
                 }))}
+                categories={categories}
+                brands={brands}
               />
             </form>
           )}
