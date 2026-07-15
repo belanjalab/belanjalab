@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminProductFormOptions } from "@/lib/admin-product-options";
+import { uploadProductImage } from "@/lib/product-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,8 @@ async function createProduct(formData: FormData) {
     formData.get("short_description") ?? "",
   ).trim();
   const description = String(formData.get("description") ?? "").trim();
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const manualImageUrl = String(formData.get("image_url") ?? "").trim();
+  const imageFile = formData.get("image_file");
   const status = String(formData.get("status") ?? "draft");
 
   if (!name || !slug || !categoryId || !brandId) {
@@ -105,6 +107,23 @@ async function createProduct(formData: FormData) {
     );
   }
 
+  let imageUrl =
+    manualImageUrl || "/images/products/logitech-g102.png";
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const uploadResult = await uploadProductImage(imageFile, slug);
+
+    if (!uploadResult.ok) {
+      redirect(
+        `/admin/products/new?error=${encodeURIComponent(
+          uploadResult.error,
+        )}`,
+      );
+    }
+
+    imageUrl = uploadResult.publicUrl;
+  }
+
   const { data: product, error: productError } = await supabase
     .from("products")
     .insert({
@@ -114,8 +133,7 @@ async function createProduct(formData: FormData) {
       brand_id: brandId,
       short_description: shortDescription || null,
       description: description || null,
-      image_url:
-        imageUrl || "/images/products/logitech-g102.png",
+      image_url: imageUrl,
       status: safeStatus,
     })
     .select("id")
@@ -226,7 +244,7 @@ export default async function NewProductPage({
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Isi informasi dasar, penilaian, dan harga awal produk.
+            Isi informasi dasar, gambar, penilaian, dan harga awal produk.
           </p>
 
           {params.error && (
@@ -238,7 +256,11 @@ export default async function NewProductPage({
             </div>
           )}
 
-          <form action={createProduct} className="mt-8 space-y-6">
+          <form
+            action={createProduct}
+            encType="multipart/form-data"
+            className="mt-8 space-y-6"
+          >
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
               <h2 className="text-lg font-black">Informasi Produk</h2>
 
@@ -347,16 +369,39 @@ export default async function NewProductPage({
                   />
                 </div>
 
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="image_file"
+                    className="text-sm font-bold"
+                  >
+                    Upload gambar produk
+                  </label>
+                  <input
+                    id="image_file"
+                    name="image_file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    JPG, PNG, atau WebP. Maksimal 5 MB.
+                  </p>
+                </div>
+
                 <div>
                   <label htmlFor="image_url" className="text-sm font-bold">
-                    URL/path gambar
+                    URL gambar alternatif
                   </label>
                   <input
                     id="image_url"
                     name="image_url"
-                    placeholder="/images/products/nama-produk.png"
+                    type="url"
+                    placeholder="https://..."
                     className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                   />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Dipakai jika tidak mengunggah file.
+                  </p>
                 </div>
 
                 <div>
