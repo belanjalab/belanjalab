@@ -23,6 +23,42 @@ function sanitizeFileName(value: string) {
   return `${baseName || "product-image"}.${extension}`;
 }
 
+function sanitizeProductSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 100);
+}
+
+export function getProductImageStoragePath(
+  imageUrl: string | null | undefined,
+): string | null {
+  if (!imageUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(imageUrl);
+    const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`;
+    const markerIndex = url.pathname.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return null;
+    }
+
+    const encodedPath = url.pathname.slice(
+      markerIndex + marker.length,
+    );
+
+    return decodeURIComponent(encodedPath);
+  } catch {
+    return null;
+  }
+}
+
 export type ProductImageUploadResult =
   | {
       ok: true;
@@ -85,13 +121,7 @@ export async function uploadProductImage(
     };
   }
 
-  const safeSlug = productSlug
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 100);
-
+  const safeSlug = sanitizeProductSlug(productSlug);
   const fileName = sanitizeFileName(file.name);
   const filePath = `${safeSlug || "product"}/${crypto.randomUUID()}-${fileName}`;
 
@@ -125,9 +155,13 @@ export async function uploadProductImage(
   };
 }
 
-export async function deleteProductImage(path: string) {
+export async function deleteProductImage(
+  path: string | null | undefined,
+) {
   if (!path) {
-    return;
+    return {
+      ok: true as const,
+    };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -138,5 +172,34 @@ export async function deleteProductImage(path: string) {
 
   if (error) {
     console.error("Gagal menghapus gambar produk:", error);
+
+    return {
+      ok: false as const,
+      error: error.message,
+    };
   }
+
+  return {
+    ok: true as const,
+  };
+}
+
+export async function deleteProductImageByUrl(
+  imageUrl: string | null | undefined,
+) {
+  const path = getProductImageStoragePath(imageUrl);
+
+  if (!path) {
+    return {
+      ok: true as const,
+      skipped: true as const,
+    };
+  }
+
+  const result = await deleteProductImage(path);
+
+  return {
+    ...result,
+    skipped: false as const,
+  };
 }
