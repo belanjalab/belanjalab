@@ -510,7 +510,7 @@ export default async function EditProductPage({
                 </Link>
 
                 <Link
-                  href={`/product/${product.slug}`}
+                  href={`/admin/products/${product.id}/preview`}
                   className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-white"
                 >
                   Preview Produk
