@@ -660,12 +660,19 @@ export default async function AdminPage({
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <Link
                 href="/admin/taxonomies"
                 className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
               >
                 Kelola Kategori & Merek
+              </Link>
+
+              <Link
+                href="/admin/marketplaces"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+              >
+                Kelola Marketplace
               </Link>
 
               <Link
