@@ -23,9 +23,9 @@ type AdminProductRow = {
   status: string;
   image_url: string | null;
   created_at: string | null;
-  categories?: CategoryRelation[] | null;
-  brands?: BrandRelation[] | null;
-  product_scores?: ScoreRelation[] | null;
+  categories?: CategoryRelation | CategoryRelation[] | null;
+  brands?: BrandRelation | BrandRelation[] | null;
+  product_scores?: ScoreRelation | ScoreRelation[] | null;
   product_prices?: PriceRelation[] | null;
 };
 
@@ -42,6 +42,16 @@ export type AdminProduct = {
   formattedPrice: string;
   createdAt: string | null;
 };
+
+function getSingleRelation<T>(
+  relation: T | T[] | null | undefined,
+): T | null {
+  if (!relation) {
+    return null;
+  }
+
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+}
 
 function getLowestPrice(prices: PriceRelation[] | null | undefined) {
   const numericPrices = (prices ?? [])
@@ -93,7 +103,6 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
         price
       )
     `)
-    .eq("status", "published")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -104,8 +113,16 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
   const rows = (data ?? []) as unknown as AdminProductRow[];
 
   return rows.map((product) => {
+    const category = getSingleRelation(product.categories);
+    const brand = getSingleRelation(product.brands);
+    const scoreRelation = getSingleRelation(product.product_scores);
     const lowestPrice = getLowestPrice(product.product_prices);
-    const score = product.product_scores?.[0]?.overall_score;
+
+    const numericScore =
+      scoreRelation?.overall_score !== null &&
+      scoreRelation?.overall_score !== undefined
+        ? Number(scoreRelation.overall_score)
+        : null;
 
     return {
       id: product.id,
@@ -114,11 +131,11 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
       status: product.status,
       imageUrl:
         product.image_url ?? "/images/products/logitech-g102.png",
-      category: product.categories?.[0]?.name ?? "Tanpa kategori",
-      brand: product.brands?.[0]?.name ?? "Tanpa merek",
+      category: category?.name ?? "Tanpa kategori",
+      brand: brand?.name ?? "Tanpa merek",
       score:
-        score !== null && score !== undefined
-          ? Number(score)
+        numericScore !== null && Number.isFinite(numericScore)
+          ? numericScore
           : null,
       lowestPrice,
       formattedPrice: formatRupiah(lowestPrice),
