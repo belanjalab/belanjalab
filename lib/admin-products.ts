@@ -32,6 +32,8 @@ export type AdminProductCompleteness =
 export type AdminProductQuery = {
   status?: "all" | "published" | "draft";
   completeness?: AdminProductCompleteness;
+  category?: string;
+  brand?: string;
   query?: string;
   page?: number;
   pageSize?: number;
@@ -229,6 +231,8 @@ export async function getAdminProductsPage(
   const query = normalizeSearchQuery(options.query);
   const sort = normalizeSort(options.sort);
   const completeness = normalizeCompleteness(options.completeness);
+  const category = (options.category ?? "").trim().slice(0, 120);
+  const brand = (options.brand ?? "").trim().slice(0, 120);
 
   let countRequest = supabase
     .from("admin_product_catalog")
@@ -239,6 +243,14 @@ export async function getAdminProductsPage(
 
   if (status !== "all") {
     countRequest = countRequest.eq("status", status);
+  }
+
+  if (category) {
+    countRequest = countRequest.eq("category", category);
+  }
+
+  if (brand) {
+    countRequest = countRequest.eq("brand", brand);
   }
 
   countRequest = applyCompletenessFilter(
@@ -297,6 +309,14 @@ export async function getAdminProductsPage(
 
   if (status !== "all") {
     dataRequest = dataRequest.eq("status", status);
+  }
+
+  if (category) {
+    dataRequest = dataRequest.eq("category", category);
+  }
+
+  if (brand) {
+    dataRequest = dataRequest.eq("brand", brand);
   }
 
   dataRequest = applyCompletenessFilter(
