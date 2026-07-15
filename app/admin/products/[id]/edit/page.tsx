@@ -521,13 +521,21 @@ export default async function EditProductPage({
               </div>
             </section>
 
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-              <Link
-                href={`/product/${product.slug}`}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-white"
-              >
-                Preview Produk
-              </Link>
+            <div className="flex flex-col gap-3 sm:flex-row">
+  <Link
+    href={`/admin/products/${product.id}/delete`}
+    className="rounded-xl border border-red-200 px-5 py-3 text-center text-sm font-bold text-red-600 hover:bg-red-50"
+  >
+    Hapus Produk
+  </Link>
+
+  <Link
+    href={`/product/${product.slug}`}
+    className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-white"
+  >
+    Preview Produk
+  </Link>
+</div>
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row">
                 <Link
