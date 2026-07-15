@@ -11,6 +11,7 @@ type AdminPageProps = {
     updated?: string;
     deleted?: string;
     status?: string;
+    q?: string | string[];
   }>;
 };
 
@@ -72,10 +73,25 @@ export default async function AdminPage({
       ? params.status
       : "all";
 
-  const filteredProducts =
+  const rawQuery = Array.isArray(params.q) ? params.q[0] : params.q;
+  const query = rawQuery?.trim().toLowerCase() ?? "";
+
+  const statusFilteredProducts =
     activeStatus === "all"
       ? products
       : products.filter((product) => product.status === activeStatus);
+
+  const filteredProducts =
+    query.length === 0
+      ? statusFilteredProducts
+      : statusFilteredProducts.filter((product) =>
+          [
+            product.name,
+            product.slug,
+            product.brand,
+            product.category,
+          ].some((value) => value.toLowerCase().includes(query)),
+        );
 
   const publishedCount = products.filter(
     (product) => product.status === "published",
@@ -218,6 +234,44 @@ export default async function AdminPage({
             </div>
           </div>
 
+          <form
+            action="/admin"
+            method="get"
+            className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row"
+          >
+            {activeStatus !== "all" && (
+              <input
+                type="hidden"
+                name="status"
+                value={activeStatus}
+              />
+            )}
+
+            <input
+              type="search"
+              name="q"
+              defaultValue={rawQuery ?? ""}
+              placeholder="Cari nama, slug, merek, atau kategori..."
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+            />
+
+            <button
+              type="submit"
+              className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+            >
+              Cari Produk
+            </button>
+
+            {(query || activeStatus !== "all") && (
+              <Link
+                href="/admin"
+                className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Reset
+              </Link>
+            )}
+          </form>
+
           <div className="mt-6 flex flex-wrap gap-2">
             {[
               ["all", "Semua", products.length],
@@ -231,8 +285,14 @@ export default async function AdminPage({
                   key={String(value)}
                   href={
                     value === "all"
-                      ? "/admin"
-                      : `/admin?status=${value}`
+                      ? query
+                        ? `/admin?q=${encodeURIComponent(rawQuery ?? "")}`
+                        : "/admin"
+                      : query
+                        ? `/admin?status=${value}&q=${encodeURIComponent(
+                            rawQuery ?? "",
+                          )}`
+                        : `/admin?status=${value}`
                   }
                   className={`rounded-full px-4 py-2 text-xs font-bold transition ${
                     isActive
@@ -407,10 +467,10 @@ export default async function AdminPage({
           ) : (
             <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <p className="text-sm font-black">
-                Tidak ada produk pada filter ini.
+                Produk tidak ditemukan.
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                Pilih filter lain atau tambahkan produk baru.
+                Coba kata kunci lain, ubah filter status, atau tambahkan produk baru.
               </p>
 
               <Link
