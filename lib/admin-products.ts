@@ -1,34 +1,5 @@
 import { createSupabaseServerClient } from "./supabase-server";
 
-type CategoryRelation = {
-  name: string;
-};
-
-type BrandRelation = {
-  name: string;
-};
-
-type ScoreRelation = {
-  overall_score?: number | string | null;
-};
-
-type PriceRelation = {
-  price: number | string | null;
-};
-
-type AdminProductRow = {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  image_url: string | null;
-  created_at: string | null;
-  categories?: CategoryRelation | CategoryRelation[] | null;
-  brands?: BrandRelation | BrandRelation[] | null;
-  product_scores?: ScoreRelation | ScoreRelation[] | null;
-  product_prices?: PriceRelation[] | null;
-};
-
 export type AdminProduct = {
   id: string;
   name: string;
@@ -43,23 +14,33 @@ export type AdminProduct = {
   createdAt: string | null;
 };
 
-function getSingleRelation<T>(
-  relation: T | T[] | null | undefined,
-): T | null {
-  if (!relation) {
-    return null;
-  }
+export type AdminProductQuery = {
+  status?: "all" | "published" | "draft";
+  query?: string;
+  page?: number;
+  pageSize?: number;
+};
 
-  return Array.isArray(relation) ? relation[0] ?? null : relation;
-}
+export type AdminProductPage = {
+  products: AdminProduct[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
 
-function getLowestPrice(prices: PriceRelation[] | null | undefined) {
-  const numericPrices = (prices ?? [])
-    .map((item) => Number(item.price))
-    .filter((price) => Number.isFinite(price));
-
-  return numericPrices.length > 0 ? Math.min(...numericPrices) : null;
-}
+type AdminProductCatalogRow = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  image_url: string | null;
+  created_at: string | null;
+  category: string | null;
+  brand: string | null;
+  score: number | string | null;
+  lowest_price: number | string | null;
+};
 
 function formatRupiah(value: number | null) {
   if (value === null) {
@@ -73,34 +54,93 @@ function formatRupiah(value: number | null) {
   }).format(value);
 }
 
-export async function getAdminProducts(): Promise<AdminProduct[]> {
+function normalizeSearchQuery(value: string | undefined) {
+  return (value ?? "")
+    .trim()
+    .replace(/[,%()]/g, " ")
+    .replace(/\s+/g, " ")
+    .slice(0, 80);
+}
+
+export async function getAdminProductsPage(
+  options: AdminProductQuery = {},
+): Promise<AdminProductPage> {
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const pageSize = Math.min(
+    50,
+    Math.max(1, Math.floor(options.pageSize ?? 10)),
+  );
 
-  if (!user) {
-    console.error("Sesi admin tidak tersedia.");
-    return [];
-  }
+  const requestedPage = Math.max(
+    1,
+    Math.floor(options.page ?? 1),
+  );
 
-  const { data: adminRecord, error: adminError } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const status =
+    options.status === "published" || options.status === "draft"
+      ? options.status
+      : "all";
 
-  if (adminError || !adminRecord) {
-    console.error(
-      "Akun tidak memiliki akses admin:",
-      adminError?.message ?? "Admin tidak ditemukan.",
+  const query = normalizeSearchQuery(options.query);
+
+  let request = supabase
+    .from("admin_product_catalog")
+    .select(
+      `
+        id,
+        name,
+        slug,
+        status,
+        image_url,
+        created_at,
+        category,
+        brand,
+        score,
+        lowest_price
+      `,
+      {
+        count: "exact",
+      },
     );
-    return [];
+
+  if (status !== "all") {
+    request = request.eq("status", status);
   }
 
-  const { data, error } = await supabase
-    .from("products")
+  if (query) {
+    const pattern = `%${query}%`;
+
+    request = request.or(
+      `name.ilike.${pattern},slug.ilike.${pattern},brand.ilike.${pattern},category.ilike.${pattern}`,
+    );
+  }
+
+  const countResult = await request.range(0, 0);
+
+  if (countResult.error) {
+    console.error(
+      "Gagal menghitung daftar produk admin:",
+      countResult.error.message,
+    );
+
+    return {
+      products: [],
+      total: 0,
+      page: 1,
+      pageSize,
+      totalPages: 1,
+    };
+  }
+
+  const total = countResult.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let dataRequest = supabase
+    .from("admin_product_catalog")
     .select(`
       id,
       name,
@@ -108,38 +148,68 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
       status,
       image_url,
       created_at,
-      categories (
-        name
-      ),
-      brands (
-        name
-      ),
-      product_scores (
-        overall_score
-      ),
-      product_prices (
-        price
-      )
+      category,
+      brand,
+      score,
+      lowest_price
     `)
-    .order("created_at", { ascending: false });
+    .order("created_at", {
+      ascending: false,
+      nullsFirst: false,
+    })
+    .range(from, to);
 
-  if (error) {
-    console.error("Gagal mengambil daftar produk admin:", error.message);
-    return [];
+  if (status !== "all") {
+    dataRequest = dataRequest.eq("status", status);
   }
 
-  const rows = (data ?? []) as unknown as AdminProductRow[];
+  if (query) {
+    const pattern = `%${query}%`;
 
-  return rows.map((product) => {
-    const category = getSingleRelation(product.categories);
-    const brand = getSingleRelation(product.brands);
-    const scoreRelation = getSingleRelation(product.product_scores);
-    const lowestPrice = getLowestPrice(product.product_prices);
+    dataRequest = dataRequest.or(
+      `name.ilike.${pattern},slug.ilike.${pattern},brand.ilike.${pattern},category.ilike.${pattern}`,
+    );
+  }
 
+  const { data, error } = await dataRequest;
+
+  if (error) {
+    console.error(
+      "Gagal mengambil daftar produk admin:",
+      error.message,
+    );
+
+    return {
+      products: [],
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  const rows = (data ?? []) as AdminProductCatalogRow[];
+
+  const products = rows.map((product) => {
     const numericScore =
-      scoreRelation?.overall_score !== null &&
-      scoreRelation?.overall_score !== undefined
-        ? Number(scoreRelation.overall_score)
+      product.score !== null && product.score !== undefined
+        ? Number(product.score)
+        : null;
+
+    const numericPrice =
+      product.lowest_price !== null &&
+      product.lowest_price !== undefined
+        ? Number(product.lowest_price)
+        : null;
+
+    const score =
+      numericScore !== null && Number.isFinite(numericScore)
+        ? numericScore
+        : null;
+
+    const lowestPrice =
+      numericPrice !== null && Number.isFinite(numericPrice)
+        ? numericPrice
         : null;
 
     return {
@@ -149,15 +219,29 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
       status: product.status,
       imageUrl:
         product.image_url ?? "/images/products/logitech-g102.png",
-      category: category?.name ?? "Tanpa kategori",
-      brand: brand?.name ?? "Tanpa merek",
-      score:
-        numericScore !== null && Number.isFinite(numericScore)
-          ? numericScore
-          : null,
+      category: product.category ?? "Tanpa kategori",
+      brand: product.brand ?? "Tanpa merek",
+      score,
       lowestPrice,
       formattedPrice: formatRupiah(lowestPrice),
       createdAt: product.created_at,
     };
   });
+
+  return {
+    products,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
+export async function getAdminProducts(): Promise<AdminProduct[]> {
+  const result = await getAdminProductsPage({
+    page: 1,
+    pageSize: 50,
+  });
+
+  return result.products;
 }
