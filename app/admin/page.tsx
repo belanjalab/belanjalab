@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   getAdminProductsPage,
+  type AdminProductCompleteness,
   type AdminProductSort,
 } from "@/lib/admin-products";
 import BulkProductActions from "@/components/admin/bulk-product-actions";
@@ -20,6 +21,7 @@ type AdminPageProps = {
     q?: string | string[];
     page?: string;
     sort?: string;
+    completeness?: string;
     error?: string;
     bulk_updated?: string;
   }>;
@@ -220,6 +222,12 @@ export default async function AdminPage({
     ? (params.sort as AdminProductSort)
     : "newest";
 
+  const completeness: AdminProductCompleteness =
+    params.completeness === "without_price" ||
+    params.completeness === "without_score"
+      ? params.completeness
+      : "all";
+
   const itemsPerPage = 10;
 
   const [productPage, stats] = await Promise.all([
@@ -229,6 +237,7 @@ export default async function AdminPage({
       page,
       pageSize: itemsPerPage,
       sort,
+      completeness,
     }),
     getAdminDashboardStats(),
   ]);
@@ -256,6 +265,10 @@ export default async function AdminPage({
 
     if (sort !== "newest") {
       search.set("sort", sort);
+    }
+
+    if (completeness !== "all") {
+      search.set("completeness", completeness);
     }
 
     if (targetPage > 1) {
@@ -428,7 +441,7 @@ export default async function AdminPage({
             </Link>
 
             <Link
-              href="/admin?sort=price_asc"
+              href="/admin?completeness=without_price"
               className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 transition hover:border-red-300"
             >
               <p className="text-xs text-red-700">Tanpa harga</p>
@@ -438,7 +451,7 @@ export default async function AdminPage({
             </Link>
 
             <Link
-              href="/admin?sort=score_asc"
+              href="/admin?completeness=without_score"
               className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-4 transition hover:border-violet-300"
             >
               <p className="text-xs text-violet-700">Tanpa skor</p>
@@ -447,6 +460,27 @@ export default async function AdminPage({
               </p>
             </Link>
           </div>
+
+          {completeness !== "all" && (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+              <p className="text-xs font-bold text-orange-700">
+                Filter aktif:{" "}
+                {completeness === "without_price"
+                  ? "Produk tanpa harga"
+                  : "Produk tanpa skor"}
+              </p>
+
+              <Link
+                href={buildAdminUrl(1).replace(
+                  /([?&])completeness=[^&]+&?/,
+                  "$1",
+                ).replace(/[?&]$/, "")}
+                className="ml-auto text-xs font-bold text-orange-700 underline"
+              >
+                Hapus filter
+              </Link>
+            </div>
+          )}
 
           <form
             action="/admin"
@@ -458,6 +492,14 @@ export default async function AdminPage({
                 type="hidden"
                 name="status"
                 value={activeStatus}
+              />
+            )}
+
+            {completeness !== "all" && (
+              <input
+                type="hidden"
+                name="completeness"
+                value={completeness}
               />
             )}
 
@@ -492,7 +534,10 @@ export default async function AdminPage({
               Cari Produk
             </button>
 
-            {(query || activeStatus !== "all" || sort !== "newest") && (
+            {(query ||
+              activeStatus !== "all" ||
+              sort !== "newest" ||
+              completeness !== "all") && (
               <Link
                 href="/admin"
                 className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50"
@@ -518,16 +563,25 @@ export default async function AdminPage({
                       ? new URLSearchParams({
                           ...(query ? { q: rawQuery ?? "" } : {}),
                           ...(sort !== "newest" ? { sort } : {}),
+                          ...(completeness !== "all"
+                            ? { completeness }
+                            : {}),
                         }).toString()
                         ? `/admin?${new URLSearchParams({
                             ...(query ? { q: rawQuery ?? "" } : {}),
                             ...(sort !== "newest" ? { sort } : {}),
+                            ...(completeness !== "all"
+                              ? { completeness }
+                              : {}),
                           }).toString()}`
                         : "/admin"
                       : `/admin?${new URLSearchParams({
                           status: String(value),
                           ...(query ? { q: rawQuery ?? "" } : {}),
                           ...(sort !== "newest" ? { sort } : {}),
+                          ...(completeness !== "all"
+                            ? { completeness }
+                            : {}),
                         }).toString()}`
                   }
                   className={`rounded-full px-4 py-2 text-xs font-bold transition ${
