@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminProductForEdit } from "@/lib/admin-product-edit";
+import { deleteProductImageByUrl } from "@/lib/product-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -58,28 +59,49 @@ async function deleteProduct(formData: FormData) {
     );
   }
 
-  const { data: product } = await supabase
+  const { data: product, error: productReadError } = await supabase
     .from("products")
-    .select("name")
+    .select("name, image_url")
     .eq("id", productId)
     .maybeSingle();
+
+  if (productReadError) {
+    console.error("Gagal membaca produk sebelum dihapus:", productReadError);
+
+    redirect(
+      `/admin/products/${productId}/delete?error=${encodeURIComponent(
+        productReadError.message,
+      )}`,
+    );
+  }
 
   if (!product) {
     redirect("/admin");
   }
 
-  const { error } = await supabase
+  const { error: deleteError } = await supabase
     .from("products")
     .delete()
     .eq("id", productId);
 
-  if (error) {
-    console.error("Gagal menghapus produk:", error);
+  if (deleteError) {
+    console.error("Gagal menghapus produk:", deleteError);
 
     redirect(
       `/admin/products/${productId}/delete?error=${encodeURIComponent(
-        error.message,
+        deleteError.message,
       )}`,
+    );
+  }
+
+  const imageCleanupResult = await deleteProductImageByUrl(
+    product.image_url,
+  );
+
+  if (!imageCleanupResult.ok) {
+    console.error(
+      "Produk terhapus, tetapi gambar gagal dibersihkan:",
+      imageCleanupResult.error,
     );
   }
 
@@ -131,8 +153,35 @@ export default async function DeleteProductPage({
 
           <p className="mt-3 text-sm leading-6 text-slate-500">
             Produk <strong>{product.name}</strong> beserta skor, harga,
-            spesifikasi, dan riwayat harga terkait akan dihapus permanen.
+            spesifikasi, riwayat harga, dan gambar Storage terkait akan
+            dihapus permanen.
           </p>
+        </div>
+
+        <div className="mt-6 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="h-full w-full object-contain p-2"
+            />
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black">{product.name}</p>
+            <p className="mt-1 truncate text-xs text-slate-500">
+              {product.slug}
+            </p>
+            <span
+              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${
+                product.status === "published"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              {product.status}
+            </span>
+          </div>
         </div>
 
         {query.error && (
