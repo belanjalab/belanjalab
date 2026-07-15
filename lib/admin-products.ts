@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./supabase";
+import { createSupabaseServerClient } from "./supabase-server";
 
 type CategoryRelation = {
   name: string;
@@ -74,10 +74,28 @@ function formatRupiah(value: number | null) {
 }
 
 export async function getAdminProducts(): Promise<AdminProduct[]> {
-  const supabase = getSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.error("Sesi admin tidak tersedia.");
+    return [];
+  }
+
+  const { data: adminRecord, error: adminError } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (adminError || !adminRecord) {
+    console.error(
+      "Akun tidak memiliki akses admin:",
+      adminError?.message ?? "Admin tidak ditemukan.",
+    );
     return [];
   }
 
