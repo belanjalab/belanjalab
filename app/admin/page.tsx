@@ -1,7 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getAdminProducts } from "@/lib/admin-products";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
+
+type AdminPageProps = {
+  searchParams: Promise<{
+    created?: string;
+  }>;
+};
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -15,7 +23,45 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-export default async function AdminPage() {
+async function logout() {
+  "use server";
+
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut();
+
+  redirect("/admin/login");
+}
+
+export default async function AdminPage({
+  searchParams,
+}: AdminPageProps) {
+  const params = await searchParams;
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id, display_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    await supabase.auth.signOut();
+
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
   const products = await getAdminProducts();
 
   return (
@@ -39,17 +85,46 @@ export default async function AdminPage() {
             </div>
           </Link>
 
-          <Link
-            href="/"
-            className="ml-auto rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
-          >
-            Lihat Website
-          </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden text-right sm:block">
+              <p className="text-xs font-bold text-slate-700">
+                {adminRecord.display_name ?? "BelanjaLab Admin"}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                {user.email}
+              </p>
+            </div>
+
+            <Link
+              href="/"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+            >
+              Lihat Website
+            </Link>
+
+            <form action={logout}>
+              <button
+                type="submit"
+                className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
+              >
+                Keluar
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-7xl">
+          {params.created && (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+            >
+              Produk “{params.created}” berhasil dibuat.
+            </div>
+          )}
+
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
@@ -61,21 +136,29 @@ export default async function AdminPage() {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                Tampilan ini masih read-only. Fitur tambah, edit, hapus, dan
-                autentikasi admin akan ditambahkan pada tahap berikutnya.
+                Kelola katalog produk, harga marketplace, dan skor BelanjaLab.
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="text-xs text-slate-500">Total produk aktif</p>
-              <p className="mt-1 text-2xl font-black">{products.length}</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <p className="text-xs text-slate-500">Total produk aktif</p>
+                <p className="mt-1 text-2xl font-black">{products.length}</p>
+              </div>
+
+              <Link
+                href="/admin/products/new"
+                className="rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
+              >
+                + Tambah Produk
+              </Link>
             </div>
           </div>
 
           {products.length > 0 ? (
             <>
               <div className="mt-8 hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_120px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
                   <span>Produk</span>
                   <span>Kategori</span>
                   <span>Harga</span>
@@ -87,7 +170,7 @@ export default async function AdminPage() {
                 {products.map((product) => (
                   <div
                     key={product.id}
-                    className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_120px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0"
+                    className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0"
                   >
                     <div className="flex min-w-0 items-center gap-4">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
@@ -126,17 +209,32 @@ export default async function AdminPage() {
                     </p>
 
                     <div>
-                      <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-bold capitalize text-green-700">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold capitalize ${
+                          product.status === "published"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
                         {product.status}
                       </span>
                     </div>
 
-                    <Link
-                      href={`/product/${product.slug}`}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-                    >
-                      Preview
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/product/${product.slug}`}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                      >
+                        Preview
+                      </Link>
+
+                      <Link
+                        href={`/admin/products/${product.id}/edit`}
+                        className="rounded-lg bg-slate-950 px-3 py-2 text-center text-xs font-bold text-white hover:bg-slate-800"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -162,7 +260,13 @@ export default async function AdminPage() {
                             {product.name}
                           </h2>
 
-                          <span className="shrink-0 rounded-full bg-green-50 px-2 py-1 text-[9px] font-bold capitalize text-green-700">
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-bold capitalize ${
+                              product.status === "published"
+                                ? "bg-green-50 text-green-700"
+                                : "bg-amber-50 text-amber-700"
+                            }`}
+                          >
                             {product.status}
                           </span>
                         </div>
@@ -189,12 +293,21 @@ export default async function AdminPage() {
                         {formatDate(product.createdAt)}
                       </p>
 
-                      <Link
-                        href={`/product/${product.slug}`}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600"
-                      >
-                        Preview
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/product/${product.slug}`}
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600"
+                        >
+                          Preview
+                        </Link>
+
+                        <Link
+                          href={`/admin/products/${product.id}/edit`}
+                          className="rounded-lg bg-slate-950 px-3 py-2 text-[10px] font-bold text-white"
+                        >
+                          Edit
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -206,8 +319,15 @@ export default async function AdminPage() {
                 Belum ada produk yang dapat ditampilkan.
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                Periksa koneksi Supabase dan data pada tabel products.
+                Tambahkan produk pertama dari tombol di atas.
               </p>
+
+              <Link
+                href="/admin/products/new"
+                className="mt-5 inline-flex rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              >
+                + Tambah Produk
+              </Link>
             </div>
           )}
         </div>
