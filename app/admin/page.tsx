@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminProducts } from "@/lib/admin-products";
+import { getAdminProductsPage } from "@/lib/admin-products";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -67,76 +67,73 @@ export default async function AdminPage({
     );
   }
 
-  const products = await getAdminProducts();
-
   const activeStatus =
     params.status === "published" || params.status === "draft"
       ? params.status
       : "all";
 
   const rawQuery = Array.isArray(params.q) ? params.q[0] : params.q;
-  const query = rawQuery?.trim().toLowerCase() ?? "";
-
-  const statusFilteredProducts =
-    activeStatus === "all"
-      ? products
-      : products.filter((product) => product.status === activeStatus);
-
-  const filteredProducts =
-    query.length === 0
-      ? statusFilteredProducts
-      : statusFilteredProducts.filter((product) =>
-          [
-            product.name,
-            product.slug,
-            product.brand,
-            product.category,
-          ].some((value) => value.toLowerCase().includes(query)),
-        );
-
-  const itemsPerPage = 10;
+  const query = rawQuery?.trim() ?? "";
   const requestedPage = Number(params.page ?? "1");
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProducts.length / itemsPerPage),
-  );
-  const currentPage =
-    Number.isFinite(requestedPage) && requestedPage > 0
-      ? Math.min(Math.floor(requestedPage), totalPages)
-      : 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
+  const page = Number.isFinite(requestedPage) && requestedPage > 0
+    ? Math.floor(requestedPage)
+    : 1;
+  const itemsPerPage = 10;
 
-  function buildAdminUrl(page: number) {
+  const [
+    productPage,
+    allCountResult,
+    publishedCountResult,
+    draftCountResult,
+  ] = await Promise.all([
+    getAdminProductsPage({
+      status: activeStatus,
+      query,
+      page,
+      pageSize: itemsPerPage,
+    }),
+    supabase
+      .from("admin_product_catalog")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("admin_product_catalog")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published"),
+    supabase
+      .from("admin_product_catalog")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "draft"),
+  ]);
+
+  const products = productPage.products;
+  const totalResults = productPage.total;
+  const currentPage = productPage.page;
+  const totalPages = productPage.totalPages;
+  const startIndex = (currentPage - 1) * productPage.pageSize;
+
+  const totalCount = allCountResult.count ?? 0;
+  const publishedCount = publishedCountResult.count ?? 0;
+  const draftCount = draftCountResult.count ?? 0;
+
+  function buildAdminUrl(targetPage: number) {
     const search = new URLSearchParams();
 
     if (activeStatus !== "all") {
       search.set("status", activeStatus);
     }
 
-    if (rawQuery?.trim()) {
-      search.set("q", rawQuery.trim());
+    if (query) {
+      search.set("q", query);
     }
 
-    if (page > 1) {
-      search.set("page", String(page));
+    if (targetPage > 1) {
+      search.set("page", String(targetPage));
     }
 
     const queryString = search.toString();
 
     return queryString ? `/admin?${queryString}` : "/admin";
   }
-
-  const publishedCount = products.filter(
-    (product) => product.status === "published",
-  ).length;
-
-  const draftCount = products.filter(
-    (product) => product.status === "draft",
-  ).length;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -253,7 +250,7 @@ export default async function AdminPage({
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
               <p className="text-xs text-slate-500">Total produk</p>
-              <p className="mt-1 text-2xl font-black">{products.length}</p>
+              <p className="mt-1 text-2xl font-black">{totalCount}</p>
             </div>
 
             <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
@@ -311,7 +308,7 @@ export default async function AdminPage({
 
           <div className="mt-6 flex flex-wrap gap-2">
             {[
-              ["all", "Semua", products.length],
+              ["all", "Semua", totalCount],
               ["published", "Published", publishedCount],
               ["draft", "Draft", draftCount],
             ].map(([value, label, count]) => {
@@ -343,7 +340,7 @@ export default async function AdminPage({
             })}
           </div>
 
-          {paginatedProducts.length > 0 ? (
+          {products.length > 0 ? (
             <>
               <div className="mt-8 hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
@@ -355,7 +352,7 @@ export default async function AdminPage({
                   <span>Aksi</span>
                 </div>
 
-                {paginatedProducts.map((product) => (
+                {products.map((product) => (
                   <div
                     key={product.id}
                     className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0"
@@ -428,7 +425,7 @@ export default async function AdminPage({
               </div>
 
               <div className="mt-6 space-y-3 md:hidden">
-                {paginatedProducts.map((product) => (
+                {products.map((product) => (
                   <article
                     key={product.id}
                     className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -519,15 +516,15 @@ export default async function AdminPage({
             </div>
           )}
 
-          {filteredProducts.length > itemsPerPage && (
+          {totalResults > productPage.pageSize && (
             <nav
               aria-label="Pagination produk admin"
               className="mt-8 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
             >
               <p className="text-xs text-slate-500">
                 Menampilkan {startIndex + 1}–
-                {Math.min(startIndex + itemsPerPage, filteredProducts.length)} dari{" "}
-                {filteredProducts.length} produk
+                {Math.min(startIndex + productPage.pageSize, totalResults)} dari{" "}
+                {totalResults} produk
               </p>
 
               <div className="flex items-center justify-between gap-2 sm:justify-end">
