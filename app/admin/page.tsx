@@ -22,6 +22,8 @@ type AdminPageProps = {
     page?: string;
     sort?: string;
     completeness?: string;
+    category?: string;
+    brand?: string;
     error?: string;
     bulk_updated?: string;
   }>;
@@ -228,6 +230,28 @@ export default async function AdminPage({
       ? params.completeness
       : "all";
 
+  const category = (params.category ?? "").trim();
+  const brand = (params.brand ?? "").trim();
+
+  const [{ data: categoryRows }, { data: brandRows }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("name")
+      .order("name", { ascending: true }),
+    supabase
+      .from("brands")
+      .select("name")
+      .order("name", { ascending: true }),
+  ]);
+
+  const categories = (categoryRows ?? [])
+    .map((item) => item.name)
+    .filter(Boolean);
+
+  const brands = (brandRows ?? [])
+    .map((item) => item.name)
+    .filter(Boolean);
+
   const itemsPerPage = 10;
 
   const [productPage, stats] = await Promise.all([
@@ -238,6 +262,8 @@ export default async function AdminPage({
       pageSize: itemsPerPage,
       sort,
       completeness,
+      category,
+      brand,
     }),
     getAdminDashboardStats(),
   ]);
@@ -269,6 +295,14 @@ export default async function AdminPage({
 
     if (completeness !== "all") {
       search.set("completeness", completeness);
+    }
+
+    if (category) {
+      search.set("category", category);
+    }
+
+    if (brand) {
+      search.set("brand", brand);
     }
 
     if (targetPage > 1) {
@@ -503,6 +537,22 @@ export default async function AdminPage({
               />
             )}
 
+            {category && (
+              <input
+                type="hidden"
+                name="category"
+                value={category}
+              />
+            )}
+
+            {brand && (
+              <input
+                type="hidden"
+                name="brand"
+                value={brand}
+              />
+            )}
+
             <input
               type="search"
               name="q"
@@ -537,7 +587,9 @@ export default async function AdminPage({
             {(query ||
               activeStatus !== "all" ||
               sort !== "newest" ||
-              completeness !== "all") && (
+              completeness !== "all" ||
+              category ||
+              brand) && (
               <Link
                 href="/admin"
                 className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50"
@@ -573,6 +625,8 @@ export default async function AdminPage({
                             ...(completeness !== "all"
                               ? { completeness }
                               : {}),
+                            ...(category ? { category } : {}),
+                            ...(brand ? { brand } : {}),
                           }).toString()}`
                         : "/admin"
                       : `/admin?${new URLSearchParams({
