@@ -5,6 +5,7 @@ import {
   type AdminProductSort,
 } from "@/lib/admin-products";
 import BulkProductActions from "@/components/admin/bulk-product-actions";
+import { deleteProductImageByUrl } from "@/lib/product-image-upload";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -47,18 +48,21 @@ async function logout() {
 async function updateBulkProductStatus(formData: FormData) {
   "use server";
 
-  const productIds = formData
-    .getAll("product_ids")
-    .map((value) => String(value))
-    .filter(Boolean);
+  const productIds = Array.from(
+    new Set(
+      formData
+        .getAll("product_ids")
+        .map((value) => String(value))
+        .filter(Boolean),
+    ),
+  );
 
-  const requestedStatus = String(formData.get("bulk_action") ?? "");
-  const status =
-    requestedStatus === "published" || requestedStatus === "draft"
-      ? requestedStatus
-      : null;
+  const requestedAction = String(formData.get("bulk_action") ?? "");
 
-  if (productIds.length === 0 || !status) {
+  if (
+    productIds.length === 0 ||
+    !["published", "draft", "delete"].includes(requestedAction)
+  ) {
     redirect(
       `/admin?error=${encodeURIComponent(
         "Pilih minimal satu produk dan tindakan yang valid.",
@@ -89,6 +93,54 @@ async function updateBulkProductStatus(formData: FormData) {
       )}`,
     );
   }
+
+  if (requestedAction === "delete") {
+    const { data: productsToDelete, error: readError } = await supabase
+      .from("products")
+      .select("id, image_url")
+      .in("id", productIds);
+
+    if (readError) {
+      redirect(
+        `/admin?error=${encodeURIComponent(readError.message)}`,
+      );
+    }
+
+    const { error: deleteError } = await supabase
+      .from("products")
+      .delete()
+      .in("id", productIds);
+
+    if (deleteError) {
+      redirect(
+        `/admin?error=${encodeURIComponent(deleteError.message)}`,
+      );
+    }
+
+    const cleanupResults = await Promise.allSettled(
+      (productsToDelete ?? []).map((product) =>
+        deleteProductImageByUrl(product.image_url),
+      ),
+    );
+
+    const cleanupFailureCount = cleanupResults.filter(
+      (result) =>
+        result.status === "rejected" ||
+        (result.status === "fulfilled" && !result.value.ok),
+    ).length;
+
+    const message =
+      cleanupFailureCount > 0
+        ? `${productIds.length} produk dihapus. ${cleanupFailureCount} gambar gagal dibersihkan dari Storage.`
+        : `${productIds.length} produk dan gambar terkait berhasil dihapus.`;
+
+    redirect(
+      `/admin?bulk_updated=${encodeURIComponent(message)}`,
+    );
+  }
+
+  const status =
+    requestedAction === "published" ? "published" : "draft";
 
   const { error } = await supabase
     .from("products")
