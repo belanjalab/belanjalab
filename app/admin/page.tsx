@@ -12,6 +12,7 @@ type AdminPageProps = {
     deleted?: string;
     status?: string;
     q?: string | string[];
+    page?: string;
   }>;
 };
 
@@ -92,6 +93,42 @@ export default async function AdminPage({
             product.category,
           ].some((value) => value.toLowerCase().includes(query)),
         );
+
+  const itemsPerPage = 10;
+  const requestedPage = Number(params.page ?? "1");
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / itemsPerPage),
+  );
+  const currentPage =
+    Number.isFinite(requestedPage) && requestedPage > 0
+      ? Math.min(Math.floor(requestedPage), totalPages)
+      : 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  function buildAdminUrl(page: number) {
+    const search = new URLSearchParams();
+
+    if (activeStatus !== "all") {
+      search.set("status", activeStatus);
+    }
+
+    if (rawQuery?.trim()) {
+      search.set("q", rawQuery.trim());
+    }
+
+    if (page > 1) {
+      search.set("page", String(page));
+    }
+
+    const queryString = search.toString();
+
+    return queryString ? `/admin?${queryString}` : "/admin";
+  }
 
   const publishedCount = products.filter(
     (product) => product.status === "published",
@@ -306,7 +343,7 @@ export default async function AdminPage({
             })}
           </div>
 
-          {filteredProducts.length > 0 ? (
+          {paginatedProducts.length > 0 ? (
             <>
               <div className="mt-8 hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
@@ -318,7 +355,7 @@ export default async function AdminPage({
                   <span>Aksi</span>
                 </div>
 
-                {filteredProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <div
                     key={product.id}
                     className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0"
@@ -391,7 +428,7 @@ export default async function AdminPage({
               </div>
 
               <div className="mt-6 space-y-3 md:hidden">
-                {filteredProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <article
                     key={product.id}
                     className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -480,6 +517,51 @@ export default async function AdminPage({
                 + Tambah Produk
               </Link>
             </div>
+          )}
+
+          {filteredProducts.length > itemsPerPage && (
+            <nav
+              aria-label="Pagination produk admin"
+              className="mt-8 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+            >
+              <p className="text-xs text-slate-500">
+                Menampilkan {startIndex + 1}–
+                {Math.min(startIndex + itemsPerPage, filteredProducts.length)} dari{" "}
+                {filteredProducts.length} produk
+              </p>
+
+              <div className="flex items-center justify-between gap-2 sm:justify-end">
+                {currentPage > 1 ? (
+                  <Link
+                    href={buildAdminUrl(currentPage - 1)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                  >
+                    ← Sebelumnya
+                  </Link>
+                ) : (
+                  <span className="cursor-not-allowed rounded-lg border border-slate-100 px-4 py-2 text-xs font-bold text-slate-300">
+                    ← Sebelumnya
+                  </span>
+                )}
+
+                <span className="rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white">
+                  {currentPage} / {totalPages}
+                </span>
+
+                {currentPage < totalPages ? (
+                  <Link
+                    href={buildAdminUrl(currentPage + 1)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                  >
+                    Berikutnya →
+                  </Link>
+                ) : (
+                  <span className="cursor-not-allowed rounded-lg border border-slate-100 px-4 py-2 text-xs font-bold text-slate-300">
+                    Berikutnya →
+                  </span>
+                )}
+              </div>
+            </nav>
           )}
         </div>
       </section>
