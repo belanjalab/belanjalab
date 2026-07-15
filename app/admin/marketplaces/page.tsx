@@ -10,6 +10,7 @@ type AdminMarketplacesPageProps = {
   searchParams: Promise<{
     created?: string;
     updated?: string;
+    deleted?: string;
     error?: string;
   }>;
 };
@@ -198,6 +199,105 @@ async function updateMarketplace(formData: FormData) {
   );
 }
 
+
+async function deleteMarketplace(formData: FormData) {
+  "use server";
+
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
+
+  if (!marketplaceId) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace tidak valid.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: marketplaceRecord, error: marketplaceError } =
+    await supabase
+      .from("marketplaces")
+      .select("id, name")
+      .eq("id", marketplaceId)
+      .maybeSingle();
+
+  if (marketplaceError || !marketplaceRecord) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        marketplaceError?.message ?? "Marketplace tidak ditemukan.",
+      )}`,
+    );
+  }
+
+  const { count, error: usageError } = await supabase
+    .from("product_prices")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("marketplace_id", marketplaceId);
+
+  if (usageError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        usageError.message,
+      )}`,
+    );
+  }
+
+  if ((count ?? 0) > 0) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        `${marketplaceRecord.name} masih dipakai oleh ${count} data harga produk dan tidak dapat dihapus.`,
+      )}`,
+    );
+  }
+
+  const { error: deleteError } = await supabase
+    .from("marketplaces")
+    .delete()
+    .eq("id", marketplaceId);
+
+  if (deleteError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        deleteError.message,
+      )}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?deleted=${encodeURIComponent(
+      `${marketplaceRecord.name} berhasil dihapus.`,
+    )}`,
+  );
+}
+
 export default async function AdminMarketplacesPage({
   searchParams,
 }: AdminMarketplacesPageProps) {
@@ -237,6 +337,12 @@ export default async function AdminMarketplacesPage({
         {params.updated && (
           <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
             {params.updated}
+          </div>
+        )}
+
+        {params.deleted && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.deleted}
           </div>
         )}
 
@@ -344,9 +450,26 @@ export default async function AdminMarketplacesPage({
                     </button>
                   </form>
 
-                  <span className="h-fit rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-                    Aktif
-                  </span>
+                  <div className="flex items-center gap-2 lg:flex-col lg:items-stretch">
+                    <span className="h-fit rounded-full bg-green-50 px-3 py-1 text-center text-xs font-bold text-green-700">
+                      Aktif
+                    </span>
+
+                    <form action={deleteMarketplace}>
+                      <input
+                        type="hidden"
+                        name="marketplace_id"
+                        value={marketplace.id}
+                      />
+
+                      <button
+                        type="submit"
+                        className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
+                      >
+                        Hapus
+                      </button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </div>
