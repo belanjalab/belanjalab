@@ -4,6 +4,7 @@ import {
   getAdminProductsPage,
   type AdminProductSort,
 } from "@/lib/admin-products";
+import BulkProductActions from "@/components/admin/bulk-product-actions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ type AdminPageProps = {
     q?: string | string[];
     page?: string;
     sort?: string;
+    error?: string;
+    bulk_updated?: string;
   }>;
 };
 
@@ -39,6 +42,72 @@ async function logout() {
   await supabase.auth.signOut();
 
   redirect("/admin/login");
+}
+
+async function updateBulkProductStatus(formData: FormData) {
+  "use server";
+
+  const productIds = formData
+    .getAll("product_ids")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  const requestedStatus = String(formData.get("bulk_action") ?? "");
+  const status =
+    requestedStatus === "published" || requestedStatus === "draft"
+      ? requestedStatus
+      : null;
+
+  if (productIds.length === 0 || !status) {
+    redirect(
+      `/admin?error=${encodeURIComponent(
+        "Pilih minimal satu produk dan tindakan yang valid.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      status,
+    })
+    .in("id", productIds);
+
+  if (error) {
+    redirect(
+      `/admin?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(
+    `/admin?bulk_updated=${encodeURIComponent(
+      `${productIds.length} produk diubah menjadi ${status}.`,
+    )}`,
+  );
 }
 
 export default async function AdminPage({
@@ -239,6 +308,24 @@ export default async function AdminPage({
             </div>
           )}
 
+          {params.bulk_updated && (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+            >
+              {params.bulk_updated}
+            </div>
+          )}
+
+          {params.error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
+              {params.error}
+            </div>
+          )}
+
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
@@ -386,6 +473,18 @@ export default async function AdminPage({
               );
             })}
           </div>
+
+          {products.length > 0 && (
+            <form action={updateBulkProductStatus} className="mt-6">
+              <BulkProductActions
+                products={products.map((product) => ({
+                  id: product.id,
+                  name: product.name,
+                  status: product.status,
+                }))}
+              />
+            </form>
+          )}
 
           {products.length > 0 ? (
             <>
