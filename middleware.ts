@@ -45,9 +45,10 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isPublicAdminRoute =
-    pathname === "/admin/login" ||
-    pathname === "/admin/forgot-password" ||
-    pathname === "/admin/update-password";
+pathname === "/admin/login" ||
+  pathname === "/admin/forgot-password" ||
+  pathname === "/admin/recovery-confirm" ||
+  pathname === "/admin/update-password";
 
   const isProtectedAdminRoute =
     pathname.startsWith("/admin") && !isPublicAdminRoute;
