@@ -12,14 +12,14 @@ type BulkProductActionsProps = {
   products: BulkProductItem[];
   categories: string[];
   brands: string[];
-  marketplaces: string[];
+  marketplaces?: string[];
 };
 
 export default function BulkProductActions({
   products,
   categories,
   brands,
-  marketplaces,
+  marketplaces = [],
 }: BulkProductActionsProps) {
   const productIds = products.map((product) => product.id);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
