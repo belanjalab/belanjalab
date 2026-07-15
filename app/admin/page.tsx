@@ -13,6 +13,7 @@ type AdminPageProps = {
     status?: string;
     q?: string | string[];
     page?: string;
+    sort?: string;
   }>;
 };
 
@@ -78,6 +79,22 @@ export default async function AdminPage({
   const page = Number.isFinite(requestedPage) && requestedPage > 0
     ? Math.floor(requestedPage)
     : 1;
+
+  const allowedSorts = new Set([
+    "newest",
+    "oldest",
+    "name_asc",
+    "name_desc",
+    "price_asc",
+    "price_desc",
+    "score_desc",
+    "score_asc",
+  ]);
+
+  const sort = allowedSorts.has(params.sort ?? "")
+    ? params.sort
+    : "newest";
+
   const itemsPerPage = 10;
 
   const [
@@ -91,6 +108,7 @@ export default async function AdminPage({
       query,
       page,
       pageSize: itemsPerPage,
+      sort,
     }),
     supabase
       .from("admin_product_catalog")
@@ -124,6 +142,10 @@ export default async function AdminPage({
 
     if (query) {
       search.set("q", query);
+    }
+
+    if (sort !== "newest") {
+      search.set("sort", sort);
     }
 
     if (targetPage > 1) {
@@ -289,6 +311,22 @@ export default async function AdminPage({
               className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
             />
 
+            <select
+              name="sort"
+              defaultValue={sort}
+              aria-label="Urutkan produk"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-orange-400"
+            >
+              <option value="newest">Terbaru</option>
+              <option value="oldest">Terlama</option>
+              <option value="name_asc">Nama A–Z</option>
+              <option value="name_desc">Nama Z–A</option>
+              <option value="price_asc">Harga termurah</option>
+              <option value="price_desc">Harga termahal</option>
+              <option value="score_desc">Skor tertinggi</option>
+              <option value="score_asc">Skor terendah</option>
+            </select>
+
             <button
               type="submit"
               className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
@@ -296,7 +334,7 @@ export default async function AdminPage({
               Cari Produk
             </button>
 
-            {(query || activeStatus !== "all") && (
+            {(query || activeStatus !== "all" || sort !== "newest") && (
               <Link
                 href="/admin"
                 className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50"
@@ -319,14 +357,20 @@ export default async function AdminPage({
                   key={String(value)}
                   href={
                     value === "all"
-                      ? query
-                        ? `/admin?q=${encodeURIComponent(rawQuery ?? "")}`
+                      ? new URLSearchParams({
+                          ...(query ? { q: rawQuery ?? "" } : {}),
+                          ...(sort !== "newest" ? { sort } : {}),
+                        }).toString()
+                        ? `/admin?${new URLSearchParams({
+                            ...(query ? { q: rawQuery ?? "" } : {}),
+                            ...(sort !== "newest" ? { sort } : {}),
+                          }).toString()}`
                         : "/admin"
-                      : query
-                        ? `/admin?status=${value}&q=${encodeURIComponent(
-                            rawQuery ?? "",
-                          )}`
-                        : `/admin?status=${value}`
+                      : `/admin?${new URLSearchParams({
+                          status: String(value),
+                          ...(query ? { q: rawQuery ?? "" } : {}),
+                          ...(sort !== "newest" ? { sort } : {}),
+                        }).toString()}`
                   }
                   className={`rounded-full px-4 py-2 text-xs font-bold transition ${
                     isActive
