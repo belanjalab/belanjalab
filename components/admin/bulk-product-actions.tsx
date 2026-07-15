@@ -12,17 +12,20 @@ type BulkProductActionsProps = {
   products: BulkProductItem[];
   categories: string[];
   brands: string[];
+  marketplaces: string[];
 };
 
 export default function BulkProductActions({
   products,
   categories,
   brands,
+  marketplaces,
 }: BulkProductActionsProps) {
   const productIds = products.map((product) => product.id);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
+  const [marketplace, setMarketplace] = useState("");
 
   const allSelected =
     productIds.length > 0 && selectedIds.length === productIds.length;
@@ -119,8 +122,8 @@ export default function BulkProductActions({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 lg:grid-cols-2">
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+      <div className="mt-4 grid gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 xl:grid-cols-3">
+        <div className="grid gap-2">
           <select
             name="category_name"
             value={category}
@@ -146,7 +149,7 @@ export default function BulkProductActions({
           </button>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <div className="grid gap-2">
           <select
             name="brand_name"
             value={brand}
@@ -169,6 +172,32 @@ export default function BulkProductActions({
             className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Terapkan Merek
+          </button>
+        </div>
+
+        <div className="grid gap-2">
+          <select
+            name="marketplace_name"
+            value={marketplace}
+            onChange={(event) => setMarketplace(event.target.value)}
+            className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
+          >
+            <option value="">Pilih marketplace</option>
+            {marketplaces.map((marketplaceName) => (
+              <option key={marketplaceName} value={marketplaceName}>
+                {marketplaceName}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            name="bulk_action"
+            value="assign_marketplace"
+            disabled={!hasSelection || !marketplace}
+            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Terapkan Marketplace
           </button>
         </div>
       </div>
