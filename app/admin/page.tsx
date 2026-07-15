@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 type AdminPageProps = {
   searchParams: Promise<{
     created?: string;
+    updated?: string;
   }>;
 };
 
@@ -63,6 +64,14 @@ export default async function AdminPage({
   }
 
   const products = await getAdminProducts();
+
+  const publishedCount = products.filter(
+    (product) => product.status === "published",
+  ).length;
+
+  const draftCount = products.filter(
+    (product) => product.status === "draft",
+  ).length;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -125,6 +134,15 @@ export default async function AdminPage({
             </div>
           )}
 
+          {params.updated && (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700"
+            >
+              Produk “{params.updated}” berhasil diperbarui.
+            </div>
+          )}
+
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
@@ -136,15 +154,18 @@ export default async function AdminPage({
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                Kelola katalog produk, harga marketplace, dan skor BelanjaLab.
+                Kelola katalog produk, harga marketplace, skor, kategori, dan
+                merek BelanjaLab.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <p className="text-xs text-slate-500">Total produk aktif</p>
-                <p className="mt-1 text-2xl font-black">{products.length}</p>
-              </div>
+              <Link
+                href="/admin/taxonomies"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+              >
+                Kelola Kategori & Merek
+              </Link>
 
               <Link
                 href="/admin/products/new"
@@ -152,6 +173,27 @@ export default async function AdminPage({
               >
                 + Tambah Produk
               </Link>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <p className="text-xs text-slate-500">Total produk</p>
+              <p className="mt-1 text-2xl font-black">{products.length}</p>
+            </div>
+
+            <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
+              <p className="text-xs text-green-700">Published</p>
+              <p className="mt-1 text-2xl font-black text-green-700">
+                {publishedCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <p className="text-xs text-amber-700">Draft</p>
+              <p className="mt-1 text-2xl font-black text-amber-700">
+                {draftCount}
+              </p>
             </div>
           </div>
 
