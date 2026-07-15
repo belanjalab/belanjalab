@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminProductsPage } from "@/lib/admin-products";
+import {
+  getAdminProductsPage,
+  type AdminProductSort,
+} from "@/lib/admin-products";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -91,8 +94,8 @@ export default async function AdminPage({
     "score_asc",
   ]);
 
-  const sort = allowedSorts.has(params.sort ?? "")
-    ? params.sort
+  const sort: AdminProductSort = allowedSorts.has(params.sort ?? "")
+    ? (params.sort as AdminProductSort)
     : "newest";
 
   const itemsPerPage = 10;
