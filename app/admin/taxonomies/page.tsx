@@ -52,6 +52,14 @@ async function requireAdmin() {
   return supabase;
 }
 
+function refreshTaxonomyPaths() {
+  revalidatePath("/admin/taxonomies");
+  revalidatePath("/admin/products/new");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/search");
+}
+
 async function createCategory(formData: FormData) {
   "use server";
 
@@ -79,12 +87,51 @@ async function createCategory(formData: FormData) {
     );
   }
 
-  revalidatePath("/admin/taxonomies");
-  revalidatePath("/admin/products/new");
+  refreshTaxonomyPaths();
 
   redirect(
     `/admin/taxonomies?success=${encodeURIComponent(
       `Kategori “${name}” berhasil ditambahkan.`,
+    )}`,
+  );
+}
+
+async function updateCategory(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? "") || name);
+
+  if (!id || !name || !slug) {
+    redirect(
+      `/admin/taxonomies?error=${encodeURIComponent(
+        "Data kategori tidak valid.",
+      )}`,
+    );
+  }
+
+  const supabase = await requireAdmin();
+
+  const { error } = await supabase
+    .from("categories")
+    .update({
+      name,
+      slug,
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(
+      `/admin/taxonomies?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  refreshTaxonomyPaths();
+
+  redirect(
+    `/admin/taxonomies?success=${encodeURIComponent(
+      `Kategori “${name}” berhasil diperbarui.`,
     )}`,
   );
 }
@@ -116,12 +163,51 @@ async function createBrand(formData: FormData) {
     );
   }
 
-  revalidatePath("/admin/taxonomies");
-  revalidatePath("/admin/products/new");
+  refreshTaxonomyPaths();
 
   redirect(
     `/admin/taxonomies?success=${encodeURIComponent(
       `Merek “${name}” berhasil ditambahkan.`,
+    )}`,
+  );
+}
+
+async function updateBrand(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? "") || name);
+
+  if (!id || !name || !slug) {
+    redirect(
+      `/admin/taxonomies?error=${encodeURIComponent(
+        "Data merek tidak valid.",
+      )}`,
+    );
+  }
+
+  const supabase = await requireAdmin();
+
+  const { error } = await supabase
+    .from("brands")
+    .update({
+      name,
+      slug,
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(
+      `/admin/taxonomies?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  refreshTaxonomyPaths();
+
+  redirect(
+    `/admin/taxonomies?success=${encodeURIComponent(
+      `Merek “${name}” berhasil diperbarui.`,
     )}`,
   );
 }
@@ -155,8 +241,7 @@ async function deleteCategory(formData: FormData) {
     );
   }
 
-  revalidatePath("/admin/taxonomies");
-  revalidatePath("/admin/products/new");
+  refreshTaxonomyPaths();
 
   redirect(
     `/admin/taxonomies?success=${encodeURIComponent(
@@ -194,8 +279,7 @@ async function deleteBrand(formData: FormData) {
     );
   }
 
-  revalidatePath("/admin/taxonomies");
-  revalidatePath("/admin/products/new");
+  refreshTaxonomyPaths();
 
   redirect(
     `/admin/taxonomies?success=${encodeURIComponent(
@@ -251,7 +335,7 @@ export default async function TaxonomiesPage({
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Tambahkan data yang akan muncul pada dropdown produk dan pencarian.
+            Tambah, edit, dan hapus data yang dipakai pada dropdown produk dan pencarian.
           </p>
 
           {params.success && (
@@ -274,16 +358,17 @@ export default async function TaxonomiesPage({
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black">Kategori</h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {categories.length} kategori tersedia
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-xl font-black">Kategori</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {categories.length} kategori tersedia
+                </p>
               </div>
 
-              <form action={createCategory} className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+              <form
+                action={createCategory}
+                className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+              >
                 <input
                   name="name"
                   required
@@ -305,22 +390,43 @@ export default async function TaxonomiesPage({
                 </button>
               </form>
 
-              <div className="mt-6 space-y-2">
+              <div className="mt-6 space-y-3">
                 {categories.map((category) => (
-                  <div
+                  <article
                     key={category.id}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">
-                        {category.name}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-slate-400">
-                        {category.slug}
-                      </p>
-                    </div>
+                    <form
+                      action={updateCategory}
+                      className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <input type="hidden" name="id" value={category.id} />
 
-                    <form action={deleteCategory}>
+                      <input
+                        name="name"
+                        required
+                        defaultValue={category.name}
+                        aria-label={`Nama kategori ${category.name}`}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                      />
+
+                      <input
+                        name="slug"
+                        required
+                        defaultValue={category.slug}
+                        aria-label={`Slug kategori ${category.name}`}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                      />
+
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-slate-950 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
+                      >
+                        Simpan
+                      </button>
+                    </form>
+
+                    <form action={deleteCategory} className="mt-3 text-right">
                       <input type="hidden" name="id" value={category.id} />
                       <input type="hidden" name="name" value={category.name} />
 
@@ -328,10 +434,10 @@ export default async function TaxonomiesPage({
                         type="submit"
                         className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
                       >
-                        Hapus
+                        Hapus kategori
                       </button>
                     </form>
-                  </div>
+                  </article>
                 ))}
 
                 {categories.length === 0 && (
@@ -343,16 +449,17 @@ export default async function TaxonomiesPage({
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black">Merek</h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {brands.length} merek tersedia
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-xl font-black">Merek</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {brands.length} merek tersedia
+                </p>
               </div>
 
-              <form action={createBrand} className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+              <form
+                action={createBrand}
+                className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+              >
                 <input
                   name="name"
                   required
@@ -374,22 +481,43 @@ export default async function TaxonomiesPage({
                 </button>
               </form>
 
-              <div className="mt-6 space-y-2">
+              <div className="mt-6 space-y-3">
                 {brands.map((brand) => (
-                  <div
+                  <article
                     key={brand.id}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">
-                        {brand.name}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-slate-400">
-                        {brand.slug}
-                      </p>
-                    </div>
+                    <form
+                      action={updateBrand}
+                      className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <input type="hidden" name="id" value={brand.id} />
 
-                    <form action={deleteBrand}>
+                      <input
+                        name="name"
+                        required
+                        defaultValue={brand.name}
+                        aria-label={`Nama merek ${brand.name}`}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                      />
+
+                      <input
+                        name="slug"
+                        required
+                        defaultValue={brand.slug}
+                        aria-label={`Slug merek ${brand.name}`}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                      />
+
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-slate-950 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
+                      >
+                        Simpan
+                      </button>
+                    </form>
+
+                    <form action={deleteBrand} className="mt-3 text-right">
                       <input type="hidden" name="id" value={brand.id} />
                       <input type="hidden" name="name" value={brand.name} />
 
@@ -397,10 +525,10 @@ export default async function TaxonomiesPage({
                         type="submit"
                         className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
                       >
-                        Hapus
+                        Hapus merek
                       </button>
                     </form>
-                  </div>
+                  </article>
                 ))}
 
                 {brands.length === 0 && (
