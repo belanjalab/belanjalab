@@ -9,6 +9,7 @@ type AdminPageProps = {
   searchParams: Promise<{
     created?: string;
     updated?: string;
+    deleted?: string;
   }>;
 };
 
@@ -140,6 +141,15 @@ export default async function AdminPage({
               className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700"
             >
               Produk “{params.updated}” berhasil diperbarui.
+            </div>
+          )}
+
+          {params.deleted && (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
+              Produk “{params.deleted}” berhasil dihapus.
             </div>
           )}
 
