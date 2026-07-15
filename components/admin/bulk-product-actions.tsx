@@ -26,6 +26,8 @@ export default function BulkProductActions({
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [marketplace, setMarketplace] = useState("");
+  const [marketplacePrice, setMarketplacePrice] = useState("");
+  const [affiliateUrl, setAffiliateUrl] = useState("");
 
   const allSelected =
     productIds.length > 0 && selectedIds.length === productIds.length;
@@ -190,14 +192,39 @@ export default function BulkProductActions({
             ))}
           </select>
 
+          <input
+            type="number"
+            name="marketplace_price"
+            min="1"
+            step="1"
+            inputMode="numeric"
+            value={marketplacePrice}
+            onChange={(event) => setMarketplacePrice(event.target.value)}
+            placeholder="Harga untuk produk terpilih"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
+          />
+
+          <input
+            type="url"
+            name="marketplace_affiliate_url"
+            value={affiliateUrl}
+            onChange={(event) => setAffiliateUrl(event.target.value)}
+            placeholder="URL affiliate (opsional)"
+            className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
+          />
+
           <button
             type="submit"
             name="bulk_action"
-            value="assign_marketplace"
-            disabled={!hasSelection || !marketplace}
+            value="add_marketplace_price"
+            disabled={
+              !hasSelection ||
+              !marketplace ||
+              Number(marketplacePrice) <= 0
+            }
             className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Terapkan Marketplace
+            Tambahkan Harga Marketplace
           </button>
         </div>
       </div>
