@@ -10,13 +10,19 @@ type BulkProductItem = {
 
 type BulkProductActionsProps = {
   products: BulkProductItem[];
+  categories: string[];
+  brands: string[];
 };
 
 export default function BulkProductActions({
   products,
+  categories,
+  brands,
 }: BulkProductActionsProps) {
   const productIds = products.map((product) => product.id);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
 
   const allSelected =
     productIds.length > 0 && selectedIds.length === productIds.length;
@@ -50,6 +56,8 @@ export default function BulkProductActions({
     }
   }
 
+  const hasSelection = selectedIds.length > 0;
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -74,7 +82,7 @@ export default function BulkProductActions({
           type="submit"
           name="bulk_action"
           value="published"
-          disabled={selectedIds.length === 0}
+          disabled={!hasSelection}
           className="rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Publish Terpilih
@@ -84,7 +92,7 @@ export default function BulkProductActions({
           type="submit"
           name="bulk_action"
           value="draft"
-          disabled={selectedIds.length === 0}
+          disabled={!hasSelection}
           className="rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Jadikan Draft
@@ -94,7 +102,7 @@ export default function BulkProductActions({
           type="submit"
           name="bulk_action"
           value="delete"
-          disabled={selectedIds.length === 0}
+          disabled={!hasSelection}
           onClick={confirmBulkDelete}
           className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -104,11 +112,65 @@ export default function BulkProductActions({
         <button
           type="button"
           onClick={() => setSelectedIds([])}
-          disabled={selectedIds.length === 0}
+          disabled={!hasSelection}
           className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Batalkan Pilihan
         </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 lg:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <select
+            name="category_name"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
+          >
+            <option value="">Pilih kategori</option>
+            {categories.map((categoryName) => (
+              <option key={categoryName} value={categoryName}>
+                {categoryName}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            name="bulk_action"
+            value="assign_category"
+            disabled={!hasSelection || !category}
+            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Terapkan Kategori
+          </button>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <select
+            name="brand_name"
+            value={brand}
+            onChange={(event) => setBrand(event.target.value)}
+            className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
+          >
+            <option value="">Pilih merek</option>
+            {brands.map((brandName) => (
+              <option key={brandName} value={brandName}>
+                {brandName}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            name="bulk_action"
+            value="assign_brand"
+            disabled={!hasSelection || !brand}
+            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Terapkan Merek
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-2 md:grid-cols-2">
