@@ -127,6 +127,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       )
     `)
     .eq("status", "published")
+    .order("created_at", { ascending: false })
     .limit(6);
 
   if (error) {
