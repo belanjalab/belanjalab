@@ -65,6 +65,15 @@ async function updateBulkProductStatus(formData: FormData) {
   const requestedAction = String(formData.get("bulk_action") ?? "");
   const categoryName = String(formData.get("category_name") ?? "").trim();
   const brandName = String(formData.get("brand_name") ?? "").trim();
+  const marketplaceName = String(
+    formData.get("marketplace_name") ?? "",
+  ).trim();
+  const marketplacePrice = Number(
+    formData.get("marketplace_price") ?? 0,
+  );
+  const marketplaceAffiliateUrl = String(
+    formData.get("marketplace_affiliate_url") ?? "",
+  ).trim();
 
   if (
     productIds.length === 0 ||
@@ -74,6 +83,7 @@ async function updateBulkProductStatus(formData: FormData) {
       "delete",
       "assign_category",
       "assign_brand",
+      "add_marketplace_price",
     ].includes(requestedAction)
   ) {
     redirect(
@@ -185,6 +195,127 @@ async function updateBulkProductStatus(formData: FormData) {
     redirect(
       `/admin?bulk_updated=${encodeURIComponent(
         `${productIds.length} produk dipindahkan ke merek ${brandRecord.name}.`,
+      )}`,
+    );
+  }
+
+  if (requestedAction === "add_marketplace_price") {
+    if (
+      !marketplaceName ||
+      !Number.isFinite(marketplacePrice) ||
+      marketplacePrice <= 0
+    ) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          "Pilih marketplace dan masukkan harga yang valid.",
+        )}`,
+      );
+    }
+
+    if (marketplaceAffiliateUrl) {
+      try {
+        const parsedUrl = new URL(marketplaceAffiliateUrl);
+
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+          throw new Error("Invalid protocol");
+        }
+      } catch {
+        redirect(
+          `/admin?error=${encodeURIComponent(
+            "URL affiliate harus berupa URL http atau https yang valid.",
+          )}`,
+        );
+      }
+    }
+
+    const { data: marketplaceRecord, error: marketplaceError } =
+      await supabase
+        .from("marketplaces")
+        .select("id, name")
+        .eq("name", marketplaceName)
+        .maybeSingle();
+
+    if (marketplaceError || !marketplaceRecord) {
+      redirect(
+        `/admin?error=${encodeURIComponent(
+          marketplaceError?.message ?? "Marketplace tidak ditemukan.",
+        )}`,
+      );
+    }
+
+    const { data: existingPrices, error: existingPriceError } =
+      await supabase
+        .from("product_prices")
+        .select("id, product_id")
+        .eq("marketplace_id", marketplaceRecord.id)
+        .in("product_id", productIds);
+
+    if (existingPriceError) {
+      redirect(
+        `/admin?error=${encodeURIComponent(existingPriceError.message)}`,
+      );
+    }
+
+    const now = new Date().toISOString();
+    const affiliateUrl = marketplaceAffiliateUrl || "#";
+    const existingProductIds = new Set(
+      (existingPrices ?? []).map((item) => item.product_id),
+    );
+
+    const existingIds = (existingPrices ?? []).map((item) => item.id);
+
+    if (existingIds.length > 0) {
+      const { error: updatePriceError } = await supabase
+        .from("product_prices")
+        .update({
+          price: marketplacePrice,
+          original_price: marketplacePrice,
+          shipping_cost: 0,
+          affiliate_url: affiliateUrl,
+          is_available: true,
+          stock_status: "in_stock",
+          last_checked_at: now,
+          updated_at: now,
+        })
+        .in("id", existingIds);
+
+      if (updatePriceError) {
+        redirect(
+          `/admin?error=${encodeURIComponent(updatePriceError.message)}`,
+        );
+      }
+    }
+
+    const newPriceRows = productIds
+      .filter((productId) => !existingProductIds.has(productId))
+      .map((productId) => ({
+        product_id: productId,
+        marketplace_id: marketplaceRecord.id,
+        price: marketplacePrice,
+        original_price: marketplacePrice,
+        shipping_cost: 0,
+        affiliate_url: affiliateUrl,
+        is_available: true,
+        stock_status: "in_stock",
+        last_checked_at: now,
+        updated_at: now,
+      }));
+
+    if (newPriceRows.length > 0) {
+      const { error: insertPriceError } = await supabase
+        .from("product_prices")
+        .insert(newPriceRows);
+
+      if (insertPriceError) {
+        redirect(
+          `/admin?error=${encodeURIComponent(insertPriceError.message)}`,
+        );
+      }
+    }
+
+    redirect(
+      `/admin?bulk_updated=${encodeURIComponent(
+        `Harga ${marketplaceRecord.name} untuk ${productIds.length} produk berhasil disimpan.`,
       )}`,
     );
   }
@@ -323,13 +454,21 @@ export default async function AdminPage({
   const category = (params.category ?? "").trim();
   const brand = (params.brand ?? "").trim();
 
-  const [{ data: categoryRows }, { data: brandRows }] = await Promise.all([
+  const [
+    { data: categoryRows },
+    { data: brandRows },
+    { data: marketplaceRows },
+  ] = await Promise.all([
     supabase
       .from("categories")
       .select("name")
       .order("name", { ascending: true }),
     supabase
       .from("brands")
+      .select("name")
+      .order("name", { ascending: true }),
+    supabase
+      .from("marketplaces")
       .select("name")
       .order("name", { ascending: true }),
   ]);
@@ -339,6 +478,10 @@ export default async function AdminPage({
     .filter(Boolean);
 
   const brands = (brandRows ?? [])
+    .map((item) => item.name)
+    .filter(Boolean);
+
+  const marketplaces = (marketplaceRows ?? [])
     .map((item) => item.name)
     .filter(Boolean);
 
@@ -750,6 +893,7 @@ export default async function AdminPage({
                 }))}
                 categories={categories}
                 brands={brands}
+                marketplaces={marketplaces}
               />
             </form>
           )}
