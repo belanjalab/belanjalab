@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminProductFormOptions } from "@/lib/admin-product-options";
 import { getAdminProductForEdit } from "@/lib/admin-product-edit";
-import { uploadProductImage } from "@/lib/product-image-upload";
+import {
+  deleteProductImage,
+  deleteProductImageByUrl,
+  uploadProductImage,
+} from "@/lib/product-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +117,9 @@ async function updateProduct(formData: FormData) {
     currentImageUrl ||
     "/images/products/logitech-g102.png";
 
+  let uploadedImagePath: string | null = null;
+  let shouldDeleteOldImage = false;
+
   if (imageFile instanceof File && imageFile.size > 0) {
     const uploadResult = await uploadProductImage(imageFile, slug);
 
@@ -125,6 +132,10 @@ async function updateProduct(formData: FormData) {
     }
 
     imageUrl = uploadResult.publicUrl;
+    uploadedImagePath = uploadResult.path;
+    shouldDeleteOldImage = imageUrl !== currentImageUrl;
+  } else if (manualImageUrl && manualImageUrl !== currentImageUrl) {
+    shouldDeleteOldImage = true;
   }
 
   const { error: productError } = await supabase
@@ -142,6 +153,10 @@ async function updateProduct(formData: FormData) {
     .eq("id", productId);
 
   if (productError) {
+    if (uploadedImagePath) {
+      await deleteProductImage(uploadedImagePath);
+    }
+
     redirect(
       `/admin/products/${productId}/edit?error=${encodeURIComponent(
         productError.message,
@@ -170,6 +185,10 @@ async function updateProduct(formData: FormData) {
         scoreError.message,
       )}`,
     );
+  }
+
+  if (shouldDeleteOldImage) {
+    await deleteProductImageByUrl(currentImageUrl);
   }
 
   redirect(`/admin?updated=${encodeURIComponent(name)}`);
@@ -401,7 +420,7 @@ export default async function EditProductPage({
                     className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
                   />
                   <p className="mt-2 text-xs text-slate-500">
-                    Kosongkan jika gambar tidak ingin diganti. Maksimal 5 MB.
+                    Gambar lama di Storage akan dihapus setelah gambar baru berhasil disimpan.
                   </p>
                 </div>
 
@@ -416,9 +435,6 @@ export default async function EditProductPage({
                     placeholder="https://..."
                     className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                   />
-                  <p className="mt-2 text-xs text-slate-500">
-                    Isi hanya jika ingin mengganti dengan URL eksternal.
-                  </p>
                 </div>
 
                 <div>
