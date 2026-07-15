@@ -24,8 +24,14 @@ export type AdminProductSort =
   | "score_desc"
   | "score_asc";
 
+export type AdminProductCompleteness =
+  | "all"
+  | "without_price"
+  | "without_score";
+
 export type AdminProductQuery = {
   status?: "all" | "published" | "draft";
+  completeness?: AdminProductCompleteness;
   query?: string;
   page?: number;
   pageSize?: number;
@@ -39,6 +45,7 @@ export type AdminProductPage = {
   pageSize: number;
   totalPages: number;
   sort: AdminProductSort;
+  completeness: AdminProductCompleteness;
 };
 
 type AdminProductCatalogRow = {
@@ -89,6 +96,33 @@ function normalizeSort(value: string | undefined): AdminProductSort {
   return allowedSorts.has(value as AdminProductSort)
     ? (value as AdminProductSort)
     : "newest";
+}
+
+function normalizeCompleteness(
+  value: string | undefined,
+): AdminProductCompleteness {
+  if (value === "without_price" || value === "without_score") {
+    return value;
+  }
+
+  return "all";
+}
+
+function applyCompletenessFilter<T extends {
+  is: (column: string, value: null) => T;
+}>(
+  request: T,
+  completeness: AdminProductCompleteness,
+): T {
+  if (completeness === "without_price") {
+    return request.is("lowest_price", null);
+  }
+
+  if (completeness === "without_score") {
+    return request.is("score", null);
+  }
+
+  return request;
 }
 
 function applySort<T extends {
@@ -194,6 +228,7 @@ export async function getAdminProductsPage(
 
   const query = normalizeSearchQuery(options.query);
   const sort = normalizeSort(options.sort);
+  const completeness = normalizeCompleteness(options.completeness);
 
   let countRequest = supabase
     .from("admin_product_catalog")
@@ -205,6 +240,11 @@ export async function getAdminProductsPage(
   if (status !== "all") {
     countRequest = countRequest.eq("status", status);
   }
+
+  countRequest = applyCompletenessFilter(
+    countRequest,
+    completeness,
+  );
 
   if (query) {
     const pattern = `%${query}%`;
@@ -229,6 +269,7 @@ export async function getAdminProductsPage(
       pageSize,
       totalPages: 1,
       sort,
+      completeness,
     };
   }
 
@@ -258,6 +299,11 @@ export async function getAdminProductsPage(
     dataRequest = dataRequest.eq("status", status);
   }
 
+  dataRequest = applyCompletenessFilter(
+    dataRequest,
+    completeness,
+  );
+
   if (query) {
     const pattern = `%${query}%`;
 
@@ -283,6 +329,7 @@ export async function getAdminProductsPage(
       pageSize,
       totalPages,
       sort,
+      completeness,
     };
   }
 
@@ -333,6 +380,7 @@ export async function getAdminProductsPage(
     pageSize,
     totalPages,
     sort,
+    completeness,
   };
 }
 
@@ -341,6 +389,7 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
     page: 1,
     pageSize: 50,
     sort: "newest",
+    completeness: "all",
   });
 
   return result.products;
