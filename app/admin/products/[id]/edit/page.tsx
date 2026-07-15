@@ -117,8 +117,6 @@ async function updateProduct(formData: FormData) {
     .eq("id", productId);
 
   if (productError) {
-    console.error("Gagal memperbarui produk:", productError);
-
     redirect(
       `/admin/products/${productId}/edit?error=${encodeURIComponent(
         productError.message,
@@ -142,8 +140,6 @@ async function updateProduct(formData: FormData) {
     });
 
   if (scoreError) {
-    console.error("Gagal memperbarui skor produk:", scoreError);
-
     redirect(
       `/admin/products/${productId}/edit?error=${encodeURIComponent(
         scoreError.message,
@@ -211,8 +207,7 @@ export default async function EditProductPage({
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Perbarui informasi dasar dan skor produk. Harga marketplace
-            dikelola pada halaman terpisah.
+            Perbarui informasi dasar dan skor produk.
           </p>
 
           {query.error && (
@@ -224,12 +219,19 @@ export default async function EditProductPage({
             </div>
           )}
 
-          <div className="mt-6">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Link
               href={`/admin/products/${product.id}/prices`}
-              className="inline-flex rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white hover:bg-green-700"
+              className="rounded-xl bg-green-600 px-5 py-3 text-center text-sm font-bold text-white hover:bg-green-700"
             >
               Kelola Harga Marketplace
+            </Link>
+
+            <Link
+              href={`/admin/products/${product.id}/specifications`}
+              className="rounded-xl bg-slate-950 px-5 py-3 text-center text-sm font-bold text-white hover:bg-slate-800"
+            >
+              Kelola Spesifikasi
             </Link>
           </div>
 
@@ -267,10 +269,7 @@ export default async function EditProductPage({
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="category_id"
-                    className="text-sm font-bold"
-                  >
+                  <label htmlFor="category_id" className="text-sm font-bold">
                     Kategori
                   </label>
                   <select
@@ -308,10 +307,7 @@ export default async function EditProductPage({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label
-                    htmlFor="short_description"
-                    className="text-sm font-bold"
-                  >
+                  <label htmlFor="short_description" className="text-sm font-bold">
                     Deskripsi singkat
                   </label>
                   <input
@@ -324,10 +320,7 @@ export default async function EditProductPage({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label
-                    htmlFor="description"
-                    className="text-sm font-bold"
-                  >
+                  <label htmlFor="description" className="text-sm font-bold">
                     Deskripsi lengkap
                   </label>
                   <textarea
@@ -396,10 +389,7 @@ export default async function EditProductPage({
                   ["ease_of_use", "Kemudahan", product.easeOfUse],
                 ].map(([name, label, value]) => (
                   <div key={String(name)}>
-                    <label
-                      htmlFor={String(name)}
-                      className="text-xs font-bold"
-                    >
+                    <label htmlFor={String(name)} className="text-xs font-bold">
                       {String(label)}
                     </label>
                     <input
