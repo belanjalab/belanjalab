@@ -6,6 +6,7 @@ import {
 } from "@/lib/admin-products";
 import BulkProductActions from "@/components/admin/bulk-product-actions";
 import { deleteProductImageByUrl } from "@/lib/product-image-upload";
+import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -221,12 +222,7 @@ export default async function AdminPage({
 
   const itemsPerPage = 10;
 
-  const [
-    productPage,
-    allCountResult,
-    publishedCountResult,
-    draftCountResult,
-  ] = await Promise.all([
+  const [productPage, stats] = await Promise.all([
     getAdminProductsPage({
       status: activeStatus,
       query,
@@ -234,17 +230,7 @@ export default async function AdminPage({
       pageSize: itemsPerPage,
       sort,
     }),
-    supabase
-      .from("admin_product_catalog")
-      .select("id", { count: "exact", head: true }),
-    supabase
-      .from("admin_product_catalog")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "published"),
-    supabase
-      .from("admin_product_catalog")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "draft"),
+    getAdminDashboardStats(),
   ]);
 
   const products = productPage.products;
@@ -253,9 +239,9 @@ export default async function AdminPage({
   const totalPages = productPage.totalPages;
   const startIndex = (currentPage - 1) * productPage.pageSize;
 
-  const totalCount = allCountResult.count ?? 0;
-  const publishedCount = publishedCountResult.count ?? 0;
-  const draftCount = draftCountResult.count ?? 0;
+  const totalCount = stats.totalProducts;
+  const publishedCount = stats.publishedProducts;
+  const draftCount = stats.draftProducts;
 
   function buildAdminUrl(targetPage: number) {
     const search = new URLSearchParams();
@@ -411,25 +397,55 @@ export default async function AdminPage({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
               <p className="text-xs text-slate-500">Total produk</p>
-              <p className="mt-1 text-2xl font-black">{totalCount}</p>
+              <p className="mt-1 text-2xl font-black">{stats.totalProducts}</p>
             </div>
 
             <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
               <p className="text-xs text-green-700">Published</p>
               <p className="mt-1 text-2xl font-black text-green-700">
-                {publishedCount}
+                {stats.publishedProducts}
               </p>
             </div>
 
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
               <p className="text-xs text-amber-700">Draft</p>
               <p className="mt-1 text-2xl font-black text-amber-700">
-                {draftCount}
+                {stats.draftProducts}
               </p>
             </div>
+
+            <Link
+              href="/admin/taxonomies"
+              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 transition hover:border-blue-300"
+            >
+              <p className="text-xs text-blue-700">Kategori & merek</p>
+              <p className="mt-1 text-2xl font-black text-blue-700">
+                {stats.totalCategories} / {stats.totalBrands}
+              </p>
+            </Link>
+
+            <Link
+              href="/admin?sort=price_asc"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 transition hover:border-red-300"
+            >
+              <p className="text-xs text-red-700">Tanpa harga</p>
+              <p className="mt-1 text-2xl font-black text-red-700">
+                {stats.productsWithoutPrice}
+              </p>
+            </Link>
+
+            <Link
+              href="/admin?sort=score_asc"
+              className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-4 transition hover:border-violet-300"
+            >
+              <p className="text-xs text-violet-700">Tanpa skor</p>
+              <p className="mt-1 text-2xl font-black text-violet-700">
+                {stats.productsWithoutScore}
+              </p>
+            </Link>
           </div>
 
           <form
