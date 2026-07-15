@@ -14,11 +14,22 @@ export type AdminProduct = {
   createdAt: string | null;
 };
 
+export type AdminProductSort =
+  | "newest"
+  | "oldest"
+  | "name_asc"
+  | "name_desc"
+  | "price_asc"
+  | "price_desc"
+  | "score_desc"
+  | "score_asc";
+
 export type AdminProductQuery = {
   status?: "all" | "published" | "draft";
   query?: string;
   page?: number;
   pageSize?: number;
+  sort?: AdminProductSort;
 };
 
 export type AdminProductPage = {
@@ -27,6 +38,7 @@ export type AdminProductPage = {
   page: number;
   pageSize: number;
   totalPages: number;
+  sort: AdminProductSort;
 };
 
 type AdminProductCatalogRow = {
@@ -62,6 +74,104 @@ function normalizeSearchQuery(value: string | undefined) {
     .slice(0, 80);
 }
 
+function normalizeSort(value: string | undefined): AdminProductSort {
+  const allowedSorts = new Set<AdminProductSort>([
+    "newest",
+    "oldest",
+    "name_asc",
+    "name_desc",
+    "price_asc",
+    "price_desc",
+    "score_desc",
+    "score_asc",
+  ]);
+
+  return allowedSorts.has(value as AdminProductSort)
+    ? (value as AdminProductSort)
+    : "newest";
+}
+
+function applySort<T extends {
+  order: (
+    column: string,
+    options?: {
+      ascending?: boolean;
+      nullsFirst?: boolean;
+    },
+  ) => T;
+}>(request: T, sort: AdminProductSort): T {
+  switch (sort) {
+    case "oldest":
+      return request.order("created_at", {
+        ascending: true,
+        nullsFirst: false,
+      });
+
+    case "name_asc":
+      return request.order("name", {
+        ascending: true,
+        nullsFirst: false,
+      });
+
+    case "name_desc":
+      return request.order("name", {
+        ascending: false,
+        nullsFirst: false,
+      });
+
+    case "price_asc":
+      return request
+        .order("lowest_price", {
+          ascending: true,
+          nullsFirst: false,
+        })
+        .order("name", {
+          ascending: true,
+          nullsFirst: false,
+        });
+
+    case "price_desc":
+      return request
+        .order("lowest_price", {
+          ascending: false,
+          nullsFirst: false,
+        })
+        .order("name", {
+          ascending: true,
+          nullsFirst: false,
+        });
+
+    case "score_asc":
+      return request
+        .order("score", {
+          ascending: true,
+          nullsFirst: false,
+        })
+        .order("name", {
+          ascending: true,
+          nullsFirst: false,
+        });
+
+    case "score_desc":
+      return request
+        .order("score", {
+          ascending: false,
+          nullsFirst: false,
+        })
+        .order("name", {
+          ascending: true,
+          nullsFirst: false,
+        });
+
+    case "newest":
+    default:
+      return request.order("created_at", {
+        ascending: false,
+        nullsFirst: false,
+      });
+  }
+}
+
 export async function getAdminProductsPage(
   options: AdminProductQuery = {},
 ): Promise<AdminProductPage> {
@@ -83,40 +193,28 @@ export async function getAdminProductsPage(
       : "all";
 
   const query = normalizeSearchQuery(options.query);
+  const sort = normalizeSort(options.sort);
 
-  let request = supabase
+  let countRequest = supabase
     .from("admin_product_catalog")
-    .select(
-      `
-        id,
-        name,
-        slug,
-        status,
-        image_url,
-        created_at,
-        category,
-        brand,
-        score,
-        lowest_price
-      `,
-      {
-        count: "exact",
-      },
-    );
+    .select("id", {
+      count: "exact",
+      head: true,
+    });
 
   if (status !== "all") {
-    request = request.eq("status", status);
+    countRequest = countRequest.eq("status", status);
   }
 
   if (query) {
     const pattern = `%${query}%`;
 
-    request = request.or(
+    countRequest = countRequest.or(
       `name.ilike.${pattern},slug.ilike.${pattern},brand.ilike.${pattern},category.ilike.${pattern}`,
     );
   }
 
-  const countResult = await request.range(0, 0);
+  const countResult = await countRequest;
 
   if (countResult.error) {
     console.error(
@@ -130,6 +228,7 @@ export async function getAdminProductsPage(
       page: 1,
       pageSize,
       totalPages: 1,
+      sort,
     };
   }
 
@@ -153,10 +252,6 @@ export async function getAdminProductsPage(
       score,
       lowest_price
     `)
-    .order("created_at", {
-      ascending: false,
-      nullsFirst: false,
-    })
     .range(from, to);
 
   if (status !== "all") {
@@ -170,6 +265,8 @@ export async function getAdminProductsPage(
       `name.ilike.${pattern},slug.ilike.${pattern},brand.ilike.${pattern},category.ilike.${pattern}`,
     );
   }
+
+  dataRequest = applySort(dataRequest, sort);
 
   const { data, error } = await dataRequest;
 
@@ -185,6 +282,7 @@ export async function getAdminProductsPage(
       page,
       pageSize,
       totalPages,
+      sort,
     };
   }
 
@@ -234,6 +332,7 @@ export async function getAdminProductsPage(
     page,
     pageSize,
     totalPages,
+    sort,
   };
 }
 
@@ -241,6 +340,7 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
   const result = await getAdminProductsPage({
     page: 1,
     pageSize: 50,
+    sort: "newest",
   });
 
   return result.products;
