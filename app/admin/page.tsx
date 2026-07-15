@@ -274,7 +274,7 @@ export default async function AdminPage({
 
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/product/${product.slug}`}
+                        href={`/admin/products/${product.id}/preview`}
                         className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
                       >
                         Preview
@@ -347,7 +347,7 @@ export default async function AdminPage({
 
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/product/${product.slug}`}
+                          href={`/admin/products/${product.id}/preview`}
                           className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600"
                         >
                           Preview
