@@ -1,10 +1,107 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { getAdminMarketplaces } from "@/lib/admin-marketplaces";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminMarketplacesPage() {
+type AdminMarketplacesPageProps = {
+  searchParams: Promise<{
+    created?: string;
+    error?: string;
+  }>;
+};
+
+async function createMarketplace(formData: FormData) {
+  "use server";
+
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (name.length < 2) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace minimal 2 karakter.",
+      )}`,
+    );
+  }
+
+  if (name.length > 80) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace maksimal 80 karakter.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: existingMarketplace, error: existingError } =
+    await supabase
+      .from("marketplaces")
+      .select("id")
+      .ilike("name", name)
+      .maybeSingle();
+
+  if (existingError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        existingError.message,
+      )}`,
+    );
+  }
+
+  if (existingMarketplace) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace dengan nama tersebut sudah ada.",
+      )}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("marketplaces")
+    .insert({ name });
+
+  if (error) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?created=${encodeURIComponent(
+      `${name} berhasil ditambahkan.`,
+    )}`,
+  );
+}
+
+export default async function AdminMarketplacesPage({
+  searchParams,
+}: AdminMarketplacesPageProps) {
+  const params = await searchParams;
   const marketplaces = await getAdminMarketplaces();
 
   return (
@@ -31,7 +128,52 @@ export default async function AdminMarketplacesPage() {
           </Link>
         </div>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {params.created && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.created}
+          </div>
+        )}
+
+        {params.error && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            {params.error}
+          </div>
+        )}
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">
+              Tambah Marketplace
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Nama marketplace akan tersedia di form harga produk dan bulk action.
+            </p>
+          </div>
+
+          <form
+            action={createMarketplace}
+            className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"
+          >
+            <input
+              type="text"
+              name="name"
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder="Contoh: Tokopedia"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-orange-400"
+            />
+
+            <button
+              type="submit"
+              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+            >
+              Tambah Marketplace
+            </button>
+          </form>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="text-lg font-black text-slate-900">
@@ -49,7 +191,7 @@ export default async function AdminMarketplacesPage() {
                 Belum ada marketplace
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Form tambah marketplace akan disambungkan pada langkah berikutnya.
+                Tambahkan marketplace pertama lewat form di atas.
               </p>
             </div>
           ) : (
