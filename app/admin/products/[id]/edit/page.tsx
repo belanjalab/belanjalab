@@ -35,21 +35,10 @@ function parseScore(value: FormDataEntryValue | null) {
   return Math.min(10, Math.max(0, score));
 }
 
-function parsePrice(value: FormDataEntryValue | null) {
-  const price = Number(value ?? 0);
-
-  if (!Number.isFinite(price) || price < 0) {
-    return 0;
-  }
-
-  return Math.round(price);
-}
-
 async function updateProduct(formData: FormData) {
   "use server";
 
   const productId = String(formData.get("product_id") ?? "");
-  const priceId = String(formData.get("price_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const manualSlug = String(formData.get("slug") ?? "").trim();
   const slug = slugify(manualSlug || name);
@@ -154,40 +143,12 @@ async function updateProduct(formData: FormData) {
 
   if (scoreError) {
     console.error("Gagal memperbarui skor produk:", scoreError);
-  }
 
-  const marketplaceId = String(formData.get("marketplace_id") ?? "");
-  const price = parsePrice(formData.get("price"));
-  const affiliateUrl = String(
-    formData.get("affiliate_url") ?? "",
-  ).trim();
-
-  if (marketplaceId && price > 0) {
-    const pricePayload = {
-      product_id: productId,
-      marketplace_id: marketplaceId,
-      price,
-      original_price: price,
-      shipping_cost: 0,
-      affiliate_url: affiliateUrl || "#",
-      is_available: true,
-      stock_status: "in_stock",
-      last_checked_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const priceQuery = priceId
-      ? supabase
-          .from("product_prices")
-          .update(pricePayload)
-          .eq("id", priceId)
-      : supabase.from("product_prices").insert(pricePayload);
-
-    const { error: priceError } = await priceQuery;
-
-    if (priceError) {
-      console.error("Gagal memperbarui harga produk:", priceError);
-    }
+    redirect(
+      `/admin/products/${productId}/edit?error=${encodeURIComponent(
+        scoreError.message,
+      )}`,
+    );
   }
 
   redirect(`/admin?updated=${encodeURIComponent(name)}`);
@@ -250,7 +211,8 @@ export default async function EditProductPage({
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Perbarui informasi dasar, skor, dan harga produk.
+            Perbarui informasi dasar dan skor produk. Harga marketplace
+            dikelola pada halaman terpisah.
           </p>
 
           {query.error && (
@@ -262,13 +224,17 @@ export default async function EditProductPage({
             </div>
           )}
 
+          <div className="mt-6">
+            <Link
+              href={`/admin/products/${product.id}/prices`}
+              className="inline-flex rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white hover:bg-green-700"
+            >
+              Kelola Harga Marketplace
+            </Link>
+          </div>
+
           <form action={updateProduct} className="mt-8 space-y-6">
             <input type="hidden" name="product_id" value={product.id} />
-            <input
-              type="hidden"
-              name="price_id"
-              value={product.priceId ?? ""}
-            />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
               <h2 className="text-lg font-black">Informasi Produk</h2>
@@ -448,76 +414,6 @@ export default async function EditProductPage({
                     />
                   </div>
                 ))}
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-              <h2 className="text-lg font-black">Harga Marketplace</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Form ini mengedit harga marketplace pertama pada produk.
-              </p>
-
-              <div className="mt-5 grid gap-5 md:grid-cols-3">
-                <div>
-                  <label
-                    htmlFor="marketplace_id"
-                    className="text-sm font-bold"
-                  >
-                    Marketplace
-                  </label>
-                  <select
-                    id="marketplace_id"
-                    name="marketplace_id"
-                    defaultValue={product.marketplaceId}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
-                  >
-                    <option value="">Belum ada</option>
-                    {options.marketplaces.map((marketplace) => (
-                      <option
-                        key={marketplace.id}
-                        value={marketplace.id}
-                      >
-                        {marketplace.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="price" className="text-sm font-bold">
-                    Harga
-                  </label>
-                  <input
-                    id="price"
-                    name="price"
-                    type="number"
-                    min="0"
-                    step="1"
-                    defaultValue={product.price || ""}
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="affiliate_url"
-                    className="text-sm font-bold"
-                  >
-                    Link toko
-                  </label>
-                  <input
-                    id="affiliate_url"
-                    name="affiliate_url"
-                    type="url"
-                    defaultValue={
-                      product.affiliateUrl === "#"
-                        ? ""
-                        : product.affiliateUrl
-                    }
-                    placeholder="https://..."
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
-                  />
-                </div>
               </div>
             </section>
 
