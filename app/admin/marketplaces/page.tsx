@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 type AdminMarketplacesPageProps = {
   searchParams: Promise<{
     created?: string;
+    updated?: string;
     error?: string;
   }>;
 };
@@ -98,6 +99,105 @@ async function createMarketplace(formData: FormData) {
   );
 }
 
+
+async function updateMarketplace(formData: FormData) {
+  "use server";
+
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!marketplaceId) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace tidak valid.",
+      )}`,
+    );
+  }
+
+  if (name.length < 2) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace minimal 2 karakter.",
+      )}`,
+    );
+  }
+
+  if (name.length > 80) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace maksimal 80 karakter.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: duplicateMarketplace, error: duplicateError } =
+    await supabase
+      .from("marketplaces")
+      .select("id")
+      .ilike("name", name)
+      .neq("id", marketplaceId)
+      .maybeSingle();
+
+  if (duplicateError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        duplicateError.message,
+      )}`,
+    );
+  }
+
+  if (duplicateMarketplace) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace dengan nama tersebut sudah ada.",
+      )}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("marketplaces")
+    .update({ name })
+    .eq("id", marketplaceId);
+
+  if (error) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?updated=${encodeURIComponent(
+      `${name} berhasil diperbarui.`,
+    )}`,
+  );
+}
+
 export default async function AdminMarketplacesPage({
   searchParams,
 }: AdminMarketplacesPageProps) {
@@ -131,6 +231,12 @@ export default async function AdminMarketplacesPage({
         {params.created && (
           <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
             {params.created}
+          </div>
+        )}
+
+        {params.updated && (
+          <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            {params.updated}
           </div>
         )}
 
@@ -199,22 +305,46 @@ export default async function AdminMarketplacesPage({
               {marketplaces.map((marketplace, index) => (
                 <div
                   key={marketplace.id}
-                  className="flex items-center gap-4 px-5 py-4"
+                  className="grid gap-4 px-5 py-4 lg:grid-cols-[auto_1fr_auto]"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-sm font-black text-orange-600">
                     {index + 1}
                   </div>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-slate-800">
-                      {marketplace.name}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-slate-400">
-                      ID: {marketplace.id}
-                    </p>
-                  </div>
+                  <form
+                    action={updateMarketplace}
+                    className="grid gap-3 sm:grid-cols-[1fr_auto]"
+                  >
+                    <input
+                      type="hidden"
+                      name="marketplace_id"
+                      value={marketplace.id}
+                    />
 
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                    <div>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        minLength={2}
+                        maxLength={80}
+                        defaultValue={marketplace.name}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-orange-400"
+                      />
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        ID: {marketplace.id}
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                    >
+                      Simpan
+                    </button>
+                  </form>
+
+                  <span className="h-fit rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
                     Aktif
                   </span>
                 </div>
