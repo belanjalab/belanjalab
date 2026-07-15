@@ -33,6 +33,23 @@ export default function BulkProductActions({
     );
   }
 
+  function confirmBulkDelete(
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    if (selectedIds.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Yakin ingin menghapus ${selectedIds.length} produk terpilih? Tindakan ini permanen dan gambar produk di Storage juga akan dihapus.`,
+    );
+
+    if (!confirmed) {
+      event.preventDefault();
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -52,7 +69,7 @@ export default function BulkProductActions({
         </p>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <button
           type="submit"
           name="bulk_action"
@@ -71,6 +88,17 @@ export default function BulkProductActions({
           className="rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Jadikan Draft
+        </button>
+
+        <button
+          type="submit"
+          name="bulk_action"
+          value="delete"
+          disabled={selectedIds.length === 0}
+          onClick={confirmBulkDelete}
+          className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Hapus Terpilih
         </button>
 
         <button
