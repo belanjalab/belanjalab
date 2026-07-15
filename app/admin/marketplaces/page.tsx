@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import ConfirmMarketplaceDeleteButton from "@/components/admin/confirm-marketplace-delete-button";
 import { getAdminMarketplaces } from "@/lib/admin-marketplaces";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -462,12 +463,9 @@ export default async function AdminMarketplacesPage({
                         value={marketplace.id}
                       />
 
-                      <button
-                        type="submit"
-                        className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
-                      >
-                        Hapus
-                      </button>
+                      <ConfirmMarketplaceDeleteButton
+                        marketplaceName={marketplace.name}
+                      />
                     </form>
                   </div>
                 </div>
