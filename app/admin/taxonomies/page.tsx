@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminTaxonomies } from "@/lib/admin-taxonomies";
+import ConfirmDeleteButton from "@/components/admin/confirm-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -430,12 +431,10 @@ export default async function TaxonomiesPage({
                       <input type="hidden" name="id" value={category.id} />
                       <input type="hidden" name="name" value={category.name} />
 
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
-                      >
-                        Hapus kategori
-                      </button>
+                      <ConfirmDeleteButton
+                        label="Hapus kategori"
+                        message={`Yakin ingin menghapus kategori “${category.name}”?`}
+                      />
                     </form>
                   </article>
                 ))}
@@ -521,12 +520,10 @@ export default async function TaxonomiesPage({
                       <input type="hidden" name="id" value={brand.id} />
                       <input type="hidden" name="name" value={brand.name} />
 
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
-                      >
-                        Hapus merek
-                      </button>
+                      <ConfirmDeleteButton
+                        label="Hapus merek"
+                        message={`Yakin ingin menghapus merek “${brand.name}”?`}
+                      />
                     </form>
                   </article>
                 ))}
