@@ -22,9 +22,9 @@ type SearchProductRow = {
   slug: string;
   short_description: string | null;
   image_url: string | null;
-  categories?: CategoryRelation[] | null;
-  brands?: BrandRelation[] | null;
-  product_scores?: ScoreRelation[] | null;
+  categories?: CategoryRelation[] | CategoryRelation | null;
+  brands?: BrandRelation[] | BrandRelation | null;
+  product_scores?: ScoreRelation[] | ScoreRelation | null;
   product_prices?: PriceRelation[] | null;
 };
 
@@ -49,6 +49,16 @@ function normalizeSearchQuery(value: string) {
     .slice(0, 80);
 }
 
+function getSingleRelation<T>(
+  relation: T | T[] | null | undefined,
+): T | null {
+  if (!relation) {
+    return null;
+  }
+
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+}
+
 function getLowestPrice(prices: PriceRelation[] | null | undefined) {
   const numericPrices = (prices ?? [])
     .map((item) => Number(item.price))
@@ -69,6 +79,55 @@ function formatRupiah(value: number | null) {
   }).format(value);
 }
 
+function mapSearchProduct(product: SearchProductRow): SearchProduct {
+  const category = getSingleRelation(product.categories);
+  const brand = getSingleRelation(product.brands);
+  const scoreRelation = getSingleRelation(product.product_scores);
+  const lowestPrice = getLowestPrice(product.product_prices);
+
+  const rawScore = scoreRelation?.overall_score;
+  const numericScore =
+    rawScore !== null && rawScore !== undefined ? Number(rawScore) : null;
+
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    shortDescription:
+      product.short_description ?? "Deskripsi belum tersedia.",
+    imageUrl:
+      product.image_url ?? "/images/products/logitech-g102.png",
+    category: category?.name ?? "Produk",
+    brand: brand?.name ?? "Tanpa merek",
+    score:
+      numericScore !== null && Number.isFinite(numericScore)
+        ? numericScore
+        : null,
+    lowestPrice,
+    formattedPrice: formatRupiah(lowestPrice),
+  };
+}
+
+const productSelect = `
+  id,
+  name,
+  slug,
+  short_description,
+  image_url,
+  categories (
+    name
+  ),
+  brands (
+    name
+  ),
+  product_scores (
+    overall_score
+  ),
+  product_prices (
+    price
+  )
+`;
+
 export async function searchProducts(
   rawQuery: string,
 ): Promise<SearchProduct[]> {
@@ -85,61 +144,68 @@ export async function searchProducts(
     return [];
   }
 
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      id,
-      name,
-      slug,
-      short_description,
-      image_url,
-      categories (
-        name
-      ),
-      brands (
-        name
-      ),
-      product_scores (
-        overall_score
-      ),
-      product_prices (
-        price
-      )
-    `)
-    .eq("status", "published")
-    .or(
-      `name.ilike.%${query}%,short_description.ilike.%${query}%,description.ilike.%${query}%`,
-    )
-    .order("name", { ascending: true })
-    .limit(24);
+  const searchPattern = `%${query}%`;
 
-  if (error) {
-    console.error("Gagal mencari produk:", error.message);
-    return [];
+  const [productResult, categoryResult, brandResult] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select(productSelect)
+        .eq("status", "published")
+        .or(
+          `name.ilike.${searchPattern},short_description.ilike.${searchPattern},description.ilike.${searchPattern}`,
+        )
+        .limit(24),
+
+      supabase
+        .from("products")
+        .select(`
+          ${productSelect.replace(
+            "categories (",
+            "categories!inner (",
+          )}
+        `)
+        .eq("status", "published")
+        .ilike("categories.name", searchPattern)
+        .limit(24),
+
+      supabase
+        .from("products")
+        .select(`
+          ${productSelect.replace(
+            "brands (",
+            "brands!inner (",
+          )}
+        `)
+        .eq("status", "published")
+        .ilike("brands.name", searchPattern)
+        .limit(24),
+    ]);
+
+  const errors = [
+    productResult.error,
+    categoryResult.error,
+    brandResult.error,
+  ].filter(Boolean);
+
+  if (errors.length > 0) {
+    for (const error of errors) {
+      console.error("Gagal mencari produk:", error?.message);
+    }
   }
 
-  const rows = (data ?? []) as unknown as SearchProductRow[];
+  const mergedRows = new Map<string, SearchProductRow>();
 
-  return rows.map((product) => {
-    const score = product.product_scores?.[0]?.overall_score;
-    const lowestPrice = getLowestPrice(product.product_prices);
+  for (const row of [
+    ...(productResult.data ?? []),
+    ...(categoryResult.data ?? []),
+    ...(brandResult.data ?? []),
+  ] as unknown as SearchProductRow[]) {
+    mergedRows.set(row.id, row);
+  }
 
-    return {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      shortDescription:
-        product.short_description ?? "Deskripsi belum tersedia.",
-      imageUrl:
-        product.image_url ?? "/images/products/logitech-g102.png",
-      category: product.categories?.[0]?.name ?? "Produk",
-      brand: product.brands?.[0]?.name ?? "Tanpa merek",
-      score:
-        score !== null && score !== undefined
-          ? Number(score)
-          : null,
-      lowestPrice,
-      formattedPrice: formatRupiah(lowestPrice),
-    };
-  });
+  return Array.from(mergedRows.values())
+    .map(mapSearchProduct)
+    .sort((a, b) => a.name.localeCompare(b.name, "id-ID"))
+    .slice(0, 24);
 }
