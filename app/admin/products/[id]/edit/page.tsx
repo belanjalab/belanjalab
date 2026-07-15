@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminProductFormOptions } from "@/lib/admin-product-options";
 import { getAdminProductForEdit } from "@/lib/admin-product-edit";
+import { uploadProductImage } from "@/lib/product-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,9 @@ async function updateProduct(formData: FormData) {
   "use server";
 
   const productId = String(formData.get("product_id") ?? "");
+  const currentImageUrl = String(
+    formData.get("current_image_url") ?? "",
+  ).trim();
   const name = String(formData.get("name") ?? "").trim();
   const manualSlug = String(formData.get("slug") ?? "").trim();
   const slug = slugify(manualSlug || name);
@@ -48,7 +52,10 @@ async function updateProduct(formData: FormData) {
     formData.get("short_description") ?? "",
   ).trim();
   const description = String(formData.get("description") ?? "").trim();
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const manualImageUrl = String(
+    formData.get("image_url") ?? "",
+  ).trim();
+  const imageFile = formData.get("image_file");
   const status = String(formData.get("status") ?? "draft");
 
   if (!productId || !name || !slug || !categoryId || !brandId) {
@@ -101,6 +108,25 @@ async function updateProduct(formData: FormData) {
     );
   }
 
+  let imageUrl =
+    manualImageUrl ||
+    currentImageUrl ||
+    "/images/products/logitech-g102.png";
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const uploadResult = await uploadProductImage(imageFile, slug);
+
+    if (!uploadResult.ok) {
+      redirect(
+        `/admin/products/${productId}/edit?error=${encodeURIComponent(
+          uploadResult.error,
+        )}`,
+      );
+    }
+
+    imageUrl = uploadResult.publicUrl;
+  }
+
   const { error: productError } = await supabase
     .from("products")
     .update({
@@ -110,8 +136,7 @@ async function updateProduct(formData: FormData) {
       brand_id: brandId,
       short_description: shortDescription || null,
       description: description || null,
-      image_url:
-        imageUrl || "/images/products/logitech-g102.png",
+      image_url: imageUrl,
       status: safeStatus,
     })
     .eq("id", productId);
@@ -207,7 +232,7 @@ export default async function EditProductPage({
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Perbarui informasi dasar dan skor produk.
+            Perbarui informasi dasar, gambar, dan skor produk.
           </p>
 
           {query.error && (
@@ -235,8 +260,17 @@ export default async function EditProductPage({
             </Link>
           </div>
 
-          <form action={updateProduct} className="mt-8 space-y-6">
+          <form
+            action={updateProduct}
+            encType="multipart/form-data"
+            className="mt-8 space-y-6"
+          >
             <input type="hidden" name="product_id" value={product.id} />
+            <input
+              type="hidden"
+              name="current_image_url"
+              value={product.imageUrl}
+            />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
               <h2 className="text-lg font-black">Informasi Produk</h2>
@@ -332,16 +366,59 @@ export default async function EditProductPage({
                   />
                 </div>
 
+                <div className="md:col-span-2">
+                  <p className="text-sm font-bold">Gambar saat ini</p>
+
+                  <div className="mt-2 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="h-full w-full object-contain p-2"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-700">
+                        Gambar produk aktif
+                      </p>
+                      <p className="mt-1 break-all text-[10px] leading-5 text-slate-400">
+                        {product.imageUrl}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor="image_file" className="text-sm font-bold">
+                    Ganti gambar produk
+                  </label>
+                  <input
+                    id="image_file"
+                    name="image_file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Kosongkan jika gambar tidak ingin diganti. Maksimal 5 MB.
+                  </p>
+                </div>
+
                 <div>
                   <label htmlFor="image_url" className="text-sm font-bold">
-                    URL/path gambar
+                    URL gambar alternatif
                   </label>
                   <input
                     id="image_url"
                     name="image_url"
-                    defaultValue={product.imageUrl}
+                    type="url"
+                    placeholder="https://..."
                     className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                   />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Isi hanya jika ingin mengganti dengan URL eksternal.
+                  </p>
                 </div>
 
                 <div>
