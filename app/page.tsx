@@ -1,33 +1,11 @@
+import { getFeaturedProducts } from "@/lib/products";
+
 const categories = [
   { name: "Gadget", icon: "📱" },
   { name: "Elektronik", icon: "💻" },
   { name: "Rumah", icon: "🏠" },
   { name: "Gaming", icon: "🎮" },
   { name: "Beauty", icon: "🧴" },
-];
-
-const products = [
-  {
-    name: "Logitech G102",
-    category: "Mouse Gaming",
-    score: "9.2/10",
-    price: "Rp249.000",
-    oldPrice: "Rp279.000",
-  },
-  {
-    name: "Xiaomi Air Fryer",
-    category: "Peralatan Rumah",
-    score: "9.0/10",
-    price: "Rp899.000",
-    oldPrice: "Rp1.099.000",
-  },
-  {
-    name: "iPhone 15",
-    category: "Smartphone",
-    score: "9.5/10",
-    price: "Rp12.999.000",
-    oldPrice: "Rp13.499.000",
-  },
 ];
 
 const articles = [
@@ -48,10 +26,13 @@ const articles = [
   },
 ];
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = await getFeaturedProducts();
+
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-5 md:py-4">
           <details className="relative mr-3 md:hidden">
@@ -93,17 +74,17 @@ export default function Home() {
             </nav>
           </details>
 
-         <a href="/" className="flex items-center gap-2">
-  <img
-    src="/images/logo-belanjalab.png"
-    alt="BelanjaLab"
-    className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-  />
+          <a href="/" className="flex items-center gap-2">
+            <img
+              src="/images/logo-belanjalab.png"
+              alt="BelanjaLab"
+              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
+            />
 
-  <span className="text-base font-black tracking-tight md:text-xl">
-    Belanja<span className="text-orange-500">Lab</span>
-  </span>
-</a>
+            <span className="text-base font-black tracking-tight md:text-xl">
+              Belanja<span className="text-orange-500">Lab</span>
+            </span>
+          </a>
 
           <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
             <a href="#kategori" className="hover:text-slate-950">
@@ -120,32 +101,37 @@ export default function Home() {
             </a>
           </nav>
 
-          <button
-            type="button"
+          <a
+            href="/search"
             aria-label="Cari"
             className="ml-auto text-lg md:hidden"
           >
             ⌕
-          </button>
+          </a>
 
-          <div className="ml-auto hidden max-w-sm flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 md:flex">
+          <form
+            action="/search"
+            method="get"
+            className="ml-auto hidden max-w-sm flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 md:flex"
+          >
             <input
-              type="text"
+              type="search"
+              name="q"
+              required
               placeholder="Cari produk, kategori, atau brand..."
               className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
             />
             <button
-              type="button"
+              type="submit"
               aria-label="Cari"
               className="ml-3 rounded-lg bg-orange-500 px-3 py-1.5 text-white"
             >
               🔍
             </button>
-          </div>
+          </form>
         </div>
       </header>
 
-      {/* Hero */}
       <section className="px-4 py-5 md:px-5 md:py-12">
         <div className="mx-auto max-w-7xl md:grid md:grid-cols-[1.2fr_0.8fr] md:gap-10 md:overflow-hidden md:rounded-3xl md:bg-slate-50 md:px-12 md:py-16">
           <div className="flex flex-col justify-center">
@@ -162,38 +148,45 @@ export default function Home() {
               untuk membantu kamu memilih produk terbaik.
             </p>
 
-            <div className="mt-5 flex items-center rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:mt-8 md:max-w-xl md:p-2">
+            <form
+              action="/search"
+              method="get"
+              className="mt-5 flex items-center rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:mt-8 md:max-w-xl md:p-2"
+            >
               <input
-                type="text"
+                type="search"
+                name="q"
+                required
                 placeholder="Cari produk, kategori, atau brand..."
                 className="min-w-0 flex-1 px-3 text-xs outline-none md:text-sm"
               />
               <button
-                type="button"
+                type="submit"
                 className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 md:px-4 md:text-sm"
               >
                 🔍
               </button>
-            </div>
+            </form>
 
             <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-500 md:mt-5 md:text-xs">
               <span>Contoh:</span>
               {["Air Fryer", "Laptop", "Headset", "Xiaomi"].map((item) => (
-                <span
+                <a
                   key={item}
+                  href={`/search?q=${encodeURIComponent(item)}`}
                   className="rounded-full border border-slate-200 bg-white px-2.5 py-1 md:px-3 md:py-1.5"
                 >
                   {item}
-                </span>
+                </a>
               ))}
             </div>
 
             <div className="mt-5 flex h-52 items-center justify-center rounded-2xl bg-slate-100 text-xs font-semibold text-slate-400 md:hidden">
               <img
-  src="/images/products/logitech-g102.png"
-  alt="Logitech G102"
-  className="h-full w-full object-contain p-6"
-/>
+                src={products[0]?.imageUrl ?? "/images/products/logitech-g102.png"}
+                alt={products[0]?.name ?? "Produk pilihan BelanjaLab"}
+                className="h-full w-full object-contain p-6"
+              />
             </div>
           </div>
 
@@ -207,14 +200,20 @@ export default function Home() {
                 Produk Pilihan
               </p>
 
-              <h2 className="mt-1 text-lg font-bold">Visual produk utama</h2>
+              <h2 className="mt-1 text-lg font-bold">
+                {products[0]?.name ?? "Produk pilihan BelanjaLab"}
+              </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                Area ini dapat diganti dengan foto produk.
+                {products[0]?.category ?? "Rekomendasi produk terbaik"}
               </p>
 
-              <div className="mt-5 flex h-44 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-400">
-                FOTO PRODUK
+              <div className="mt-5 flex h-44 items-center justify-center rounded-2xl bg-slate-100">
+                <img
+                  src={products[0]?.imageUrl ?? "/images/products/logitech-g102.png"}
+                  alt={products[0]?.name ?? "Produk pilihan BelanjaLab"}
+                  className="h-full w-full object-contain p-5"
+                />
               </div>
             </div>
 
@@ -225,7 +224,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Benefits */}
       <section className="px-4 md:px-5">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-3 md:grid-cols-4 md:p-5">
           {[
@@ -249,13 +247,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories */}
       <section id="kategori" className="px-4 py-7 md:px-5 md:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="mb-4 flex items-end justify-between md:mb-6">
             <h2 className="text-sm font-black md:text-2xl">Kategori Populer</h2>
             <a
-              href="#"
+              href="/search"
               className="text-[10px] font-semibold text-orange-500 md:text-sm"
             >
               Lihat semua →
@@ -266,7 +263,7 @@ export default function Home() {
             {categories.map((category) => (
               <a
                 key={category.name}
-                href="#"
+                href={`/search?q=${encodeURIComponent(category.name)}`}
                 className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md md:rounded-2xl md:p-5"
               >
                 <div className="text-lg md:text-3xl">{category.icon}</div>
@@ -279,70 +276,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Products */}
-      <section className="px-4 pb-8 md:px-5 md:pb-16">
+      <section id="produk" className="px-4 pb-8 md:px-5 md:pb-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-4 flex items-end justify-between md:mb-6">
             <h2 className="text-sm font-black md:text-2xl">Produk Trending</h2>
             <a
-              href="#"
+              href="/search"
               className="text-[10px] font-semibold text-orange-500 md:text-sm"
             >
               Lihat semua →
             </a>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 md:gap-5">
-            {products.map((product) => (
-              <article
-                key={product.name}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:rounded-2xl"
-              >
-                <div className="p-2 md:p-3">
-                  <div className="flex h-24 items-center justify-center rounded-lg bg-slate-100 text-[9px] font-semibold text-slate-400 md:h-44 md:rounded-xl md:text-xs">
-                    <img
-  src="/images/products/logitech-g102.png"
-  alt="Logitech G102"
-  className="h-full w-full object-contain p-3"
-/>
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
+              {products.map((product) => (
+                <article
+                  key={product.id}
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:rounded-2xl"
+                >
+                  <div className="p-2 md:p-3">
+                    <div className="flex h-32 items-center justify-center rounded-lg bg-slate-100 md:h-44 md:rounded-xl">
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="h-full w-full object-contain p-3"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-2 pt-0 md:p-4 md:pt-1">
-                  <p className="text-[8px] text-slate-400 md:text-xs">
-                    {product.category}
-                  </p>
-                  <h3 className="mt-1 min-h-8 text-[9px] font-bold leading-4 md:min-h-10 md:text-sm md:leading-5">
-                    {product.name}
-                  </h3>
-                  <p className="mt-2 text-[10px] font-black text-green-600 md:mt-3 md:text-base">
-                    {product.score}
-                  </p>
-                  <p className="mt-1 text-[9px] font-black text-orange-500 md:text-base">
-                    {product.price}
-                  </p>
-                  <p className="text-[8px] text-slate-400 line-through md:text-xs">
-                    {product.oldPrice}
-                  </p>
+                  <div className="p-3 pt-0 md:p-4 md:pt-1">
+                    <p className="text-[9px] text-slate-400 md:text-xs">
+                      {product.category}
+                    </p>
+                    <h3 className="mt-1 min-h-10 text-[11px] font-bold leading-4 md:min-h-10 md:text-sm md:leading-5">
+                      {product.name}
+                    </h3>
+                    <p className="mt-2 text-[11px] font-black text-green-600 md:mt-3 md:text-base">
+                      {product.score}
+                    </p>
+                    <p className="mt-1 text-[10px] font-black text-orange-500 md:text-base">
+                      {product.price}
+                    </p>
 
-                  <a
-                    href={
-                      product.name === "Logitech G102"
-                        ? "/product/logitech-g102-lightsync"
-                        : "#"
-                    }
-                    className="mt-2 block w-full rounded-md bg-orange-500 py-1.5 text-center text-[8px] font-bold text-white hover:bg-orange-600 md:mt-4 md:rounded-lg md:py-2.5 md:text-xs"
-                  >
-                    Lihat
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <a
+                      href={`/product/${product.slug}`}
+                      className="mt-3 block w-full rounded-md bg-orange-500 py-2 text-center text-[9px] font-bold text-white hover:bg-orange-600 md:mt-4 md:rounded-lg md:py-2.5 md:text-xs"
+                    >
+                      Lihat
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Belum ada produk published.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Publish produk dari dashboard admin agar tampil di sini.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Comparison desktop */}
       <section id="perbandingan" className="hidden px-5 pb-16 md:block">
         <div className="mx-auto max-w-7xl rounded-3xl bg-slate-50 p-10">
           <div className="mb-7">
@@ -354,9 +353,15 @@ export default function Home() {
 
           <div className="grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-400">Logitech G102</p>
-              <p className="mt-3 text-3xl font-black text-green-600">9.2/10</p>
-              <p className="mt-1 text-xs text-slate-500">Rp279.000</p>
+              <p className="text-xs text-slate-400">
+                {products[0]?.name ?? "Produk pertama"}
+              </p>
+              <p className="mt-3 text-3xl font-black text-green-600">
+                {products[0]?.score ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {products[0]?.price ?? "Harga belum tersedia"}
+              </p>
             </div>
 
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 font-black text-white">
@@ -364,15 +369,20 @@ export default function Home() {
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-400">Fantech X9</p>
-              <p className="mt-3 text-3xl font-black text-green-600">8.6/10</p>
-              <p className="mt-1 text-xs text-slate-500">Rp165.000</p>
+              <p className="text-xs text-slate-400">
+                {products[1]?.name ?? "Produk kedua"}
+              </p>
+              <p className="mt-3 text-3xl font-black text-green-600">
+                {products[1]?.score ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {products[1]?.price ?? "Harga belum tersedia"}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Articles */}
       <section id="artikel" className="px-4 pb-8 md:px-5 md:pb-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-4 flex items-end justify-between md:mb-6">
@@ -411,97 +421,85 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer desktop */}
-     {/* Footer desktop */}
-<footer
-  id="tentang"
-  className="hidden bg-slate-950 px-5 py-12 text-white md:block"
->
-  <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
-    <div>
-      <a href="/" className="flex items-center gap-3">
-        <img
-          src="/images/logo-belanjalab.png"
-          alt="BelanjaLab"
-          className="h-10 w-10 rounded-full object-cover"
-        />
+      <footer
+        id="tentang"
+        className="hidden bg-slate-950 px-5 py-12 text-white md:block"
+      >
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
+          <div>
+            <a href="/" className="flex items-center gap-3">
+              <img
+                src="/images/logo-belanjalab.png"
+                alt="BelanjaLab"
+                className="h-10 w-10 rounded-full object-cover"
+              />
 
-        <span className="text-xl font-black">
-          Belanja<span className="text-orange-500">Lab</span>
-        </span>
-      </a>
+              <span className="text-xl font-black">
+                Belanja<span className="text-orange-500">Lab</span>
+              </span>
+            </a>
 
-      <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
-        Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
-      </p>
-    </div>
+            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
+              Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
+            </p>
+          </div>
 
-    <div>
-      <h3 className="text-sm font-bold">Produk</h3>
+          <div>
+            <h3 className="text-sm font-bold">Produk</h3>
+            <div className="mt-4 space-y-3 text-sm text-slate-400">
+              <a href="#produk" className="block hover:text-white">
+                Rekomendasi
+              </a>
+              <a href="/compare" className="block hover:text-white">
+                Perbandingan
+              </a>
+              <a href="#kategori" className="block hover:text-white">
+                Kategori
+              </a>
+            </div>
+          </div>
 
-      <div className="mt-4 space-y-3 text-sm text-slate-400">
-        <a href="#produk" className="block hover:text-white">
-          Rekomendasi
-        </a>
+          <div>
+            <h3 className="text-sm font-bold">Perusahaan</h3>
+            <div className="mt-4 space-y-3 text-sm text-slate-400">
+              <a href="#tentang" className="block hover:text-white">
+                Tentang Kami
+              </a>
+              <a href="#" className="block hover:text-white">
+                Kontak
+              </a>
+              <a href="#" className="block hover:text-white">
+                Karier
+              </a>
+            </div>
+          </div>
 
-        <a href="/compare" className="block hover:text-white">
-          Perbandingan
-        </a>
+          <div>
+            <h3 className="text-sm font-bold">Legal</h3>
+            <div className="mt-4 space-y-3 text-sm text-slate-400">
+              <a href="#" className="block hover:text-white">
+                Kebijakan Privasi
+              </a>
+              <a href="#" className="block hover:text-white">
+                Syarat Penggunaan
+              </a>
+              <a href="#" className="block hover:text-white">
+                Disclaimer
+              </a>
+            </div>
+          </div>
+        </div>
 
-        <a href="#kategori" className="block hover:text-white">
-          Kategori
-        </a>
-      </div>
-    </div>
+        <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
+          © {new Date().getFullYear()} BelanjaLab. All rights reserved.
+        </div>
+      </footer>
 
-    <div>
-      <h3 className="text-sm font-bold">Perusahaan</h3>
-
-      <div className="mt-4 space-y-3 text-sm text-slate-400">
-        <a href="#tentang" className="block hover:text-white">
-          Tentang Kami
-        </a>
-
-        <a href="#" className="block hover:text-white">
-          Kontak
-        </a>
-
-        <a href="#" className="block hover:text-white">
-          Karier
-        </a>
-      </div>
-    </div>
-
-    <div>
-      <h3 className="text-sm font-bold">Legal</h3>
-
-      <div className="mt-4 space-y-3 text-sm text-slate-400">
-        <a href="#" className="block hover:text-white">
-          Kebijakan Privasi
-        </a>
-
-        <a href="#" className="block hover:text-white">
-          Syarat Penggunaan
-        </a>
-
-        <a href="#" className="block hover:text-white">
-          Disclaimer
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
-    © {new Date().getFullYear()} BelanjaLab. All rights reserved.
-  </div>
-</footer>
-
-      {/* Bottom navigation mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
         {[
           ["⌂", "Beranda", "/"],
           ["▦", "Kategori", "#kategori"],
-          ["⌕", "Cari", "#"],
+          ["⌕", "Cari", "/search"],
           ["⇄", "Compare", "/compare"],
           ["▤", "Artikel", "#artikel"],
         ].map(([icon, label, href], index) => (
