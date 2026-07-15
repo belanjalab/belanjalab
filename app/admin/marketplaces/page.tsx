@@ -452,8 +452,34 @@ export default async function AdminMarketplacesPage({
                   </form>
 
                   <div className="flex items-center gap-2 lg:flex-col lg:items-stretch">
-                    <span className="h-fit rounded-full bg-green-50 px-3 py-1 text-center text-xs font-bold text-green-700">
-                      Aktif
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Produk
+                        </p>
+                        <p className="mt-1 text-sm font-black text-slate-800">
+                          {marketplace.productCount}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Harga
+                        </p>
+                        <p className="mt-1 text-sm font-black text-slate-800">
+                          {marketplace.priceCount}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`h-fit rounded-full px-3 py-1 text-center text-xs font-bold ${
+                        marketplace.priceCount > 0
+                          ? "bg-green-50 text-green-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {marketplace.priceCount > 0 ? "Digunakan" : "Belum dipakai"}
                     </span>
 
                     <form action={deleteMarketplace}>
