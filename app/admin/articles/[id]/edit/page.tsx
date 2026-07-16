@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { deleteArticleImageByUrl, uploadArticleImage } from "@/lib/article-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,11 @@ async function updateArticle(formData: FormData) {
   const slug = slugify(manualSlug || title);
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
-  const coverImage = String(formData.get("cover_image") ?? "").trim();
+  const coverFile = formData.get("cover_file");
+  const removeCover = formData.get("remove_cover") === "on";
+  const currentCoverImage = String(
+    formData.get("current_cover_image") ?? "",
+  ).trim();
   const published = formData.get("published") === "on";
 
   if (!articleId) {
@@ -135,6 +140,36 @@ async function updateArticle(formData: FormData) {
     );
   }
 
+  let uploadedCover:
+    | {
+        publicUrl: string;
+        path: string;
+      }
+    | null = null;
+
+  if (coverFile instanceof File && coverFile.size > 0) {
+    const uploadResult = await uploadArticleImage(coverFile, slug);
+
+    if (!uploadResult.ok) {
+      redirect(
+        `/admin/articles/${articleId}/edit?error=${encodeURIComponent(
+          uploadResult.error,
+        )}`,
+      );
+    }
+
+    uploadedCover = {
+      publicUrl: uploadResult.publicUrl,
+      path: uploadResult.path,
+    };
+  }
+
+  const nextCoverImage = uploadedCover
+    ? uploadedCover.publicUrl
+    : removeCover
+      ? null
+      : currentCoverImage || null;
+
   const { error } = await supabase
     .from("articles")
     .update({
@@ -142,17 +177,29 @@ async function updateArticle(formData: FormData) {
       slug,
       excerpt: excerpt || null,
       content,
-      cover_image: coverImage || null,
+      cover_image: nextCoverImage,
       published,
     })
     .eq("id", articleId);
 
   if (error) {
+    if (uploadedCover) {
+      await deleteArticleImageByUrl(uploadedCover.publicUrl);
+    }
+
     redirect(
       `/admin/articles/${articleId}/edit?error=${encodeURIComponent(
         error.message,
       )}`,
     );
+  }
+
+  if (
+    currentCoverImage &&
+    (removeCover || uploadedCover) &&
+    currentCoverImage !== nextCoverImage
+  ) {
+    await deleteArticleImageByUrl(currentCoverImage);
   }
 
   redirect(
@@ -218,9 +265,15 @@ export default async function EditArticlePage({
 
         <form
           action={updateArticle}
+          encType="multipart/form-data"
           className="mt-8 grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7"
         >
           <input type="hidden" name="article_id" value={article.id} />
+          <input
+            type="hidden"
+            name="current_cover_image"
+            value={article.cover_image ?? ""}
+          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-bold text-slate-700">
@@ -273,14 +326,16 @@ export default async function EditArticlePage({
           </label>
 
           <label className="grid gap-2 text-sm font-bold text-slate-700">
-            URL cover image
+            Ganti cover artikel
             <input
-              type="text"
-              name="cover_image"
-              defaultValue={article.cover_image ?? ""}
-              placeholder="https://... atau /images/articles/..."
-              className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+              type="file"
+              name="cover_file"
+              accept="image/jpeg,image/png,image/webp"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
             />
+            <span className="text-xs font-medium text-slate-400">
+              Kosongkan jika tidak ingin mengganti cover. Maksimal 5 MB.
+            </span>
           </label>
 
           {article.cover_image && (
@@ -291,6 +346,17 @@ export default async function EditArticlePage({
                 className="h-56 w-full object-cover"
               />
             </div>
+          )}
+
+          {article.cover_image && (
+            <label className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+              <input
+                type="checkbox"
+                name="remove_cover"
+                className="h-4 w-4 accent-red-600"
+              />
+              Hapus cover saat menyimpan
+            </label>
           )}
 
           <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
