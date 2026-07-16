@@ -2,12 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { deleteArticleImage, uploadArticleImage } from "@/lib/article-image-upload";
 
 export const dynamic = "force-dynamic";
 
 type AdminArticlesPageProps = {
   searchParams: Promise<{
     created?: string;
+    updated?: string;
+    deleted?: string;
     error?: string;
   }>;
 };
@@ -77,7 +80,7 @@ async function createArticle(formData: FormData) {
   const slug = slugify(manualSlug || title);
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
-  const coverImage = String(formData.get("cover_image") ?? "").trim();
+  const coverFile = formData.get("cover_file");
   const published = formData.get("published") === "on";
 
   if (title.length < 3 || title.length > 160) {
@@ -134,16 +137,42 @@ async function createArticle(formData: FormData) {
     );
   }
 
+  let uploadedCover:
+    | {
+        publicUrl: string;
+        path: string;
+      }
+    | null = null;
+
+  if (coverFile instanceof File && coverFile.size > 0) {
+    const uploadResult = await uploadArticleImage(coverFile, slug);
+
+    if (!uploadResult.ok) {
+      redirect(
+        `/admin/articles?error=${encodeURIComponent(uploadResult.error)}`,
+      );
+    }
+
+    uploadedCover = {
+      publicUrl: uploadResult.publicUrl,
+      path: uploadResult.path,
+    };
+  }
+
   const { error } = await supabase.from("articles").insert({
     title,
     slug,
     excerpt: excerpt || null,
     content,
-    cover_image: coverImage || null,
+    cover_image: uploadedCover?.publicUrl ?? null,
     published,
   });
 
   if (error) {
+    if (uploadedCover) {
+      await deleteArticleImage(uploadedCover.path);
+    }
+
     redirect(
       `/admin/articles?error=${encodeURIComponent(error.message)}`,
     );
@@ -205,6 +234,18 @@ export default async function AdminArticlesPage({
           </div>
         )}
 
+        {params.updated && (
+          <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            {params.updated}
+          </div>
+        )}
+
+        {params.deleted && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.deleted}
+          </div>
+        )}
+
         {params.error && (
           <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
             {params.error}
@@ -221,7 +262,11 @@ export default async function AdminArticlesPage({
             </p>
           </div>
 
-          <form action={createArticle} className="mt-5 grid gap-5">
+          <form
+            action={createArticle}
+            encType="multipart/form-data"
+            className="mt-5 grid gap-5"
+          >
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold text-slate-700">
                 Judul
@@ -269,15 +314,15 @@ export default async function AdminArticlesPage({
             </label>
 
             <label className="grid gap-2 text-sm font-bold text-slate-700">
-              URL cover image
+              Upload cover artikel
               <input
-                type="url"
-                name="cover_image"
-                placeholder="https://example.com/gambar-artikel.jpg"
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                type="file"
+                name="cover_file"
+                accept="image/jpeg,image/png,image/webp"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
               />
               <span className="text-xs font-medium text-slate-400">
-                Gunakan link gambar publik. Tidak ada upload file langsung.
+                JPG, PNG, atau WebP. Maksimal 5 MB.
               </span>
             </label>
 
@@ -369,14 +414,30 @@ export default async function AdminArticlesPage({
                     </p>
                   </div>
 
-                  <a
-                    href={`/articles/${article.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-                  >
-                    Lihat Artikel
-                  </a>
+                  <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
+                    <Link
+                      href={`/admin/articles/${article.id}/edit`}
+                      className="rounded-xl bg-slate-950 px-4 py-3 text-center text-xs font-bold text-white hover:bg-slate-800"
+                    >
+                      Edit
+                    </Link>
+
+                    <Link
+                      href={`/admin/articles/${article.id}/delete`}
+                      className="rounded-xl border border-red-200 px-4 py-3 text-center text-xs font-bold text-red-600 hover:bg-red-50"
+                    >
+                      Hapus
+                    </Link>
+
+                    <a
+                      href={`/articles/${article.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                    >
+                      Preview
+                    </a>
+                  </div>
                 </article>
               ))}
             </div>
