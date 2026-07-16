@@ -209,12 +209,6 @@ export async function getProductBySlug(
 export async function getCompareProducts(): Promise<CompareProduct[]> {
   const supabase = getSupabaseClient();
 
-  const compareSlugs = [
-    "logitech-g102-lightsync",
-    "fantech-x9-thor",
-    "rexus-daxa-air-iv",
-  ];
-
   const { data, error } = await supabase
     .from("products")
     .select(`
@@ -237,7 +231,8 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
       )
     `)
     .eq("status", "published")
-    .in("slug", compareSlugs);
+    .order("name", { ascending: true })
+    .limit(50);
 
   if (error) {
     console.error("Gagal mengambil produk compare:", error.message);
@@ -246,7 +241,7 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
 
   const rows = (data ?? []) as unknown as CompareProductRow[];
 
-  const normalized = rows.map((product) => {
+  return rows.map((product) => {
     const category = product.categories?.[0]?.name ?? "Produk";
     const score = product.product_scores?.[0]?.overall_score;
     const lowestPrice = getLowestPrice(product.product_prices);
@@ -271,10 +266,4 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
       specifications: specificationMap,
     };
   });
-
-  const order = new Map(compareSlugs.map((slug, index) => [slug, index]));
-
-  return normalized.sort(
-    (a, b) => (order.get(a.slug) ?? 999) - (order.get(b.slug) ?? 999),
-  );
 }
