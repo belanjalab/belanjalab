@@ -1,3 +1,4 @@
+import { getActiveHero } from "@/lib/hero";
 import { getFeaturedProducts } from "@/lib/products";
 
 const categories = [
@@ -29,7 +30,18 @@ const articles = [
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const products = await getFeaturedProducts();
+  const [products, hero] = await Promise.all([
+    getFeaturedProducts(),
+    getActiveHero(),
+  ]);
+
+  const heroProduct = hero?.featured_product;
+  const heroProductImage =
+    hero?.hero_image_url ??
+    products[0]?.imageUrl ??
+    "/images/products/logitech-g102.png";
+  const heroProductName =
+    heroProduct?.name ?? products[0]?.name ?? "Produk pilihan BelanjaLab";
 
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
@@ -140,12 +152,12 @@ export default async function Home() {
             </p>
 
             <h1 className="max-w-2xl text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-6xl">
-              Yang Lebih Cerdas
+              {hero?.title ?? "Yang Lebih Cerdas"}
             </h1>
 
             <p className="mt-3 max-w-xl text-xs leading-5 text-slate-500 md:mt-5 md:text-lg md:leading-7 md:text-slate-600">
-              Review jujur, perbandingan lengkap, dan rekomendasi terpercaya
-              untuk membantu kamu memilih produk terbaik.
+              {hero?.subtitle ??
+                "Review jujur, perbandingan lengkap, dan rekomendasi terpercaya untuk membantu kamu memilih produk terbaik."}
             </p>
 
             <form
@@ -181,10 +193,32 @@ export default async function Home() {
               ))}
             </div>
 
+            {(hero?.primary_button_text || hero?.secondary_button_text) && (
+              <div className="mt-5 flex flex-wrap gap-3">
+                {hero?.primary_button_text && hero?.primary_button_url && (
+                  <a
+                    href={hero.primary_button_url}
+                    className="rounded-lg bg-orange-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-orange-600 md:text-sm"
+                  >
+                    {hero.primary_button_text}
+                  </a>
+                )}
+
+                {hero?.secondary_button_text && hero?.secondary_button_url && (
+                  <a
+                    href={hero.secondary_button_url}
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 md:text-sm"
+                  >
+                    {hero.secondary_button_text}
+                  </a>
+                )}
+              </div>
+            )}
+
             <div className="mt-5 flex h-52 items-center justify-center rounded-2xl bg-slate-100 text-xs font-semibold text-slate-400 md:hidden">
               <img
-                src={products[0]?.imageUrl ?? "/images/products/logitech-g102.png"}
-                alt={products[0]?.name ?? "Produk pilihan BelanjaLab"}
+                src={heroProductImage}
+                alt={heroProductName}
                 className="h-full w-full object-contain p-6"
               />
             </div>
@@ -200,21 +234,30 @@ export default async function Home() {
                 Produk Pilihan
               </p>
 
-              <h2 className="mt-1 text-lg font-bold">
-                {products[0]?.name ?? "Produk pilihan BelanjaLab"}
-              </h2>
+              <h2 className="mt-1 text-lg font-bold">{heroProductName}</h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                {products[0]?.category ?? "Rekomendasi produk terbaik"}
+                {heroProduct?.short_description ??
+                  products[0]?.category ??
+                  "Rekomendasi produk terbaik"}
               </p>
 
               <div className="mt-5 flex h-44 items-center justify-center rounded-2xl bg-slate-100">
                 <img
-                  src={products[0]?.imageUrl ?? "/images/products/logitech-g102.png"}
-                  alt={products[0]?.name ?? "Produk pilihan BelanjaLab"}
+                  src={heroProductImage}
+                  alt={heroProductName}
                   className="h-full w-full object-contain p-5"
                 />
               </div>
+
+              {heroProduct?.slug && (
+                <a
+                  href={`/product/${heroProduct.slug}`}
+                  className="mt-4 inline-flex text-xs font-bold text-orange-500 hover:text-orange-600"
+                >
+                  Lihat produk →
+                </a>
+              )}
             </div>
 
             <div className="absolute bottom-2 right-0 rounded-2xl bg-white p-5 text-3xl shadow-xl">
