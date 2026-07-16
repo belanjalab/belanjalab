@@ -690,6 +690,13 @@ export default async function AdminPage({
               </Link>
 
               <Link
+                href="/admin/articles"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+              >
+                Kelola Artikel
+              </Link>
+
+              <Link
                 href="/admin/products/new"
                 className="rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
               >
