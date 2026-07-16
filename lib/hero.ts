@@ -1,6 +1,8 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export async function getActiveHero() {
+  const supabase = getSupabaseClient();
+
   const { data, error } = await supabase
     .from("hero_sections")
     .select(`
@@ -17,7 +19,9 @@ export async function getActiveHero() {
     .limit(1)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(`Failed to fetch active hero: ${error.message}`);
+  }
 
   return data;
 }
