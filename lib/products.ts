@@ -104,11 +104,6 @@ function getLowestPrice(prices: PriceRelation[] | null | undefined) {
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
   const supabase = getSupabaseClient();
 
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
-    return [];
-  }
-
   const { data, error } = await supabase
     .from("products")
     .select(`
@@ -127,11 +122,16 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       )
     `)
     .eq("status", "published")
+    .eq("is_featured", true)
+    .order("featured_order", {
+      ascending: true,
+      nullsFirst: false,
+    })
     .order("created_at", { ascending: false })
     .limit(6);
 
   if (error) {
-    console.error("Gagal mengambil produk:", error.message);
+    console.error("Gagal mengambil featured products:", error.message);
     return [];
   }
 
@@ -162,11 +162,6 @@ export async function getProductBySlug(
   slug: string,
 ): Promise<ProductDetail | null> {
   const supabase = getSupabaseClient();
-
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
-    return null;
-  }
 
   const { data, error } = await supabase
     .from("products")
@@ -213,11 +208,6 @@ export async function getProductBySlug(
 
 export async function getCompareProducts(): Promise<CompareProduct[]> {
   const supabase = getSupabaseClient();
-
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
-    return [];
-  }
 
   const compareSlugs = [
     "logitech-g102-lightsync",
