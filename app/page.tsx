@@ -1,5 +1,6 @@
 import { getHomepageArticles } from "@/lib/articles";
 import { getHomepageCategories } from "@/lib/categories";
+import { getActiveSiteFooter } from "@/lib/footer";
 import { getActiveHero } from "@/lib/hero";
 import { getFeaturedProducts } from "@/lib/products";
 
@@ -8,11 +9,12 @@ import { getFeaturedProducts } from "@/lib/products";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [products, hero, categories, articles] = await Promise.all([
+  const [products, hero, categories, articles, footer] = await Promise.all([
     getFeaturedProducts(),
     getActiveHero(),
     getHomepageCategories(),
     getHomepageArticles(),
+    getActiveSiteFooter(),
   ]);
 
   const heroProduct = hero?.featured_product;
@@ -503,7 +505,7 @@ export default async function Home() {
             </a>
 
             <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
-              Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.
+              {footer.companyDescription}
             </p>
           </div>
 
@@ -528,10 +530,10 @@ export default async function Home() {
               <a href="#tentang" className="block hover:text-white">
                 Tentang Kami
               </a>
-              <a href="#" className="block hover:text-white">
+              <a href={footer.contactUrl} className="block hover:text-white">
                 Kontak
               </a>
-              <a href="#" className="block hover:text-white">
+              <a href={footer.careersUrl} className="block hover:text-white">
                 Karier
               </a>
             </div>
@@ -540,13 +542,13 @@ export default async function Home() {
           <div>
             <h3 className="text-sm font-bold">Legal</h3>
             <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <a href="#" className="block hover:text-white">
+              <a href={footer.privacyUrl} className="block hover:text-white">
                 Kebijakan Privasi
               </a>
-              <a href="#" className="block hover:text-white">
+              <a href={footer.termsUrl} className="block hover:text-white">
                 Syarat Penggunaan
               </a>
-              <a href="#" className="block hover:text-white">
+              <a href={footer.disclaimerUrl} className="block hover:text-white">
                 Disclaimer
               </a>
             </div>
