@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { deleteArticleImageByUrl } from "@/lib/article-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ async function deleteArticle(formData: FormData) {
 
   const { data: article, error: readError } = await supabase
     .from("articles")
-    .select("title")
+    .select("title,cover_image")
     .eq("id", articleId)
     .maybeSingle();
 
@@ -74,6 +75,8 @@ async function deleteArticle(formData: FormData) {
       `/admin/articles?error=${encodeURIComponent(error.message)}`,
     );
   }
+
+  await deleteArticleImageByUrl(article.cover_image);
 
   redirect(
     `/admin/articles?deleted=${encodeURIComponent(
