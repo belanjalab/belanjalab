@@ -19,21 +19,32 @@ const specificationRows = [
 export default function CompareClient({
   products,
 }: CompareClientProps) {
-  const [selectedProducts, setSelectedProducts] = useState(
-    products.slice(0, 3),
-  );
+  const [selectedProducts, setSelectedProducts] = useState<CompareProduct[]>([]);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const availableProducts = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          !selectedProducts.some(
-            (selected) => selected.id === product.id,
-          ),
-      ),
-    [products, selectedProducts],
-  );
+  const availableProducts = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const isSelected = selectedProducts.some(
+        (selected) => selected.id === product.id,
+      );
+
+      if (isSelected) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return (
+        product.name.toLowerCase().includes(normalizedQuery) ||
+        product.category.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [products, searchQuery, selectedProducts]);
 
   function removeProduct(productId: string) {
     setSelectedProducts((current) =>
@@ -55,6 +66,7 @@ export default function CompareClient({
     });
 
     setIsPickerOpen(false);
+    setSearchQuery("");
   }
 
   const columnCount = Math.max(selectedProducts.length, 1);
@@ -191,10 +203,13 @@ export default function CompareClient({
 
           <button
             type="button"
-            onClick={() => setIsPickerOpen((current) => !current)}
+            onClick={() => {
+              setIsPickerOpen((current) => !current);
+              setSearchQuery("");
+            }}
             disabled={
               selectedProducts.length >= 3 ||
-              availableProducts.length === 0
+              products.length === 0
             }
             className="mt-4 w-full rounded-xl border-2 border-dashed border-slate-300 px-4 py-3 text-[10px] font-bold text-slate-500 hover:border-orange-400 hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-40 md:mt-6 md:rounded-2xl md:px-6 md:py-5 md:text-sm"
           >
@@ -215,15 +230,29 @@ export default function CompareClient({
 
                 <button
                   type="button"
-                  onClick={() => setIsPickerOpen(false)}
+                  onClick={() => {
+                    setIsPickerOpen(false);
+                    setSearchQuery("");
+                  }}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-sm"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {availableProducts.map((product) => (
+              <div className="mt-4">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Cari nama atau kategori produk..."
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                />
+              </div>
+
+              {availableProducts.length > 0 ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {availableProducts.map((product) => (
                   <button
                     key={product.id}
                     type="button"
@@ -247,8 +276,18 @@ export default function CompareClient({
                       </p>
                     </div>
                   </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                  <p className="text-sm font-bold text-slate-700">
+                    Produk tidak ditemukan.
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Coba kata kunci lain atau tambahkan produk published dari CMS.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
