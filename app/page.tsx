@@ -1,33 +1,18 @@
+import { getHomepageArticles } from "@/lib/articles";
 import { getHomepageCategories } from "@/lib/categories";
 import { getActiveHero } from "@/lib/hero";
 import { getFeaturedProducts } from "@/lib/products";
 
 
-const articles = [
-  {
-    title: "10 Laptop Terbaik untuk Mahasiswa",
-    category: "Panduan Belanja",
-    time: "6 menit baca",
-  },
-  {
-    title: "Air Fryer vs Oven Listrik",
-    category: "Perbandingan",
-    time: "5 menit baca",
-  },
-  {
-    title: "7 Headset Gaming Terbaik",
-    category: "Rekomendasi",
-    time: "7 menit baca",
-  },
-];
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [products, hero, categories] = await Promise.all([
+  const [products, hero, categories, articles] = await Promise.all([
     getFeaturedProducts(),
     getActiveHero(),
     getHomepageCategories(),
+    getHomepageArticles(),
   ]);
 
   const heroProduct = hero?.featured_product;
@@ -437,36 +422,65 @@ export default async function Home() {
           <div className="mb-4 flex items-end justify-between md:mb-6">
             <h2 className="text-sm font-black md:text-2xl">Artikel Terbaru</h2>
             <a
-              href="#"
+              href="/articles"
               className="text-[10px] font-semibold text-orange-500 md:text-sm"
             >
               Lihat semua →
             </a>
           </div>
 
-          <div className="space-y-3 md:grid md:grid-cols-3 md:gap-5 md:space-y-0">
-            {articles.map((article) => (
-              <article
-                key={article.title}
-                className="flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block md:rounded-2xl"
-              >
-                <div className="flex w-24 shrink-0 items-center justify-center bg-slate-100 text-[9px] font-semibold text-slate-400 md:h-40 md:w-full md:text-xs">
-                  GAMBAR
-                </div>
-                <div className="p-3 md:p-5">
-                  <p className="text-[8px] text-slate-400 md:text-xs">
-                    {article.category}
-                  </p>
-                  <h3 className="mt-1 text-[10px] font-bold leading-4 md:mt-2 md:text-sm md:leading-6">
-                    {article.title}
-                  </h3>
-                  <p className="mt-2 text-[8px] text-slate-400 md:mt-3 md:text-xs">
-                    {article.time}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
+          {articles.length > 0 ? (
+            <div className="space-y-3 md:grid md:grid-cols-3 md:gap-5 md:space-y-0">
+              {articles.map((article) => (
+                <a
+                  key={article.id}
+                  href={`/articles/${article.slug}`}
+                  className="flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md md:block md:rounded-2xl"
+                >
+                  <div className="flex w-24 shrink-0 items-center justify-center overflow-hidden bg-slate-100 text-[9px] font-semibold text-slate-400 md:h-40 md:w-full md:text-xs">
+                    {article.imageUrl ? (
+                      <img
+                        src={article.imageUrl}
+                        alt={article.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      "GAMBAR"
+                    )}
+                  </div>
+
+                  <div className="p-3 md:p-5">
+                    <p className="text-[8px] text-slate-400 md:text-xs">
+                      Artikel
+                    </p>
+
+                    <h3 className="mt-1 text-[10px] font-bold leading-4 md:mt-2 md:text-sm md:leading-6">
+                      {article.title}
+                    </h3>
+
+                    {article.excerpt && (
+                      <p className="mt-2 line-clamp-2 text-[9px] leading-4 text-slate-500 md:text-xs md:leading-5">
+                        {article.excerpt}
+                      </p>
+                    )}
+
+                    <p className="mt-2 text-[8px] text-slate-400 md:mt-3 md:text-xs">
+                      {article.readingTime}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Belum ada artikel published.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Artikel akan tampil setelah dipublikasikan dari CMS.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
