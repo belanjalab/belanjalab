@@ -1,13 +1,7 @@
+import { getHomepageCategories } from "@/lib/categories";
 import { getActiveHero } from "@/lib/hero";
 import { getFeaturedProducts } from "@/lib/products";
 
-const categories = [
-  { name: "Gadget", icon: "📱" },
-  { name: "Elektronik", icon: "💻" },
-  { name: "Rumah", icon: "🏠" },
-  { name: "Gaming", icon: "🎮" },
-  { name: "Beauty", icon: "🧴" },
-];
 
 const articles = [
   {
@@ -30,9 +24,10 @@ const articles = [
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [products, hero] = await Promise.all([
+  const [products, hero, categories] = await Promise.all([
     getFeaturedProducts(),
     getActiveHero(),
+    getHomepageCategories(),
   ]);
 
   const heroProduct = hero?.featured_product;
@@ -302,10 +297,11 @@ export default async function Home() {
             </a>
           </div>
 
-          <div className="grid grid-cols-5 gap-2 md:grid-cols-5 md:gap-4">
-            {categories.map((category) => (
+          {categories.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
+              {categories.map((category) => (
               <a
-                key={category.name}
+                key={category.id}
                 href={`/search?q=${encodeURIComponent(category.name)}`}
                 className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md md:rounded-2xl md:p-5"
               >
@@ -314,8 +310,18 @@ export default async function Home() {
                   {category.name}
                 </p>
               </a>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Belum ada kategori.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Tambahkan kategori dari dashboard admin.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
