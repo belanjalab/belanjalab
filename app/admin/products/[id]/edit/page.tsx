@@ -61,11 +61,25 @@ async function updateProduct(formData: FormData) {
   ).trim();
   const imageFile = formData.get("image_file");
   const status = String(formData.get("status") ?? "draft");
+  const isFeatured = formData.get("is_featured") === "on";
+  const featuredOrderRaw = String(formData.get("featured_order") ?? "").trim();
+  const featuredOrder = featuredOrderRaw ? Number.parseInt(featuredOrderRaw, 10) : null;
 
   if (!productId || !name || !slug || !categoryId || !brandId) {
     redirect(
       `/admin/products/${productId}/edit?error=${encodeURIComponent(
         "Nama, slug, kategori, dan merek wajib diisi.",
+      )}`,
+    );
+  }
+
+  if (
+    featuredOrder !== null &&
+    (!Number.isInteger(featuredOrder) || featuredOrder < 0 || featuredOrder > 9999)
+  ) {
+    redirect(
+      `/admin/products/${productId}/edit?error=${encodeURIComponent(
+        "Urutan featured harus berupa angka 0-9999.",
       )}`,
     );
   }
@@ -149,6 +163,8 @@ async function updateProduct(formData: FormData) {
       description: description || null,
       image_url: imageUrl,
       status: safeStatus,
+      is_featured: isFeatured,
+      featured_order: isFeatured ? featuredOrder : null,
     })
     .eq("id", productId);
 
@@ -450,6 +466,34 @@ export default async function EditProductPage({
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
                   </select>
+                </div>
+
+                <div className="md:col-span-2 grid gap-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 md:grid-cols-[1fr_180px] md:items-end">
+                  <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                    <input
+                      type="checkbox"
+                      name="is_featured"
+                      defaultChecked={product.isFeatured}
+                      className="h-4 w-4 accent-orange-500"
+                    />
+                    Tampilkan sebagai Featured Product di Homepage
+                  </label>
+
+                  <div>
+                    <label htmlFor="featured_order" className="text-sm font-bold">
+                      Urutan Featured
+                    </label>
+                    <input
+                      id="featured_order"
+                      name="featured_order"
+                      type="number"
+                      min="0"
+                      max="9999"
+                      defaultValue={product.featuredOrder ?? ""}
+                      placeholder="0"
+                      className="mt-2 w-full rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    />
+                  </div>
                 </div>
               </div>
             </section>
