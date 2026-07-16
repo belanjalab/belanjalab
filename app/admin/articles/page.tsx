@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 type AdminArticlesPageProps = {
   searchParams: Promise<{
     created?: string;
+    updated?: string;
+    deleted?: string;
     error?: string;
   }>;
 };
@@ -205,6 +207,18 @@ export default async function AdminArticlesPage({
           </div>
         )}
 
+        {params.updated && (
+          <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            {params.updated}
+          </div>
+        )}
+
+        {params.deleted && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.deleted}
+          </div>
+        )}
+
         {params.error && (
           <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
             {params.error}
@@ -366,14 +380,30 @@ export default async function AdminArticlesPage({
                     </p>
                   </div>
 
-                  <a
-                    href={`/articles/${article.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-                  >
-                    Lihat Artikel
-                  </a>
+                  <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
+                    <Link
+                      href={`/admin/articles/${article.id}/edit`}
+                      className="rounded-xl bg-slate-950 px-4 py-3 text-center text-xs font-bold text-white hover:bg-slate-800"
+                    >
+                      Edit
+                    </Link>
+
+                    <Link
+                      href={`/admin/articles/${article.id}/delete`}
+                      className="rounded-xl border border-red-200 px-4 py-3 text-center text-xs font-bold text-red-600 hover:bg-red-50"
+                    >
+                      Hapus
+                    </Link>
+
+                    <a
+                      href={`/articles/${article.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                    >
+                      Preview
+                    </a>
+                  </div>
                 </article>
               ))}
             </div>
