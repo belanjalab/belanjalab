@@ -42,6 +42,8 @@ type AdminProductEditRow = {
   status: string;
   category_id: string;
   brand_id: string;
+  is_featured: boolean;
+  featured_order: number | null;
   categories?: CategoryRelation | CategoryRelation[] | null;
   brands?: BrandRelation | BrandRelation[] | null;
   product_scores?: ScoreRelation | ScoreRelation[] | null;
@@ -58,6 +60,8 @@ export type AdminProductEditData = {
   status: string;
   categoryId: string;
   brandId: string;
+  isFeatured: boolean;
+  featuredOrder: number | null;
   performance: number;
   design: number;
   features: number;
@@ -103,6 +107,8 @@ export async function getAdminProductForEdit(
       status,
       category_id,
       brand_id,
+      is_featured,
+      featured_order,
       categories (
         id,
         name
@@ -158,6 +164,8 @@ export async function getAdminProductForEdit(
     status: product.status,
     categoryId: product.category_id,
     brandId: product.brand_id,
+    isFeatured: product.is_featured,
+    featuredOrder: product.featured_order,
     performance: toNumber(score?.performance),
     design: toNumber(score?.design),
     features: toNumber(score?.features),
