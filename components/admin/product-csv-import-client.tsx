@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+
+import {
+  importProductsFromCsv,
+  type ProductCsvImportResult,
+  type ProductCsvImportRow,
+} from "@/lib/admin-product-import";
 
 const REQUIRED_HEADERS = ["name", "category", "brand"] as const;
 
@@ -171,6 +177,10 @@ export default function ProductCsvImportClient() {
   const [fileName, setFileName] = useState("");
   const [parsedCsv, setParsedCsv] = useState<ParsedCsv | null>(null);
   const [fileError, setFileError] = useState("");
+  const [importResults, setImportResults] = useState<
+    ProductCsvImportResult[]
+  >([]);
+  const [isPending, startTransition] = useTransition();
 
   const validation = useMemo(() => {
     if (!parsedCsv) {
@@ -201,6 +211,7 @@ export default function ProductCsvImportClient() {
 
     setParsedCsv(null);
     setFileError("");
+    setImportResults([]);
     setFileName(file?.name ?? "");
 
     if (!file) {
@@ -274,6 +285,25 @@ export default function ProductCsvImportClient() {
     parsedCsv &&
     validation.missingHeaders.length === 0 &&
     validation.errors.length === 0;
+
+
+  function handleImport() {
+    if (!parsedCsv || !isValid || isPending) {
+      return;
+    }
+
+    const rows = parsedCsv.rows as ProductCsvImportRow[];
+
+    startTransition(async () => {
+      const response = await importProductsFromCsv(rows);
+      setImportResults(response.results);
+    });
+  }
+
+  const importedSuccessCount = importResults.filter(
+    (result) => result.status === "success",
+  ).length;
+  const importedErrorCount = importResults.length - importedSuccessCount;
 
   return (
     <section className="mt-8 space-y-6">
@@ -413,14 +443,55 @@ export default function ProductCsvImportClient() {
             </div>
           </div>
 
+
+          {importResults.length > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-black text-slate-900">
+                    Hasil Import
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {importedSuccessCount} berhasil · {importedErrorCount} gagal
+                  </p>
+                </div>
+
+                <a
+                  href="/admin"
+                  className="rounded-xl bg-slate-950 px-4 py-3 text-center text-xs font-bold text-white hover:bg-slate-800"
+                >
+                  Lihat Daftar Produk
+                </a>
+              </div>
+
+              <div className="mt-5 max-h-96 space-y-2 overflow-y-auto">
+                {importResults.map((result) => (
+                  <div
+                    key={`${result.rowNumber}-${result.name}`}
+                    className={`rounded-xl border px-4 py-3 text-xs ${
+                      result.status === "success"
+                        ? "border-green-200 bg-green-50 text-green-700"
+                        : "border-red-200 bg-red-50 text-red-700"
+                    }`}
+                  >
+                    <p className="font-black">
+                      Baris {result.rowNumber}: {result.name}
+                    </p>
+                    <p className="mt-1">{result.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end">
             <button
               type="button"
-              disabled={!isValid}
+              onClick={handleImport}
+              disabled={!isValid || isPending || importResults.length > 0}
               className="rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
-              title="Proses penyimpanan ke Supabase dibuat pada langkah berikutnya."
             >
-              Lanjutkan Import
+              {isPending ? "Mengimport..." : "Import ke Supabase"}
             </button>
           </div>
         </>
