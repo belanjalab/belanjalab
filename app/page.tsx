@@ -53,7 +53,7 @@ export default async function Home() {
               </a>
 
               <a
-                href="#artikel"
+                href="/articles"
                 className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
               >
                 Artikel
@@ -87,7 +87,7 @@ export default async function Home() {
             <a href="/compare" className="hover:text-slate-950">
               Perbandingan
             </a>
-            <a href="#artikel" className="hover:text-slate-950">
+            <a href="/articles" className="hover:text-slate-950">
               Artikel
             </a>
             <a href="#tentang" className="hover:text-slate-950">
