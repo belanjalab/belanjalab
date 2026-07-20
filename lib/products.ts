@@ -23,7 +23,13 @@ type MarketplaceRelation = {
 
 type PriceRelation = {
   price: number | string | null;
+  original_price?: number | string | null;
+  shipping_cost?: number | string | null;
   affiliate_url?: string | null;
+  is_available?: boolean | null;
+  stock_status?: string | null;
+  last_checked_at?: string | null;
+  updated_at?: string | null;
   marketplaces?: MarketplaceRelation[] | MarketplaceRelation | null;
 };
 
@@ -93,10 +99,21 @@ function formatRupiah(value: number | null) {
   }).format(value);
 }
 
+function isUsablePrice(price: PriceRelation) {
+  const numericPrice = Number(price.price);
+
+  return (
+    Number.isFinite(numericPrice) &&
+    numericPrice > 0 &&
+    price.is_available !== false &&
+    price.stock_status !== "out_of_stock"
+  );
+}
+
 function getLowestPrice(prices: PriceRelation[] | null | undefined) {
   const numericPrices = (prices ?? [])
-    .map((item) => Number(item.price))
-    .filter((price) => Number.isFinite(price));
+    .filter(isUsablePrice)
+    .map((item) => Number(item.price));
 
   return numericPrices.length > 0 ? Math.min(...numericPrices) : null;
 }
@@ -118,7 +135,9 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
         overall_score
       ),
       product_prices (
-        price
+        price,
+        is_available,
+        stock_status
       )
     `)
     .eq("status", "published")
@@ -188,7 +207,13 @@ export async function getProductBySlug(
       ),
       product_prices (
         price,
+        original_price,
+        shipping_cost,
         affiliate_url,
+        is_available,
+        stock_status,
+        last_checked_at,
+        updated_at,
         marketplaces (
           name
         )
@@ -203,7 +228,12 @@ export async function getProductBySlug(
     return null;
   }
 
-  return data as unknown as ProductDetail;
+  const product = data as unknown as ProductDetail;
+
+  return {
+    ...product,
+    product_prices: (product.product_prices ?? []).filter(isUsablePrice),
+  };
 }
 
 export async function getCompareProducts(): Promise<CompareProduct[]> {
@@ -223,7 +253,9 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
         overall_score
       ),
       product_prices (
-        price
+        price,
+        is_available,
+        stock_status
       ),
       product_specifications (
         spec_key,
