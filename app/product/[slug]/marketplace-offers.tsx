@@ -1,258 +1,514 @@
-import type { MarketplaceOffer } from "@/lib/marketplace-prices";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
-type MarketplaceOffersProps = {
-  offers: MarketplaceOffer[];
+import ConfirmMarketplaceDeleteButton from "@/components/admin/confirm-marketplace-delete-button";
+import { getAdminMarketplaces } from "@/lib/admin-marketplaces";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+export const dynamic = "force-dynamic";
+
+type AdminMarketplacesPageProps = {
+  searchParams: Promise<{
+    created?: string;
+    updated?: string;
+    deleted?: string;
+    error?: string;
+  }>;
 };
 
-function formatCheckedAt(value: string | null) {
-  if (!value) {
-    return "Belum pernah diperiksa";
-  }
+async function createMarketplace(formData: FormData) {
+  "use server";
 
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
+  const name = String(formData.get("name") ?? "").trim();
 
-function getStockLabel(status: string, isAvailable: boolean) {
-  if (!isAvailable || status === "out_of_stock") {
-    return "Stok habis";
-  }
-
-  switch (status) {
-    case "low_stock":
-      return "Stok terbatas";
-    case "preorder":
-      return "Preorder";
-    case "in_stock":
-      return "Tersedia";
-    default:
-      return "Cek marketplace";
-  }
-}
-
-function getStockClass(status: string, isAvailable: boolean) {
-  if (!isAvailable || status === "out_of_stock") {
-    return "bg-red-50 text-red-700";
-  }
-
-  if (status === "low_stock" || status === "preorder") {
-    return "bg-amber-50 text-amber-700";
-  }
-
-  return "bg-green-50 text-green-700";
-}
-
-function getPriceMovement(offer: MarketplaceOffer) {
-  const history = offer.priceHistory;
-
-  if (history.length < 2) {
-    return null;
-  }
-
-  const firstPrice = history[0].price;
-  const latestPrice = history[history.length - 1].price;
-  const difference = latestPrice - firstPrice;
-
-  if (difference === 0) {
-    return {
-      label: "Harga stabil",
-      className: "text-slate-500",
-    };
-  }
-
-  const formattedDifference = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(Math.abs(difference));
-
-  return difference < 0
-    ? {
-        label: `Turun ${formattedDifference}`,
-        className: "text-green-600",
-      }
-    : {
-        label: `Naik ${formattedDifference}`,
-        className: "text-red-600",
-      };
-}
-
-export default function MarketplaceOffers({
-  offers,
-}: MarketplaceOffersProps) {
-  if (offers.length === 0) {
-    return (
-      <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-        <h2 className="text-base font-black">
-          Harga marketplace belum tersedia
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          Kami belum memiliki data harga terbaru untuk produk ini.
-        </p>
-      </section>
+  if (name.length < 2) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace minimal 2 karakter.",
+      )}`,
     );
   }
 
-  const bestOffer = offers.find((offer) => offer.isAvailable) ?? offers[0];
+  if (name.length > 80) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace maksimal 80 karakter.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: existingMarketplace, error: existingError } =
+    await supabase
+      .from("marketplaces")
+      .select("id")
+      .ilike("name", name)
+      .maybeSingle();
+
+  if (existingError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        existingError.message,
+      )}`,
+    );
+  }
+
+  if (existingMarketplace) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace dengan nama tersebut sudah ada.",
+      )}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("marketplaces")
+    .insert({ name });
+
+  if (error) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?created=${encodeURIComponent(
+      `${name} berhasil ditambahkan.`,
+    )}`,
+  );
+}
+
+
+async function updateMarketplace(formData: FormData) {
+  "use server";
+
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!marketplaceId) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace tidak valid.",
+      )}`,
+    );
+  }
+
+  if (name.length < 2) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace minimal 2 karakter.",
+      )}`,
+    );
+  }
+
+  if (name.length > 80) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Nama marketplace maksimal 80 karakter.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: duplicateMarketplace, error: duplicateError } =
+    await supabase
+      .from("marketplaces")
+      .select("id")
+      .ilike("name", name)
+      .neq("id", marketplaceId)
+      .maybeSingle();
+
+  if (duplicateError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        duplicateError.message,
+      )}`,
+    );
+  }
+
+  if (duplicateMarketplace) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace dengan nama tersebut sudah ada.",
+      )}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("marketplaces")
+    .update({ name })
+    .eq("id", marketplaceId);
+
+  if (error) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?updated=${encodeURIComponent(
+      `${name} berhasil diperbarui.`,
+    )}`,
+  );
+}
+
+
+async function deleteMarketplace(formData: FormData) {
+  "use server";
+
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
+
+  if (!marketplaceId) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        "Marketplace tidak valid.",
+      )}`,
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  const { data: marketplaceRecord, error: marketplaceError } =
+    await supabase
+      .from("marketplaces")
+      .select("id, name")
+      .eq("id", marketplaceId)
+      .maybeSingle();
+
+  if (marketplaceError || !marketplaceRecord) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        marketplaceError?.message ?? "Marketplace tidak ditemukan.",
+      )}`,
+    );
+  }
+
+  const { count, error: usageError } = await supabase
+    .from("product_prices")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("marketplace_id", marketplaceId);
+
+  if (usageError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        usageError.message,
+      )}`,
+    );
+  }
+
+  if ((count ?? 0) > 0) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        `${marketplaceRecord.name} masih dipakai oleh ${count} data harga produk dan tidak dapat dihapus.`,
+      )}`,
+    );
+  }
+
+  const { error: deleteError } = await supabase
+    .from("marketplaces")
+    .delete()
+    .eq("id", marketplaceId);
+
+  if (deleteError) {
+    redirect(
+      `/admin/marketplaces?error=${encodeURIComponent(
+        deleteError.message,
+      )}`,
+    );
+  }
+
+  redirect(
+    `/admin/marketplaces?deleted=${encodeURIComponent(
+      `${marketplaceRecord.name} berhasil dihapus.`,
+    )}`,
+  );
+}
+
+export default async function AdminMarketplacesPage({
+  searchParams,
+}: AdminMarketplacesPageProps) {
+  const params = await searchParams;
+  const marketplaces = await getAdminMarketplaces();
 
   return (
-    <section>
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
-            Perbandingan Harga
-          </p>
-          <h2 className="mt-2 text-2xl font-black md:text-3xl">
-            Harga dari marketplace
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Urutan berdasarkan total harga produk dan ongkir.
-          </p>
-        </div>
+    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-orange-600">
+              BelanjaLab Admin
+            </p>
+            <h1 className="mt-1 text-3xl font-black text-slate-900">
+              Marketplace
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Kelola marketplace yang tersedia untuk harga produk.
+            </p>
+          </div>
 
-        <div className="rounded-xl bg-green-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-green-700">
-            Penawaran terbaik
-          </p>
-          <p className="mt-1 text-lg font-black text-green-700">
-            {bestOffer.marketplace}
-          </p>
-          <p className="text-sm font-bold text-green-600">
-            {bestOffer.formattedTotalPrice}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-3">
-        {offers.map((offer, index) => {
-          const movement = getPriceMovement(offer);
-          const hasValidLink =
-            Boolean(offer.affiliateUrl) && offer.affiliateUrl !== "#";
-
-          return (
-            <article
-              key={offer.id}
-              className={`rounded-2xl border bg-white p-4 shadow-sm md:p-5 ${
-                index === 0
-                  ? "border-green-300 ring-1 ring-green-100"
-                  : "border-slate-200"
-              }`}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/admin/prices"
+              className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white hover:bg-orange-600"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="min-w-0 md:w-48">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black">
-                      {offer.marketplace}
-                    </h3>
+              Kelola Harga
+            </Link>
 
-                    {index === 0 && offer.isAvailable && (
-                      <span className="rounded-full bg-green-500 px-2 py-1 text-[9px] font-bold text-white">
-                        TERMURAH
-                      </span>
-                    )}
+            <Link
+              href="/admin"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+
+        {params.created && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.created}
+          </div>
+        )}
+
+        {params.updated && (
+          <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            {params.updated}
+          </div>
+        )}
+
+        {params.deleted && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+            {params.deleted}
+          </div>
+        )}
+
+        {params.error && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            {params.error}
+          </div>
+        )}
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">
+              Tambah Marketplace
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Nama marketplace akan tersedia di form harga produk dan bulk action.
+            </p>
+          </div>
+
+          <form
+            action={createMarketplace}
+            className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"
+          >
+            <input
+              type="text"
+              name="name"
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder="Contoh: Tokopedia"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-orange-400"
+            />
+
+            <button
+              type="submit"
+              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+            >
+              Tambah Marketplace
+            </button>
+          </form>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">
+                Daftar Marketplace
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {marketplaces.length} marketplace tersedia
+              </p>
+            </div>
+          </div>
+
+          {marketplaces.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Belum ada marketplace
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Tambahkan marketplace pertama lewat form di atas.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {marketplaces.map((marketplace, index) => (
+                <div
+                  key={marketplace.id}
+                  className="grid gap-4 px-5 py-4 lg:grid-cols-[auto_1fr_auto]"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-sm font-black text-orange-600">
+                    {index + 1}
                   </div>
 
-                  <span
-                    className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${getStockClass(
-                      offer.stockStatus,
-                      offer.isAvailable,
-                    )}`}
+                  <form
+                    action={updateMarketplace}
+                    className="grid gap-3 sm:grid-cols-[1fr_auto]"
                   >
-                    {getStockLabel(
-                      offer.stockStatus,
-                      offer.isAvailable,
-                    )}
-                  </span>
-                </div>
+                    <input
+                      type="hidden"
+                      name="marketplace_id"
+                      value={marketplace.id}
+                    />
 
-                <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-4">
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Harga produk
-                    </p>
-                    <p className="mt-1 text-sm font-black text-orange-500">
-                      {offer.formattedPrice}
-                    </p>
+                    <div>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        minLength={2}
+                        maxLength={80}
+                        defaultValue={marketplace.name}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-orange-400"
+                      />
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        ID: {marketplace.id}
+                      </p>
+                    </div>
 
-                    {offer.formattedOriginalPrice &&
-                      offer.originalPrice !== offer.price && (
-                        <p className="mt-1 text-[10px] text-slate-400 line-through">
-                          {offer.formattedOriginalPrice}
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                    >
+                      Simpan
+                    </button>
+                  </form>
+
+                  <div className="flex items-center gap-2 lg:flex-col lg:items-stretch">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Produk
                         </p>
-                      )}
-                  </div>
+                        <p className="mt-1 text-sm font-black text-slate-800">
+                          {marketplace.productCount}
+                        </p>
+                      </div>
 
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Ongkir
-                    </p>
-                    <p className="mt-1 text-sm font-bold">
-                      {offer.formattedShippingCost}
-                    </p>
-                  </div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Harga
+                        </p>
+                        <p className="mt-1 text-sm font-black text-slate-800">
+                          {marketplace.priceCount}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Total
-                    </p>
-                    <p className="mt-1 text-sm font-black">
-                      {offer.formattedTotalPrice}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Riwayat harga
-                    </p>
-                    <p
-                      className={`mt-1 text-sm font-bold ${
-                        movement?.className ?? "text-slate-500"
+                    <span
+                      className={`h-fit rounded-full px-3 py-1 text-center text-xs font-bold ${
+                        marketplace.priceCount > 0
+                          ? "bg-green-50 text-green-700"
+                          : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {movement?.label ?? "Data awal"}
-                    </p>
+                      {marketplace.priceCount > 0 ? "Digunakan" : "Belum dipakai"}
+                    </span>
+
+                    <form action={deleteMarketplace}>
+                      <input
+                        type="hidden"
+                        name="marketplace_id"
+                        value={marketplace.id}
+                      />
+
+                      <ConfirmMarketplaceDeleteButton
+                        marketplaceName={marketplace.name}
+                      />
+                    </form>
                   </div>
                 </div>
-
-                <div className="md:w-40">
-                  {hasValidLink && offer.isAvailable ? (
-                    <a
-                      href={offer.affiliateUrl ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer sponsored"
-                      className="block rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
-                    >
-                      Buka Toko
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full cursor-not-allowed rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400"
-                    >
-                      Link belum tersedia
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <p className="mt-4 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
-                Terakhir diperiksa: {formatCheckedAt(offer.lastCheckedAt)}
-              </p>
-            </article>
-          );
-        })}
+              ))}
+            </div>
+          )}
+        </section>
       </div>
-
-      <p className="mt-4 text-[10px] leading-5 text-slate-400">
-        Harga dan ketersediaan dapat berubah sewaktu-waktu. Periksa kembali
-        detail akhir di marketplace sebelum melakukan pembelian.
-      </p>
-    </section>
+    </main>
   );
 }
