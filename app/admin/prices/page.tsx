@@ -171,11 +171,29 @@ async function updateProductPrice(formData: FormData) {
 
   const supabase = await requireAdmin();
   const now = new Date().toISOString();
+  const roundedPrice = Math.round(price);
+
+  const { data: currentPriceRow, error: currentPriceError } =
+    await supabase
+      .from("product_prices")
+      .select("price")
+      .eq("id", priceId)
+      .maybeSingle();
+
+  if (currentPriceError || !currentPriceRow) {
+    redirect(
+      `/admin/prices?error=${encodeURIComponent(
+        currentPriceError?.message ?? "Data harga tidak ditemukan.",
+      )}`,
+    );
+  }
+
+  const previousPrice = Number(currentPriceRow.price);
 
   const { error } = await supabase
     .from("product_prices")
     .update({
-      price: Math.round(price),
+      price: roundedPrice,
       original_price: Math.round(originalPrice),
       shipping_cost: Math.round(shippingCost),
       affiliate_url: affiliateUrl || "#",
@@ -192,9 +210,59 @@ async function updateProductPrice(formData: FormData) {
     );
   }
 
+  if (Number.isFinite(previousPrice) && previousPrice !== roundedPrice) {
+    const { count, error: historyCountError } = await supabase
+      .from("product_price_history")
+      .select("product_price_id", {
+        count: "exact",
+        head: true,
+      })
+      .eq("product_price_id", priceId);
+
+    if (historyCountError) {
+      redirect(
+        `/admin/prices?error=${encodeURIComponent(
+          `Harga berhasil diperbarui, tetapi riwayat gagal diperiksa: ${historyCountError.message}`,
+        )}`,
+      );
+    }
+
+    const historyEntries = [];
+
+    if ((count ?? 0) === 0) {
+      historyEntries.push({
+        product_price_id: priceId,
+        price: previousPrice,
+        captured_at: new Date(
+          new Date(now).getTime() - 1000,
+        ).toISOString(),
+      });
+    }
+
+    historyEntries.push({
+      product_price_id: priceId,
+      price: roundedPrice,
+      captured_at: now,
+    });
+
+    const { error: historyError } = await supabase
+      .from("product_price_history")
+      .insert(historyEntries);
+
+    if (historyError) {
+      redirect(
+        `/admin/prices?error=${encodeURIComponent(
+          `Harga berhasil diperbarui, tetapi riwayat gagal disimpan: ${historyError.message}`,
+        )}`,
+      );
+    }
+  }
+
   redirect(
     `/admin/prices?updated=${encodeURIComponent(
-      `Harga ${productName} berhasil diperbarui.`,
+      previousPrice !== roundedPrice
+        ? `Harga ${productName} berhasil diperbarui dan riwayat harga dicatat.`
+        : `Data ${productName} berhasil diperbarui tanpa perubahan harga.`,
     )}`,
   );
 }
