@@ -321,12 +321,21 @@ export default async function AdminMarketplacesPage({
             </p>
           </div>
 
-          <Link
-            href="/admin"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
-          >
-            Kembali ke Dashboard
-          </Link>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/admin/prices"
+              className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white hover:bg-orange-600"
+            >
+              Kelola Harga
+            </Link>
+
+            <Link
+              href="/admin"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
         </div>
 
         {params.created && (
