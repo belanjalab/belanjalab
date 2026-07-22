@@ -1,3 +1,6 @@
+import * as cheerio from 'cheerio';
+import { decode } from 'html-entities';
+
 export type ParsedShopeeProduct = {
   title: string | null;
   image: string | null;
@@ -6,35 +9,42 @@ export type ParsedShopeeProduct = {
   description: string | null;
 };
 
-function extract(pattern: RegExp, html: string) {
-  const match = html.match(pattern);
-  return match?.[1]?.trim() ?? null;
-}
-
 export function parseShopeeHtml(html: string): ParsedShopeeProduct {
-  const title =
-    extract(/<title>(.*?)<\/title>/is, html) ??
-    extract(/"name":"(.*?)"/is, html);
+  const $ = cheerio.load(html);
 
-  const image =
-    extract(/property="og:image"\s+content="(.*?)"/is, html) ??
-    extract(/"image":"(.*?)"/is, html);
+  // 1. Ambil data dasar dari Meta Tags (Lebih stabil dari Regex)
+  let title = $('meta[property="og:title"]').attr('content') || $('title').text() || null;
+  const image = $('meta[property="og:image"]').attr('content') || null;
+  const description = $('meta[property="og:description"]').attr('content') || null;
 
-  const description =
-    extract(/property="og:description"\s+content="(.*?)"/is, html) ??
-    extract(/"description":"(.*?)"/is, html);
+  let brand: string | null = null;
+  let category: string | null = null;
 
-  const brand =
-    extract(/"brand":"(.*?)"/is, html) ??
-    extract(/"brand":\{"@type":"Brand","name":"(.*?)"/is, html);
+  // 2. Cari data terstruktur di dalam JSON-LD (Sangat akurat untuk E-Commerce)
+  $('script[type="application/ld+json"]').each((_, element) => {
+    try {
+      const scriptContent = $(element).html();
+      if (scriptContent) {
+        const jsonData = JSON.parse(scriptContent);
+        
+        // Memastikan tipe JSON adalah Produk
+        if (jsonData['@type'] === 'Product') {
+          brand = jsonData.brand?.name || brand;
+          category = jsonData.category || category;
+          if (!title) title = jsonData.name || null;
+        }
+      }
+    } catch (e) {
+      // Abaikan error jika JSON dari Shopee cacat
+    }
+  });
 
-  const category = extract(/"category":"(.*?)"/is, html);
-
+  // 3. Bersihkan karakter HTML (misal: "&amp;" menjadi "&")
   return {
-    title,
+    title: title ? decode(title) : null,
     image,
     brand,
     category,
-    description,
+    description: description ? decode(description) : null,
   };
 }
