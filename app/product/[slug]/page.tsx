@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug } from "@/lib/products";
@@ -11,6 +12,68 @@ type ProductPageProps = {
     slug: string;
   }>;
 };
+
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://belanjalab.com";
+
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    return {
+      title: "Produk tidak ditemukan",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const category = product.categories?.[0]?.name ?? "Produk";
+  const description =
+    product.short_description ??
+    product.description ??
+    `Lihat ulasan, skor, spesifikasi, dan perbandingan harga ${product.name} di BelanjaLab.`;
+  const canonicalPath = `/product/${product.slug}`;
+  const imageUrl = product.image_url ?? "/images/products/product-placeholder.svg";
+
+  return {
+    title: product.name,
+    description,
+    keywords: [
+      product.name,
+      `review ${product.name}`,
+      `harga ${product.name}`,
+      category,
+      "BelanjaLab",
+    ],
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      type: "website",
+      locale: "id_ID",
+      url: canonicalPath,
+      siteName: "BelanjaLab",
+      title: product.name,
+      description,
+      images: [
+        {
+          url: imageUrl,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -78,8 +141,58 @@ export default async function ProductPage({
     ["Kemudahan", easeOfUseScore],
   ] as const;
 
+  const productUrl = `${siteUrl}/product/${product.slug}`;
+  const productImage =
+    product.image_url ?? `${siteUrl}/images/products/product-placeholder.svg`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description:
+      product.short_description ??
+      product.description ??
+      `Informasi dan perbandingan harga ${product.name}.`,
+    image: [productImage],
+    url: productUrl,
+    brand: {
+      "@type": "Brand",
+      name: brand,
+    },
+    category,
+    ...(overallScore > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: overallScore.toFixed(1),
+            bestRating: "10",
+            worstRating: "1",
+            ratingCount: "1",
+          },
+        }
+      : {}),
+    ...(lowestPrice !== null
+      ? {
+          offers: {
+            "@type": "AggregateOffer",
+            priceCurrency: "IDR",
+            lowPrice: lowestPrice,
+            offerCount: product.product_prices?.length ?? 1,
+            availability: "https://schema.org/InStock",
+            url: productUrl,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-6 md:py-4">
           <Link href="/" className="flex items-center gap-2">
@@ -136,7 +249,7 @@ export default async function ProductPage({
               <img
                 src={
                   product.image_url ??
-                  "/images/products/logitech-g102.png"
+                  "/images/products/product-placeholder.svg"
                 }
                 alt={product.name}
                 className="h-full w-full object-contain"
