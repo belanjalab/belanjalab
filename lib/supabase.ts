@@ -1,13 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  "https://sosfbgtcquphgdnzulvk.supabase.co";
+import { getSupabaseConfig } from "@/lib/supabase-config";
 
-const supabasePublishableKey =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_F_6xoAaLgsO1YPT8hkq4Pg_Jw-6iL6S";
+let browserClient: ReturnType<typeof createClient> | undefined;
 
 export function getSupabaseClient() {
-  return createClient(supabaseUrl, supabasePublishableKey);
+  if (!browserClient) {
+    const { url, publishableKey } = getSupabaseConfig();
+    browserClient = createClient(url, publishableKey);
+  }
+
+  return browserClient;
 }
