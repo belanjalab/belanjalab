@@ -129,7 +129,7 @@ async function updateProduct(formData: FormData) {
   let imageUrl =
     manualImageUrl ||
     currentImageUrl ||
-    "/images/products/logitech-g102.png";
+    "/images/products/product-placeholder.svg";
 
   let uploadedImagePath: string | null = null;
   let shouldDeleteOldImage = false;

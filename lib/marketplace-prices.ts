@@ -1,5 +1,7 @@
 import { getSupabaseClient } from "./supabase";
 
+type Relation<T> = T | T[] | null | undefined;
+
 type MarketplaceRelation = {
   name: string;
 };
@@ -13,7 +15,7 @@ type ProductPriceRow = {
   is_available: boolean | null;
   stock_status: string | null;
   last_checked_at: string | null;
-  marketplaces?: MarketplaceRelation[] | null;
+  marketplaces?: Relation<MarketplaceRelation>;
 };
 
 type PriceHistoryRow = {
@@ -50,6 +52,14 @@ export type MarketplacePriceResult = {
   offers: MarketplaceOffer[];
 };
 
+function getSingleRelation<T>(relation: Relation<T>): T | null {
+  if (!relation) {
+    return null;
+  }
+
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+}
+
 function toNumber(value: number | string | null | undefined) {
   const number = Number(value ?? 0);
   return Number.isFinite(number) ? number : 0;
@@ -67,11 +77,6 @@ export async function getMarketplaceOffersByProductSlug(
   slug: string,
 ): Promise<MarketplacePriceResult | null> {
   const supabase = getSupabaseClient();
-
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
-    return null;
-  }
 
   const { data: product, error: productError } = await supabase
     .from("products")
@@ -95,13 +100,17 @@ export async function getMarketplaceOffersByProductSlug(
     `)
     .eq("slug", slug)
     .eq("status", "published")
-    .single();
+    .maybeSingle();
 
-  if (productError || !product) {
+  if (productError) {
     console.error(
       "Gagal mengambil harga marketplace:",
-      productError?.message ?? "Produk tidak ditemukan.",
+      productError.message,
     );
+    return null;
+  }
+
+  if (!product) {
     return null;
   }
 
@@ -111,7 +120,12 @@ export async function getMarketplaceOffersByProductSlug(
       : []
   ) as unknown as ProductPriceRow[];
 
-  const priceIds = priceRows.map((item) => item.id);
+  const validPriceRows = priceRows.filter((item) => {
+    const price = toNumber(item.price);
+    return price > 0;
+  });
+
+  const priceIds = validPriceRows.map((item) => item.id);
   let historyRows: PriceHistoryRow[] = [];
 
   if (priceIds.length > 0) {
@@ -136,8 +150,9 @@ export async function getMarketplaceOffersByProductSlug(
     }
   }
 
-  const offers = priceRows
+  const offers = validPriceRows
     .map((offer) => {
+      const marketplace = getSingleRelation(offer.marketplaces);
       const price = toNumber(offer.price);
       const originalPrice =
         offer.original_price === null
@@ -148,21 +163,16 @@ export async function getMarketplaceOffersByProductSlug(
 
       return {
         id: offer.id,
-        marketplace:
-          offer.marketplaces?.[0]?.name ?? "Marketplace",
+        marketplace: marketplace?.name ?? "Marketplace",
         price,
         originalPrice,
         shippingCost,
         totalPrice,
         formattedPrice: formatRupiah(price),
         formattedOriginalPrice:
-          originalPrice !== null
-            ? formatRupiah(originalPrice)
-            : null,
+          originalPrice !== null ? formatRupiah(originalPrice) : null,
         formattedShippingCost:
-          shippingCost > 0
-            ? formatRupiah(shippingCost)
-            : "Gratis ongkir",
+          shippingCost > 0 ? formatRupiah(shippingCost) : "Gratis ongkir",
         formattedTotalPrice: formatRupiah(totalPrice),
         affiliateUrl: offer.affiliate_url,
         isAvailable: offer.is_available ?? false,
@@ -170,8 +180,7 @@ export async function getMarketplaceOffersByProductSlug(
         lastCheckedAt: offer.last_checked_at,
         priceHistory: historyRows
           .filter(
-            (history) =>
-              history.product_price_id === offer.id,
+            (history) => history.product_price_id === offer.id,
           )
           .map((history) => ({
             price: toNumber(history.price),

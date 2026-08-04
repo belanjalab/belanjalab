@@ -20,13 +20,24 @@ function redirectTo(request: NextRequest, pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isPublicAdminRoute = PUBLIC_ADMIN_ROUTES.has(pathname);
+  const isProtectedAdminRoute = isAdminRoute && !isPublicAdminRoute;
+
   if (!supabaseUrl || !supabasePublishableKey) {
     console.error(
       "Supabase environment variables belum tersedia di runtime Cloudflare.",
     );
 
-    if (request.nextUrl.pathname.startsWith("/admin")) {
-      return redirectTo(request, "/admin/login");
+    if (isProtectedAdminRoute) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/admin/login";
+      loginUrl.searchParams.set(
+        "error",
+        "Konfigurasi aplikasi belum lengkap.",
+      );
+      return NextResponse.redirect(loginUrl);
     }
 
     return NextResponse.next({ request });
@@ -56,11 +67,6 @@ export async function middleware(request: NextRequest) {
       },
     },
   );
-
-  const pathname = request.nextUrl.pathname;
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isPublicAdminRoute = PUBLIC_ADMIN_ROUTES.has(pathname);
-  const isProtectedAdminRoute = isAdminRoute && !isPublicAdminRoute;
 
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;

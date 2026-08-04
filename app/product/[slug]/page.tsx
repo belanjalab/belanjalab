@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/lib/products";
+import {
+  getProductBySlug,
+  getSingleRelation,
+} from "@/lib/products";
 import { getMarketplaceOffersByProductSlug } from "@/lib/marketplace-prices";
+import {
+  PRODUCT_PLACEHOLDER_PATH,
+  SITE_URL,
+  toAbsoluteSiteUrl,
+} from "@/lib/site-config";
 import MarketplaceOffers from "./marketplace-offers";
 
 export const revalidate = 3600;
@@ -12,11 +20,6 @@ type ProductPageProps = {
     slug: string;
   }>;
 };
-
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://belanjalab.com";
 
 export async function generateMetadata({
   params,
@@ -31,13 +34,14 @@ export async function generateMetadata({
     };
   }
 
-  const category = product.categories?.[0]?.name ?? "Produk";
+  const category =
+    getSingleRelation(product.categories)?.name ?? "Produk";
   const description =
     product.short_description ??
     product.description ??
     `Lihat ulasan, skor, spesifikasi, dan perbandingan harga ${product.name} di BelanjaLab.`;
   const canonicalPath = `/product/${product.slug}`;
-  const imageUrl = product.image_url ?? "/images/products/product-placeholder.svg";
+  const imageUrl = toAbsoluteSiteUrl(product.image_url);
 
   return {
     title: product.name,
@@ -120,9 +124,11 @@ export default async function ProductPage({
     notFound();
   }
 
-  const category = product.categories?.[0]?.name ?? "Produk";
-  const brand = product.brands?.[0]?.name ?? "Tanpa merek";
-  const score = product.product_scores?.[0];
+  const category =
+    getSingleRelation(product.categories)?.name ?? "Produk";
+  const brand =
+    getSingleRelation(product.brands)?.name ?? "Tanpa merek";
+  const score = getSingleRelation(product.product_scores);
 
   const overallScore = Number(score?.overall_score ?? 0);
   const performanceScore = Number(score?.performance ?? 0);
@@ -141,9 +147,8 @@ export default async function ProductPage({
     ["Kemudahan", easeOfUseScore],
   ] as const;
 
-  const productUrl = `${siteUrl}/product/${product.slug}`;
-  const productImage =
-    product.image_url ?? `${siteUrl}/images/products/product-placeholder.svg`;
+  const productUrl = `${SITE_URL}/product/${product.slug}`;
+  const productImage = toAbsoluteSiteUrl(product.image_url);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -238,7 +243,7 @@ export default async function ProductPage({
               <img
                 src={
                   product.image_url ??
-                  "/images/products/product-placeholder.svg"
+                  PRODUCT_PLACEHOLDER_PATH
                 }
                 alt={product.name}
                 className="h-full w-full object-contain"

@@ -160,7 +160,7 @@ export async function getAdminProductForEdit(
     shortDescription: product.short_description ?? "",
     description: product.description ?? "",
     imageUrl:
-      product.image_url ?? "/images/products/logitech-g102.png",
+      product.image_url ?? "/images/products/product-placeholder.svg",
     status: product.status,
     categoryId: product.category_id,
     brandId: product.brand_id,

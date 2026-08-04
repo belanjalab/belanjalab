@@ -383,7 +383,7 @@ export async function getAdminProductsPage(
       slug: product.slug,
       status: product.status,
       imageUrl:
-        product.image_url ?? "/images/products/logitech-g102.png",
+        product.image_url ?? "/images/products/product-placeholder.svg",
       category: product.category ?? "Tanpa kategori",
       brand: product.brand ?? "Tanpa merek",
       score,

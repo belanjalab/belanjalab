@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://belanjalab.com";
+import { SITE_URL } from "@/lib/site-config";
 
 const siteDescription =
   "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "BelanjaLab",
     template: "%s | BelanjaLab",
@@ -24,12 +22,9 @@ export const metadata: Metadata = {
     "harga produk",
     "belanja cerdas",
   ],
-  authors: [{ name: "BelanjaLab", url: siteUrl }],
+  authors: [{ name: "BelanjaLab", url: SITE_URL }],
   creator: "BelanjaLab",
   publisher: "BelanjaLab",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "id_ID",

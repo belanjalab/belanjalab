@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SITE_URL } from "@/lib/site-config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,7 @@ async function sendResetEmail(formData: FormData) {
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo:
-      "https://belanjalab.dik-julyan.workers.dev/auth/callback?next=/admin/update-password",
+    redirectTo: `${SITE_URL}/auth/callback?next=/admin/update-password`,
   });
 
   if (error) {
@@ -36,7 +36,7 @@ async function sendResetEmail(formData: FormData) {
 
     redirect(
       `/admin/forgot-password?error=${encodeURIComponent(
-        `${error.message}${error.code ? ` (${error.code})` : ""}`,
+        "Link reset gagal dikirim. Silakan coba lagi beberapa saat.",
       )}`,
     );
   }

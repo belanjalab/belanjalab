@@ -1,10 +1,13 @@
+import type { Metadata } from "next";
 import { getHomepageArticles } from "@/lib/articles";
 import { getHomepageCategories } from "@/lib/categories";
 import { getActiveSiteFooter } from "@/lib/footer";
 import { getActiveHero } from "@/lib/hero";
 import { getFeaturedProducts } from "@/lib/products";
 
-
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export const revalidate = 3600;
 

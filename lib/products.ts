@@ -1,4 +1,7 @@
+import { PRODUCT_PLACEHOLDER_PATH } from "./site-config";
 import { getSupabaseClient } from "./supabase";
+
+type Relation<T> = T | T[] | null | undefined;
 
 type CategoryRelation = {
   name: string;
@@ -30,7 +33,7 @@ type PriceRelation = {
   stock_status?: string | null;
   last_checked_at?: string | null;
   updated_at?: string | null;
-  marketplaces?: MarketplaceRelation[] | MarketplaceRelation | null;
+  marketplaces?: Relation<MarketplaceRelation>;
 };
 
 type SpecificationRelation = {
@@ -43,8 +46,8 @@ type FeaturedProductRow = {
   name: string;
   slug: string;
   image_url: string | null;
-  categories?: CategoryRelation[] | null;
-  product_scores?: ScoreRelation[] | null;
+  categories?: Relation<CategoryRelation>;
+  product_scores?: Relation<ScoreRelation>;
   product_prices?: PriceRelation[] | null;
 };
 
@@ -65,9 +68,9 @@ export type ProductDetail = {
   short_description: string | null;
   description: string | null;
   image_url: string | null;
-  categories?: CategoryRelation[] | null;
-  brands?: BrandRelation[] | null;
-  product_scores?: ScoreRelation[] | null;
+  categories?: Relation<CategoryRelation>;
+  brands?: Relation<BrandRelation>;
+  product_scores?: Relation<ScoreRelation>;
   product_prices?: PriceRelation[] | null;
 };
 
@@ -86,6 +89,16 @@ export type CompareProduct = {
   formattedPrice: string;
   specifications: Record<string, string>;
 };
+
+export function getSingleRelation<T>(
+  relation: Relation<T>,
+): T | null {
+  if (!relation) {
+    return null;
+  }
+
+  return Array.isArray(relation) ? relation[0] ?? null : relation;
+}
 
 function formatRupiah(value: number | null) {
   if (value === null) {
@@ -157,21 +170,20 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
   const rows = (data ?? []) as unknown as FeaturedProductRow[];
 
   return rows.map((product) => {
-    const category = product.categories?.[0]?.name ?? "Produk";
-    const score = product.product_scores?.[0]?.overall_score;
+    const category = getSingleRelation(product.categories);
+    const score = getSingleRelation(product.product_scores);
     const lowestPrice = getLowestPrice(product.product_prices);
+    const numericScore = Number(score?.overall_score);
 
     return {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      imageUrl:
-        product.image_url ?? "/images/products/product-placeholder.svg",
-      category,
-      score:
-        score !== null && score !== undefined
-          ? `${Number(score).toFixed(1)}/10`
-          : "Belum dinilai",
+      imageUrl: product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
+      category: category?.name ?? "Produk",
+      score: Number.isFinite(numericScore)
+        ? `${numericScore.toFixed(1)}/10`
+        : "Belum dinilai",
       price: formatRupiah(lowestPrice),
     };
   });
@@ -221,10 +233,14 @@ export async function getProductBySlug(
     `)
     .eq("slug", slug)
     .eq("status", "published")
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Gagal mengambil detail produk:", error.message);
+    return null;
+  }
+
+  if (!data) {
     return null;
   }
 
@@ -274,9 +290,10 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
   const rows = (data ?? []) as unknown as CompareProductRow[];
 
   return rows.map((product) => {
-    const category = product.categories?.[0]?.name ?? "Produk";
-    const score = product.product_scores?.[0]?.overall_score;
+    const category = getSingleRelation(product.categories);
+    const score = getSingleRelation(product.product_scores);
     const lowestPrice = getLowestPrice(product.product_prices);
+    const numericScore = Number(score?.overall_score ?? 0);
 
     const specificationMap = Object.fromEntries(
       (product.product_specifications ?? []).map((item) => [
@@ -289,10 +306,9 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      imageUrl:
-        product.image_url ?? "/images/products/product-placeholder.svg",
-      category,
-      score: Number(score ?? 0),
+      imageUrl: product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
+      category: category?.name ?? "Produk",
+      score: Number.isFinite(numericScore) ? numericScore : 0,
       price: lowestPrice,
       formattedPrice: formatRupiah(lowestPrice),
       specifications: specificationMap,

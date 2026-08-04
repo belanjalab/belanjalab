@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 3600;
 
@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Artikel BelanjaLab",
   description:
     "Panduan, rekomendasi, dan insight produk untuk membantu keputusan belanja yang lebih cerdas.",
+  alternates: { canonical: "/articles" },
 };
 
 type ArticleListItem = {
@@ -35,7 +36,7 @@ function estimateReadingTime(content: string | null) {
 }
 
 async function getPublishedArticles() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from("articles")

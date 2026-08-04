@@ -108,7 +108,7 @@ async function createProduct(formData: FormData) {
   }
 
   let imageUrl =
-    manualImageUrl || "/images/products/logitech-g102.png";
+    manualImageUrl || "/images/products/product-placeholder.svg";
 
   if (imageFile instanceof File && imageFile.size > 0) {
     const uploadResult = await uploadProductImage(imageFile, slug);

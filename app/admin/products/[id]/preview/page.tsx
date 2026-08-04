@@ -265,7 +265,7 @@ export default async function AdminProductPreviewPage({
               <img
                 src={
                   product.image_url ??
-                  "/images/products/logitech-g102.png"
+                  "/images/products/product-placeholder.svg"
                 }
                 alt={product.name}
                 className="h-full w-full object-contain"

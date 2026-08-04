@@ -2,13 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { SITE_URL } from "@/lib/site-config";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 3600;
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://belanjalab.com";
 
 type ArticlePageProps = {
   params: Promise<{
@@ -40,7 +37,7 @@ function estimateReadingTime(content: string) {
 }
 
 async function getArticle(slug: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from("articles")
@@ -119,7 +116,7 @@ export default async function ArticlePage({
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
-  const articleUrl = `${siteUrl}/articles/${article.slug}`;
+  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -133,15 +130,15 @@ export default async function ArticlePage({
     author: {
       "@type": "Organization",
       name: "BelanjaLab",
-      url: siteUrl,
+      url: SITE_URL,
     },
     publisher: {
       "@type": "Organization",
       name: "BelanjaLab",
-      url: siteUrl,
+      url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${siteUrl}/icon.png`,
+        url: `${SITE_URL}/icon.png`,
       },
     },
     ...(article.cover_image ? { image: [article.cover_image] } : {}),

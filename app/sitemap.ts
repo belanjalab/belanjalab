@@ -1,10 +1,7 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site-config";
 
 import { getSupabaseClient } from "@/lib/supabase";
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://belanjalab.com";
 
 export const revalidate = 3600;
 
@@ -50,13 +47,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: siteUrl,
+      url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${siteUrl}/articles`,
+      url: `${SITE_URL}/articles`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
@@ -66,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productRoutes: MetadataRoute.Sitemap = (
     (productsResult.data ?? []) as ProductSitemapRow[]
   ).map((product) => ({
-    url: `${siteUrl}/product/${product.slug}`,
+    url: `${SITE_URL}/product/${product.slug}`,
     lastModified: product.updated_at
       ? new Date(product.updated_at)
       : new Date(),
@@ -77,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articleRoutes: MetadataRoute.Sitemap = (
     (articlesResult.data ?? []) as ArticleSitemapRow[]
   ).map((article) => ({
-    url: `${siteUrl}/articles/${article.slug}`,
+    url: `${SITE_URL}/articles/${article.slug}`,
     lastModified: article.updated_at
       ? new Date(article.updated_at)
       : new Date(),

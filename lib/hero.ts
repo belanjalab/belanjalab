@@ -52,7 +52,8 @@ export async function getActiveHero(): Promise<ActiveHero | null> {
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Failed to fetch active hero: ${error.message}`);
+    console.error("Gagal mengambil hero aktif:", error.message);
+    return null;
   }
 
   return data as unknown as ActiveHero | null;

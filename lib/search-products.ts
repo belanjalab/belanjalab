@@ -1,3 +1,4 @@
+import { PRODUCT_PLACEHOLDER_PATH } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type CategoryRelation = {
@@ -14,6 +15,8 @@ type ScoreRelation = {
 
 type PriceRelation = {
   price: number | string | null;
+  is_available?: boolean | null;
+  stock_status?: string | null;
 };
 
 type SearchProductRow = {
@@ -61,8 +64,13 @@ function getSingleRelation<T>(
 
 function getLowestPrice(prices: PriceRelation[] | null | undefined) {
   const numericPrices = (prices ?? [])
+    .filter(
+      (item) =>
+        item.is_available !== false &&
+        item.stock_status !== "out_of_stock",
+    )
     .map((item) => Number(item.price))
-    .filter((price) => Number.isFinite(price));
+    .filter((price) => Number.isFinite(price) && price > 0);
 
   return numericPrices.length > 0 ? Math.min(...numericPrices) : null;
 }
@@ -96,7 +104,7 @@ function mapSearchProduct(product: SearchProductRow): SearchProduct {
     shortDescription:
       product.short_description ?? "Deskripsi belum tersedia.",
     imageUrl:
-      product.image_url ?? "/images/products/logitech-g102.png",
+      product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
     category: category?.name ?? "Produk",
     brand: brand?.name ?? "Tanpa merek",
     score:
@@ -124,7 +132,9 @@ const productSelect = `
     overall_score
   ),
   product_prices (
-    price
+    price,
+    is_available,
+    stock_status
   )
 `;
 
@@ -139,10 +149,6 @@ export async function searchProducts(
 
   const supabase = getSupabaseClient();
 
-  if (!supabase) {
-    console.error("Konfigurasi Supabase belum tersedia.");
-    return [];
-  }
 
   const searchPattern = `%${query}%`;
 
