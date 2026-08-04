@@ -36,6 +36,33 @@ type ParsedCsv = {
   rows: CsvRow[];
 };
 
+const TEMPLATE_EXAMPLE_ROW = [
+  "Logitech G102 Lightsync",
+  "logitech-g102-lightsync",
+  "Mouse",
+  "Logitech",
+  "Mouse gaming ringan dengan pencahayaan RGB.",
+  "Logitech G102 Lightsync cocok untuk penggunaan harian dan gaming kasual.",
+  "https://example.com/logitech-g102.jpg",
+  "draft",
+  "8.0",
+  "7.5",
+  "7.5",
+  "8.5",
+  "8.5",
+  "Shopee",
+  "249000",
+  "https://shopee.co.id/example",
+] as const;
+
+function escapeCsvCell(value: string) {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+
+  return value;
+}
+
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let currentRow: string[] = [];
@@ -182,6 +209,26 @@ export default function ProductCsvImportClient() {
   >([]);
   const [isPending, startTransition] = useTransition();
 
+  function handleDownloadTemplate() {
+    const csvContent = [
+      EXPECTED_HEADERS.map(escapeCsvCell).join(","),
+      TEMPLATE_EXAMPLE_ROW.map(escapeCsvCell).join(","),
+    ].join("\r\n");
+
+    const blob = new Blob([`\uFEFF${csvContent}`], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = "belanjalab-product-import-template.csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
   const validation = useMemo(() => {
     if (!parsedCsv) {
       return {
@@ -312,9 +359,19 @@ export default function ProductCsvImportClient() {
           Upload CSV
         </h2>
 
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          Gunakan CSV UTF-8 dengan header sesuai template BelanjaLab.
-        </p>
+        <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs leading-5 text-slate-500">
+            Gunakan CSV UTF-8 dengan header sesuai template BelanjaLab.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="w-fit rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
+          >
+            Download Template CSV
+          </button>
+        </div>
 
         <input
           type="file"
