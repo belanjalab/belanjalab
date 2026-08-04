@@ -6,7 +6,7 @@ import { getFeaturedProducts } from "@/lib/products";
 
 
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function Home() {
   const [products, hero, categories, articles, footer] = await Promise.all([
@@ -21,7 +21,7 @@ export default async function Home() {
   const heroProductImage =
     hero?.hero_image_url ??
     products[0]?.imageUrl ??
-    "/images/products/logitech-g102.png";
+    "/images/products/product-placeholder.svg";
   const heroProductName =
     heroProduct?.name ?? products[0]?.name ?? "Produk pilihan BelanjaLab";
 

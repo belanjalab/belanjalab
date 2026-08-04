@@ -166,7 +166,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       name: product.name,
       slug: product.slug,
       imageUrl:
-        product.image_url ?? "/images/products/logitech-g102.png",
+        product.image_url ?? "/images/products/product-placeholder.svg",
       category,
       score:
         score !== null && score !== undefined
@@ -290,7 +290,7 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
       name: product.name,
       slug: product.slug,
       imageUrl:
-        product.image_url ?? "/images/products/logitech-g102.png",
+        product.image_url ?? "/images/products/product-placeholder.svg",
       category,
       score: Number(score ?? 0),
       price: lowestPrice,

@@ -5,7 +5,7 @@ import { getProductBySlug } from "@/lib/products";
 import { getMarketplaceOffersByProductSlug } from "@/lib/marketplace-prices";
 import MarketplaceOffers from "./marketplace-offers";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type ProductPageProps = {
   params: Promise<{

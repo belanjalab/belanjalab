@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Artikel BelanjaLab",
