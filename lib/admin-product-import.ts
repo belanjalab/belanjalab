@@ -261,6 +261,22 @@ export async function validateProductsCsv(
       });
     }
 
+    if (!isHttpUrl(row.image_url ?? "")) {
+      issues.push({
+        rowNumber,
+        field: "image_url",
+        message: "image_url harus berupa URL http/https yang valid.",
+      });
+    }
+
+    if (!isHttpUrl(affiliateUrl)) {
+      issues.push({
+        rowNumber,
+        field: "affiliate_url",
+        message: "affiliate_url harus berupa URL http/https yang valid.",
+      });
+    }
+
     if (affiliateUrl && existingAffiliateUrls.has(affiliateUrl)) {
       issues.push({
         rowNumber,
@@ -283,11 +299,13 @@ export async function validateProductsCsv(
 
 export async function importProductsFromCsv(
   rows: ProductCsvImportRow[],
+  fileName?: string,
 ): Promise<{
   ok: boolean;
   results: ProductCsvImportResult[];
   successCount: number;
   errorCount: number;
+  runId?: string;
 }> {
   if (!Array.isArray(rows) || rows.length === 0) {
     return {
@@ -336,44 +354,36 @@ export async function importProductsFromCsv(
     };
   }
 
-  const { data: adminRecord } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const validation = await validateProductsCsv(rows);
 
-  if (!adminRecord) {
+  if (!validation.ok) {
+    const validationResults = validation.issues.map((issue) => ({
+      rowNumber: issue.rowNumber,
+      name:
+        issue.rowNumber >= 2
+          ? rows[issue.rowNumber - 2]?.name?.trim() || "Tanpa nama"
+          : "Validasi CSV",
+      status: "error" as const,
+      message: issue.message,
+    }));
+
     return {
       ok: false,
-      results: [
-        {
-          rowNumber: 0,
-          name: "Akses admin",
-          status: "error",
-          message: "Akun ini tidak memiliki akses admin.",
-        },
-      ],
+      results: validationResults,
       successCount: 0,
-      errorCount: 1,
+      errorCount: validationResults.length,
     };
   }
 
-  const [
-    { data: categoryRows, error: categoryError },
-    { data: brandRows, error: brandError },
-    { data: marketplaceRows, error: marketplaceError },
-    { data: existingProducts, error: productReadError },
-  ] = await Promise.all([
-    supabase.from("categories").select("id,name"),
-    supabase.from("brands").select("id,name"),
-    supabase.from("marketplaces").select("id,name"),
-    supabase.from("products").select("slug"),
-  ]);
+  const { data: runId, error: runError } = await supabase.rpc(
+    "start_product_csv_import",
+    {
+      p_total_rows: rows.length,
+      p_file_name: fileName?.trim() || null,
+    },
+  );
 
-  const setupError =
-    categoryError ?? brandError ?? marketplaceError ?? productReadError;
-
-  if (setupError) {
+  if (runError) {
     return {
       ok: false,
       results: [
@@ -381,7 +391,9 @@ export async function importProductsFromCsv(
           rowNumber: 0,
           name: "Persiapan import",
           status: "error",
-          message: setupError.message,
+          message:
+            "Import log gagal dibuat. Pastikan migration atomic CSV import sudah dijalankan: " +
+            runError.message,
         },
       ],
       successCount: 0,
@@ -389,223 +401,56 @@ export async function importProductsFromCsv(
     };
   }
 
-  const categoryMap = new Map(
-    (categoryRows ?? []).map((item) => [
-      normalizeLookup(item.name),
-      item.id,
-    ]),
-  );
-
-  const brandMap = new Map(
-    (brandRows ?? []).map((item) => [
-      normalizeLookup(item.name),
-      item.id,
-    ]),
-  );
-
-  const marketplaceMap = new Map(
-    (marketplaceRows ?? []).map((item) => [
-      normalizeLookup(item.name),
-      item.id,
-    ]),
-  );
-
-  const usedSlugs = new Set(
-    (existingProducts ?? []).map((item) => item.slug),
-  );
-
   const results: ProductCsvImportResult[] = [];
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index];
     const rowNumber = index + 2;
-    const name = row.name?.trim() ?? "";
+    const name = row.name?.trim() || "Tanpa nama";
     const slug = slugify(row.slug?.trim() || name);
-    const categoryId = categoryMap.get(
-      normalizeLookup(row.category ?? ""),
+
+    const payload = {
+      name,
+      slug,
+      category: row.category?.trim() || "",
+      brand: row.brand?.trim() || "",
+      short_description: row.short_description?.trim() || "",
+      description: row.description?.trim() || "",
+      image_url: row.image_url?.trim() || "/images/products/product-placeholder.svg",
+      status:
+        row.status?.trim().toLowerCase() === "published"
+          ? "published"
+          : "draft",
+      performance: parseScore(row.performance),
+      design: parseScore(row.design),
+      features: parseScore(row.features),
+      value: parseScore(row.value),
+      ease_of_use: parseScore(row.ease_of_use),
+      marketplace: row.marketplace?.trim() || "",
+      price: parsePriceInput(row.price),
+      affiliate_url: row.affiliate_url?.trim() || "",
+    };
+
+    const { error } = await supabase.rpc(
+      "import_product_from_csv_atomic",
+      { p_data: payload },
     );
-    const brandId = brandMap.get(normalizeLookup(row.brand ?? ""));
-    const marketplaceName = row.marketplace?.trim() ?? "";
-    const marketplaceId = marketplaceName
-      ? marketplaceMap.get(normalizeLookup(marketplaceName))
-      : undefined;
-    const price = parsePriceInput(row.price);
-    const status =
-      row.status?.trim().toLowerCase() === "published"
-        ? "published"
-        : "draft";
-    const imageUrl =
-      row.image_url?.trim() ||
-      "/images/products/logitech-g102.png";
-    const affiliateUrl = row.affiliate_url?.trim() || "#";
 
-    if (!name || !slug) {
-      results.push({
-        rowNumber,
-        name: name || "Tanpa nama",
-        status: "error",
-        message: "Nama atau slug produk tidak valid.",
-      });
-      continue;
-    }
-
-    if (!categoryId) {
+    if (error) {
       results.push({
         rowNumber,
         name,
         status: "error",
-        message: `Kategori "${row.category}" tidak ditemukan.`,
+        message: error.message,
       });
       continue;
     }
-
-    if (!brandId) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: `Merek "${row.brand}" tidak ditemukan.`,
-      });
-      continue;
-    }
-
-    if (marketplaceName && !marketplaceId) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: `Marketplace "${marketplaceName}" tidak ditemukan.`,
-      });
-      continue;
-    }
-
-    if (marketplaceName && price <= 0) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: "Harga wajib lebih dari 0 jika marketplace diisi.",
-      });
-      continue;
-    }
-
-    if (!isHttpUrl(row.image_url ?? "")) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: "image_url harus berupa URL http/https yang valid.",
-      });
-      continue;
-    }
-
-    if (!isHttpUrl(row.affiliate_url ?? "")) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: "affiliate_url harus berupa URL http/https yang valid.",
-      });
-      continue;
-    }
-
-    if (usedSlugs.has(slug)) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: `Slug "${slug}" sudah digunakan.`,
-      });
-      continue;
-    }
-
-    const { data: product, error: productError } = await supabase
-      .from("products")
-      .insert({
-        name,
-        slug,
-        category_id: categoryId,
-        brand_id: brandId,
-        short_description:
-          row.short_description?.trim() || null,
-        description: row.description?.trim() || null,
-        image_url: imageUrl,
-        status,
-      })
-      .select("id")
-      .single();
-
-    if (productError || !product) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: productError?.message ?? "Produk gagal dibuat.",
-      });
-      continue;
-    }
-
-    const { error: scoreError } = await supabase
-      .from("product_scores")
-      .insert({
-        product_id: product.id,
-        performance: parseScore(row.performance),
-        design: parseScore(row.design),
-        features: parseScore(row.features),
-        value: parseScore(row.value),
-        ease_of_use: parseScore(row.ease_of_use),
-      });
-
-    if (scoreError) {
-      await supabase.from("products").delete().eq("id", product.id);
-
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: `Skor gagal disimpan: ${scoreError.message}`,
-      });
-      continue;
-    }
-
-    if (marketplaceId && price > 0) {
-      const now = new Date().toISOString();
-
-      const { error: priceError } = await supabase
-        .from("product_prices")
-        .insert({
-          product_id: product.id,
-          marketplace_id: marketplaceId,
-          price,
-          original_price: price,
-          shipping_cost: 0,
-          affiliate_url: affiliateUrl,
-          is_available: true,
-          stock_status: "in_stock",
-          last_checked_at: now,
-          updated_at: now,
-        });
-
-      if (priceError) {
-        await supabase.from("products").delete().eq("id", product.id);
-
-        results.push({
-          rowNumber,
-          name,
-          status: "error",
-          message: `Harga gagal disimpan: ${priceError.message}`,
-        });
-        continue;
-      }
-    }
-
-    usedSlugs.add(slug);
 
     results.push({
       rowNumber,
       name,
       status: "success",
-      message: `Produk berhasil diimport sebagai ${status}.`,
+      message: `Produk berhasil diimport sebagai ${payload.status}.`,
     });
   }
 
@@ -614,10 +459,30 @@ export async function importProductsFromCsv(
   ).length;
   const errorCount = results.length - successCount;
 
+  const { error: finishError } = await supabase.rpc(
+    "finish_product_csv_import",
+    {
+      p_run_id: runId,
+      p_success_count: successCount,
+      p_error_count: errorCount,
+      p_results: results,
+    },
+  );
+
+  if (finishError) {
+    results.push({
+      rowNumber: 0,
+      name: "Import log",
+      status: "error",
+      message: `Produk selesai diproses, tetapi log import gagal diperbarui: ${finishError.message}`,
+    });
+  }
+
   return {
-    ok: errorCount === 0,
+    ok: errorCount === 0 && !finishError,
     results,
     successCount,
-    errorCount,
+    errorCount: errorCount + (finishError ? 1 : 0),
+    runId: typeof runId === "string" ? runId : undefined,
   };
 }

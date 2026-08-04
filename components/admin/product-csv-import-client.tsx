@@ -4,8 +4,10 @@ import { useMemo, useState, useTransition } from "react";
 
 import {
   importProductsFromCsv,
+  validateProductsCsv,
   type ProductCsvImportResult,
   type ProductCsvImportRow,
+  type ProductCsvValidationIssue,
 } from "@/lib/admin-product-import";
 
 const REQUIRED_HEADERS = ["name", "category", "brand"] as const;
@@ -134,6 +136,22 @@ function validateScore(value: string) {
   return Number.isFinite(score) && score >= 0 && score <= 10;
 }
 
+function parsePriceInput(value: string) {
+  if (!value.trim()) {
+    return 0;
+  }
+
+  const normalized = value
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/^rp/i, "")
+    .replace(/[.,](?=\d{3}(?:[.,]|$))/g, "")
+    .replace(/,/g, ".");
+
+  const price = Number(normalized);
+  return Number.isFinite(price) && price > 0 ? Math.round(price) : 0;
+}
+
 function validateHttpUrl(value: string) {
   if (!value.trim()) {
     return true;
@@ -182,10 +200,10 @@ function getRowErrors(row: CsvRow, index: number) {
   }
 
   if (row.price?.trim()) {
-    const price = Number(row.price);
+    const price = parsePriceInput(row.price);
 
-    if (!Number.isFinite(price) || price < 0) {
-      errors.push(`Baris ${index}: price harus berupa angka positif.`);
+    if (price <= 0) {
+      errors.push(`Baris ${index}: price harus berupa angka lebih dari 0.`);
     }
   }
 
@@ -204,6 +222,10 @@ export default function ProductCsvImportClient() {
   const [fileName, setFileName] = useState("");
   const [parsedCsv, setParsedCsv] = useState<ParsedCsv | null>(null);
   const [fileError, setFileError] = useState("");
+  const [databaseIssues, setDatabaseIssues] = useState<
+    ProductCsvValidationIssue[]
+  >([]);
+  const [isValidating, setIsValidating] = useState(false);
   const [importResults, setImportResults] = useState<
     ProductCsvImportResult[]
   >([]);
@@ -258,6 +280,7 @@ export default function ProductCsvImportClient() {
 
     setParsedCsv(null);
     setFileError("");
+    setDatabaseIssues([]);
     setImportResults([]);
     setFileName(file?.name ?? "");
 
@@ -322,16 +345,46 @@ export default function ProductCsvImportClient() {
       return row;
     });
 
-    setParsedCsv({
+    const nextParsedCsv = {
       headers,
       rows,
-    });
+    };
+
+    setParsedCsv(nextParsedCsv);
+
+    const localMissingHeaders = REQUIRED_HEADERS.filter(
+      (header) => !headers.includes(header),
+    );
+    const localErrors = rows.flatMap((row, index) =>
+      getRowErrors(row, index + 2),
+    );
+
+    if (localMissingHeaders.length > 0 || localErrors.length > 0) {
+      return;
+    }
+
+    setIsValidating(true);
+
+    try {
+      const response = await validateProductsCsv(
+        rows as ProductCsvImportRow[],
+      );
+      setDatabaseIssues(response.issues);
+    } catch {
+      setFileError(
+        "Validasi database gagal dijalankan. Periksa koneksi lalu upload ulang CSV.",
+      );
+    } finally {
+      setIsValidating(false);
+    }
   }
 
   const isValid =
     parsedCsv &&
     validation.missingHeaders.length === 0 &&
-    validation.errors.length === 0;
+    validation.errors.length === 0 &&
+    databaseIssues.length === 0 &&
+    !isValidating;
 
 
   function handleImport() {
@@ -342,7 +395,7 @@ export default function ProductCsvImportClient() {
     const rows = parsedCsv.rows as ProductCsvImportRow[];
 
     startTransition(async () => {
-      const response = await importProductsFromCsv(rows);
+      const response = await importProductsFromCsv(rows, fileName);
       setImportResults(response.results);
     });
   }
@@ -406,17 +459,16 @@ export default function ProductCsvImportClient() {
             <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
               <p className="text-xs text-green-700">Baris valid</p>
               <p className="mt-1 text-2xl font-black text-green-700">
-                {validation.errors.length === 0
-                  ? parsedCsv.rows.length
-                  : Math.max(
-                      0,
-                      parsedCsv.rows.length -
-                        new Set(
-                          validation.errors.map((error) =>
-                            error.split(":")[0],
-                          ),
-                        ).size,
-                    )}
+                {Math.max(
+                  0,
+                  parsedCsv.rows.length -
+                    new Set([
+                      ...validation.errors.map((error) =>
+                        Number(error.match(/Baris (\d+)/)?.[1] ?? 0),
+                      ),
+                      ...databaseIssues.map((issue) => issue.rowNumber),
+                    ].filter((rowNumber) => rowNumber > 0)).size,
+                )}
               </p>
             </div>
 
@@ -424,7 +476,8 @@ export default function ProductCsvImportClient() {
               <p className="text-xs text-red-700">Total error</p>
               <p className="mt-1 text-2xl font-black text-red-700">
                 {validation.errors.length +
-                  validation.missingHeaders.length}
+                  validation.missingHeaders.length +
+                  databaseIssues.length}
               </p>
             </div>
           </div>
@@ -445,6 +498,34 @@ export default function ProductCsvImportClient() {
               <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs text-red-600">
                 {validation.errors.map((error, index) => (
                   <p key={`${error}-${index}`}>{error}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+
+          {isValidating && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+              Memeriksa kategori, brand, marketplace, slug, dan affiliate URL…
+            </div>
+          )}
+
+          {databaseIssues.length > 0 && (
+            <div className="rounded-2xl border border-red-200 bg-white p-5">
+              <h2 className="text-sm font-black text-red-700">
+                Validasi Database
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Perbaiki CSV sebelum melakukan import. Belum ada data yang
+                dimasukkan ke Supabase.
+              </p>
+
+              <div className="mt-3 max-h-64 space-y-2 overflow-y-auto text-xs text-red-600">
+                {databaseIssues.map((issue, index) => (
+                  <p key={`${issue.rowNumber}-${issue.field}-${index}`}>
+                    {issue.rowNumber > 0 ? `Baris ${issue.rowNumber}: ` : ""}
+                    {issue.message}
+                  </p>
                 ))}
               </div>
             </div>
@@ -545,10 +626,19 @@ export default function ProductCsvImportClient() {
             <button
               type="button"
               onClick={handleImport}
-              disabled={!isValid || isPending || importResults.length > 0}
+              disabled={
+                !isValid ||
+                isPending ||
+                isValidating ||
+                importResults.length > 0
+              }
               className="rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {isPending ? "Mengimport..." : "Import ke Supabase"}
+              {isValidating
+                ? "Memvalidasi..."
+                : isPending
+                  ? `Memproses ${parsedCsv.rows.length} produk...`
+                  : "Import ke Supabase"}
             </button>
           </div>
         </>

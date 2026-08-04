@@ -159,17 +159,6 @@ export default async function ProductPage({
       name: brand,
     },
     category,
-    ...(overallScore > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: overallScore.toFixed(1),
-            bestRating: "10",
-            worstRating: "1",
-            ratingCount: "1",
-          },
-        }
-      : {}),
     ...(lowestPrice !== null
       ? {
           offers: {
