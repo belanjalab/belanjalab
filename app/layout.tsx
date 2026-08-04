@@ -5,24 +5,26 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
   "https://belanjalab.com";
 
+const siteDescription =
+  "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: "BelanjaLab",
     template: "%s | BelanjaLab",
   },
-  description:
-    "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.",
+  description: siteDescription,
   applicationName: "BelanjaLab",
   keywords: [
     "BelanjaLab",
     "rekomendasi produk",
     "perbandingan produk",
-    "review produk",
+    "ulasan produk",
     "harga produk",
     "belanja cerdas",
   ],
-  authors: [{ name: "BelanjaLab" }],
+  authors: [{ name: "BelanjaLab", url: siteUrl }],
   creator: "BelanjaLab",
   publisher: "BelanjaLab",
   alternates: {
@@ -34,30 +36,23 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "BelanjaLab",
     title: "BelanjaLab",
-    description:
-      "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "BelanjaLab",
-      },
-    ],
+    description: siteDescription,
   },
   twitter: {
     card: "summary_large_image",
     title: "BelanjaLab",
-    description:
-      "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.",
-    images: ["/og-image.png"],
+    description: siteDescription,
   },
-  icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-icon.png" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 
