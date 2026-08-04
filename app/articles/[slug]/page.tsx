@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://belanjalab.com";
 
 type ArticlePageProps = {
   params: Promise<{
@@ -62,31 +66,39 @@ export async function generateMetadata({
 
   if (!article) {
     return {
-      title: "Artikel Tidak Ditemukan | BelanjaLab",
+      title: "Artikel tidak ditemukan",
+      robots: { index: false, follow: false },
     };
   }
 
+  const description =
+    article.excerpt ?? "Artikel dan panduan belanja dari BelanjaLab.";
+  const canonicalPath = `/articles/${article.slug}`;
+
   return {
-    title: `${article.title} | BelanjaLab`,
-    description:
-      article.excerpt ??
-      "Artikel dan panduan belanja dari BelanjaLab.",
+    title: article.title,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+    },
     openGraph: {
       title: article.title,
-      description:
-        article.excerpt ??
-        "Artikel dan panduan belanja dari BelanjaLab.",
+      description,
       type: "article",
+      url: canonicalPath,
+      siteName: "BelanjaLab",
+      locale: "id_ID",
       publishedTime: article.created_at,
       modifiedTime: article.updated_at,
       images: article.cover_image
-        ? [
-            {
-              url: article.cover_image,
-              alt: article.title,
-            },
-          ]
+        ? [{ url: article.cover_image, alt: article.title }]
         : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: article.cover_image ? [article.cover_image] : undefined,
     },
   };
 }
@@ -107,8 +119,42 @@ export default async function ArticlePage({
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
+  const articleUrl = `${siteUrl}/articles/${article.slug}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description:
+      article.excerpt ?? "Artikel dan panduan belanja dari BelanjaLab.",
+    url: articleUrl,
+    datePublished: article.created_at,
+    dateModified: article.updated_at,
+    inLanguage: "id-ID",
+    author: {
+      "@type": "Organization",
+      name: "BelanjaLab",
+      url: siteUrl,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "BelanjaLab",
+      url: siteUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/icon.png`,
+      },
+    },
+    ...(article.cover_image ? { image: [article.cover_image] } : {}),
+  };
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">

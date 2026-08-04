@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { searchProducts } from "@/lib/search-products";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Cari Produk",
+  description:
+    "Cari produk, merek, dan kategori di BelanjaLab.",
+  alternates: { canonical: "/search" },
+  robots: { index: false, follow: true },
+};
 
 type SearchPageProps = {
   searchParams: Promise<{
