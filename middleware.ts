@@ -12,32 +12,11 @@ const PUBLIC_ADMIN_ROUTES = new Set([
   "/admin/update-password",
 ]);
 
-function applySecurityHeaders(response: NextResponse) {
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), browsing-topics=()",
-  );
-  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
-  response.headers.set("X-DNS-Prefetch-Control", "on");
-
-  if (process.env.NODE_ENV === "production") {
-    response.headers.set(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains; preload",
-    );
-  }
-
-  return response;
-}
-
-function redirectWithSecurity(request: NextRequest, pathname: string) {
+function redirectTo(request: NextRequest, pathname: string) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   url.search = "";
-  return applySecurityHeaders(NextResponse.redirect(url));
+  return NextResponse.redirect(url);
 }
 
 export async function middleware(request: NextRequest) {
@@ -45,7 +24,12 @@ export async function middleware(request: NextRequest) {
     console.error(
       "Supabase environment variables belum tersedia di runtime Cloudflare.",
     );
-    return applySecurityHeaders(NextResponse.next({ request }));
+
+    if (request.nextUrl.pathname.startsWith("/admin")) {
+      return redirectTo(request, "/admin/login");
+    }
+
+    return NextResponse.next({ request });
   }
 
   let response = NextResponse.next({ request });
@@ -101,7 +85,7 @@ export async function middleware(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/admin/login";
     loginUrl.searchParams.set("next", pathname);
-    return applySecurityHeaders(NextResponse.redirect(loginUrl));
+    return NextResponse.redirect(loginUrl);
   }
 
   if (isProtectedAdminRoute && !isAdmin) {
@@ -111,20 +95,16 @@ export async function middleware(request: NextRequest) {
       "error",
       "Akun ini tidak memiliki akses admin.",
     );
-    return applySecurityHeaders(NextResponse.redirect(loginUrl));
+    return NextResponse.redirect(loginUrl);
   }
 
   if (pathname === "/admin/login" && userId && isAdmin) {
-    return redirectWithSecurity(request, "/admin");
+    return redirectTo(request, "/admin");
   }
 
-  return applySecurityHeaders(response);
+  return response;
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/auth/:path*",
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/admin/:path*", "/auth/:path*"],
 };
