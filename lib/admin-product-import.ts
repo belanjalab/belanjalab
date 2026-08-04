@@ -21,6 +21,17 @@ export type ProductCsvImportRow = {
   affiliate_url?: string;
 };
 
+export type ProductCsvValidationIssue = {
+  rowNumber: number;
+  field: string;
+  message: string;
+};
+
+export type ProductCsvValidationResult = {
+  ok: boolean;
+  issues: ProductCsvValidationIssue[];
+};
+
 export type ProductCsvImportResult = {
   rowNumber: number;
   name: string;
@@ -78,6 +89,196 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+
+function parsePriceInput(value: string | undefined) {
+  if (!value?.trim()) {
+    return 0;
+  }
+
+  const normalized = value
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/^rp/i, "")
+    .replace(/[.,](?=\d{3}(?:[.,]|$))/g, "")
+    .replace(/,/g, ".");
+
+  const price = Number(normalized);
+  return Number.isFinite(price) && price > 0 ? Math.round(price) : 0;
+}
+
+export async function validateProductsCsv(
+  rows: ProductCsvImportRow[],
+): Promise<ProductCsvValidationResult> {
+  const issues: ProductCsvValidationIssue[] = [];
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return {
+      ok: false,
+      issues: [
+        { rowNumber: 0, field: "file", message: "CSV tidak memiliki data produk." },
+      ],
+    };
+  }
+
+  if (rows.length > MAX_IMPORT_ROWS) {
+    return {
+      ok: false,
+      issues: [
+        {
+          rowNumber: 0,
+          field: "file",
+          message: `Maksimal ${MAX_IMPORT_ROWS} produk per proses import.`,
+        },
+      ],
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const [
+    { data: categoryRows, error: categoryError },
+    { data: brandRows, error: brandError },
+    { data: marketplaceRows, error: marketplaceError },
+    { data: existingProducts, error: productError },
+    { data: existingPrices, error: priceError },
+  ] = await Promise.all([
+    supabase.from("categories").select("name"),
+    supabase.from("brands").select("name"),
+    supabase.from("marketplaces").select("name"),
+    supabase.from("products").select("slug"),
+    supabase
+      .from("product_prices")
+      .select("affiliate_url")
+      .not("affiliate_url", "is", null),
+  ]);
+
+  const setupError =
+    categoryError ?? brandError ?? marketplaceError ?? productError ?? priceError;
+
+  if (setupError) {
+    return {
+      ok: false,
+      issues: [
+        {
+          rowNumber: 0,
+          field: "database",
+          message: `Validasi database gagal: ${setupError.message}`,
+        },
+      ],
+    };
+  }
+
+  const categories = new Set(
+    (categoryRows ?? []).map((item) => normalizeLookup(item.name)),
+  );
+  const brands = new Set(
+    (brandRows ?? []).map((item) => normalizeLookup(item.name)),
+  );
+  const marketplaces = new Set(
+    (marketplaceRows ?? []).map((item) => normalizeLookup(item.name)),
+  );
+  const existingSlugs = new Set(
+    (existingProducts ?? []).map((item) => item.slug),
+  );
+  const existingAffiliateUrls = new Set(
+    (existingPrices ?? [])
+      .map((item) => item.affiliate_url?.trim())
+      .filter((value): value is string => Boolean(value && value !== "#")),
+  );
+  const csvSlugs = new Set<string>();
+  const csvAffiliateUrls = new Set<string>();
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2;
+    const name = row.name?.trim() ?? "";
+    const slug = slugify(row.slug?.trim() || name);
+    const category = normalizeLookup(row.category ?? "");
+    const brand = normalizeLookup(row.brand ?? "");
+    const marketplace = normalizeLookup(row.marketplace ?? "");
+    const affiliateUrl = row.affiliate_url?.trim() ?? "";
+    const price = parsePriceInput(row.price);
+
+    if (!name) {
+      issues.push({ rowNumber, field: "name", message: "name wajib diisi." });
+    }
+
+    if (!slug) {
+      issues.push({ rowNumber, field: "slug", message: "slug tidak valid." });
+    } else if (existingSlugs.has(slug)) {
+      issues.push({
+        rowNumber,
+        field: "slug",
+        message: `Slug "${slug}" sudah digunakan di database.`,
+      });
+    } else if (csvSlugs.has(slug)) {
+      issues.push({
+        rowNumber,
+        field: "slug",
+        message: `Slug "${slug}" duplikat di dalam CSV.`,
+      });
+    } else {
+      csvSlugs.add(slug);
+    }
+
+    if (!category || !categories.has(category)) {
+      issues.push({
+        rowNumber,
+        field: "category",
+        message: `Kategori "${row.category ?? ""}" tidak ditemukan.`,
+      });
+    }
+
+    if (!brand || !brands.has(brand)) {
+      issues.push({
+        rowNumber,
+        field: "brand",
+        message: `Brand "${row.brand ?? ""}" tidak ditemukan.`,
+      });
+    }
+
+    if (marketplace && !marketplaces.has(marketplace)) {
+      issues.push({
+        rowNumber,
+        field: "marketplace",
+        message: `Marketplace "${row.marketplace ?? ""}" tidak ditemukan.`,
+      });
+    }
+
+    if (marketplace && price <= 0) {
+      issues.push({
+        rowNumber,
+        field: "price",
+        message: "price wajib lebih dari 0 jika marketplace diisi.",
+      });
+    }
+
+    if (!marketplace && (row.price?.trim() || affiliateUrl)) {
+      issues.push({
+        rowNumber,
+        field: "marketplace",
+        message: "marketplace wajib diisi jika price atau affiliate_url diisi.",
+      });
+    }
+
+    if (affiliateUrl && existingAffiliateUrls.has(affiliateUrl)) {
+      issues.push({
+        rowNumber,
+        field: "affiliate_url",
+        message: "affiliate_url sudah digunakan di database.",
+      });
+    } else if (affiliateUrl && csvAffiliateUrls.has(affiliateUrl)) {
+      issues.push({
+        rowNumber,
+        field: "affiliate_url",
+        message: "affiliate_url duplikat di dalam CSV.",
+      });
+    } else if (affiliateUrl) {
+      csvAffiliateUrls.add(affiliateUrl);
+    }
+  });
+
+  return { ok: issues.length === 0, issues };
 }
 
 export async function importProductsFromCsv(
@@ -228,7 +429,7 @@ export async function importProductsFromCsv(
     const marketplaceId = marketplaceName
       ? marketplaceMap.get(normalizeLookup(marketplaceName))
       : undefined;
-    const price = parsePrice(row.price);
+    const price = parsePriceInput(row.price);
     const status =
       row.status?.trim().toLowerCase() === "published"
         ? "published"
