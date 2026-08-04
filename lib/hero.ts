@@ -1,12 +1,44 @@
 import { getSupabaseClient } from "@/lib/supabase";
 
-export async function getActiveHero() {
+export type HeroFeaturedProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  short_description: string | null;
+};
+
+export type ActiveHero = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  primary_button_text: string | null;
+  primary_button_url: string | null;
+  secondary_button_text: string | null;
+  secondary_button_url: string | null;
+  hero_image_url: string | null;
+  featured_product_id: string | null;
+  is_active: boolean;
+  sort_order: number;
+  featured_product: HeroFeaturedProduct | null;
+};
+
+export async function getActiveHero(): Promise<ActiveHero | null> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from("hero_sections")
     .select(`
-      *,
+      id,
+      title,
+      subtitle,
+      primary_button_text,
+      primary_button_url,
+      secondary_button_text,
+      secondary_button_url,
+      hero_image_url,
+      featured_product_id,
+      is_active,
+      sort_order,
       featured_product:products(
         id,
         name,
@@ -23,5 +55,5 @@ export async function getActiveHero() {
     throw new Error(`Failed to fetch active hero: ${error.message}`);
   }
 
-  return data;
+  return data as unknown as ActiveHero | null;
 }
