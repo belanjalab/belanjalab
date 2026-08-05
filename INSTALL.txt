@@ -1,32 +1,46 @@
-BELANJALAB UI/UX STAGE 2 - BRAND POLISH
+BELANJALAB UI/UX STAGE 3 — DECISION PLATFORM DIFFERENTIATION
 
-Cara pasang:
+CARA PASANG
 1. Ekstrak ZIP ini di root project BelanjaLab.
-2. Izinkan overwrite untuk file yang sudah ada.
-3. Pastikan file baru components/home/home-icons.tsx ikut tersalin.
-4. Jalankan:
+2. Izinkan seluruh file lama ditimpa.
+3. Jalankan:
+
    npm run typecheck
    npm run build
 
-File yang berubah:
+4. Setelah kedua perintah berhasil, commit dan deploy seperti biasa.
+
+FILE YANG DIGANTI / DITAMBAHKAN
 - app/page.tsx
 - app/globals.css
-- app/layout.tsx
-- lib/categories.ts
-
-File baru:
+- app/compare/page.tsx
+- app/compare/compare-client.tsx
 - components/home/home-icons.tsx
+- components/home/decision-product-card.tsx
+- components/home/quick-comparison.tsx
+- components/home/score-methodology.tsx
+- lib/products.ts
 
-Perubahan utama:
-- Plus Jakarta Sans melalui next/font (tanpa dependency npm tambahan).
-- Hero dan visual hierarchy homepage diperkuat.
-- Search input ganda di desktop dihapus; header memakai tombol menuju pencarian.
-- Emoji dan panah Unicode diganti SVG konsisten.
-- Ikon kategori sekarang menggunakan key semantik dan SVG.
-- Value strip menggunakan ikon berbeda untuk setiap manfaat.
-- Kartu hero menampilkan kategori, BelanjaLab Score, harga, dan CTA.
-- Kategori mobile dirapikan menjadi grid tiga kolom.
-- Styling card, section heading, compare, dan artikel dibuat lebih konsisten.
+PERUBAHAN UTAMA
+- Product card menjadi kartu keputusan: kekuatan utama, skor, verdict, harga, jumlah sumber harga, dan waktu cek.
+- Quick comparison membandingkan dua featured product dari kategori yang sama.
+- CTA compare membawa slug produk ke /compare?products=slug-1,slug-2 dan langsung memilih produk tersebut.
+- Metodologi BelanjaLab Score serta transparansi harga dijelaskan di homepage.
+- Harga hanya memakai penawaran yang tersedia dan tidak berstatus out_of_stock.
+- Freshness memakai last_checked_at, lalu updated_at sebagai fallback.
 
-Commit message:
-refactor(home): strengthen visual identity and hero hierarchy
+DATABASE
+Tidak ada migration SQL baru. Stage ini memakai kolom dan relasi yang sudah tersedia pada project:
+short_description, brands, product_scores, product_prices, marketplaces,
+last_checked_at, dan updated_at.
+
+CATATAN QA
+- Responsive visual QA: 390 px, 820 px, dan 1440 px.
+- Tidak ditemukan horizontal overflow.
+- Tidak ditemukan teks fixed-size di bawah 12 px pada komponen homepage baru.
+- Tombol/input/summary utama tidak ditemukan di bawah 44 px.
+- Pemeriksaan TypeScript terisolasi berhasil.
+- Build Next.js penuh tetap harus dijalankan di mesin project karena dependency registry tidak tersedia di lingkungan pembuatan paket.
+
+COMMIT MESSAGE
+feat(home): introduce decision cards and relevant quick comparison

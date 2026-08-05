@@ -209,6 +209,43 @@ function RefreshIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+function StoreIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 9h16l-1-5H5L4 9Z" />
+      <path d="M5 9v11h14V9" />
+      <path d="M9 20v-6h6v6" />
+      <path d="M4 9a3 3 0 0 0 5 2 3 3 0 0 0 6 0 3 3 0 0 0 5-2" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
+
 function SmartphoneIcon({ className = "h-6 w-6" }: IconProps) {
   return (
     <svg
@@ -463,6 +500,7 @@ export {
   ArticleIcon,
   CategoryGlyph,
   CategoryIcon,
+  CheckIcon,
   CompareIcon,
   HeadphonesIcon,
   HomeIcon,
@@ -474,4 +512,5 @@ export {
   ShieldCheckIcon,
   SmartphoneIcon,
   SparklesIcon,
+  StoreIcon,
 };

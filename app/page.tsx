@@ -3,14 +3,19 @@ import { getHomepageArticles } from "@/lib/articles";
 import { getHomepageCategories } from "@/lib/categories";
 import { getActiveSiteFooter } from "@/lib/footer";
 import { getActiveHero } from "@/lib/hero";
-import { getFeaturedProducts } from "@/lib/products";
+import {
+  getFeaturedProducts,
+  type FeaturedProduct,
+} from "@/lib/products";
+import DecisionProductCard from "@/components/home/decision-product-card";
+import QuickComparison from "@/components/home/quick-comparison";
+import ScoreMethodology from "@/components/home/score-methodology";
 import {
   ArrowRightIcon,
   ArticleIcon,
   CategoryGlyph,
   CategoryIcon,
   CompareIcon,
-  HeadphonesIcon,
   HomeIcon,
   InfoIcon,
   MenuIcon,
@@ -18,8 +23,8 @@ import {
   ScoreIcon,
   SearchIcon,
   ShieldCheckIcon,
-  SmartphoneIcon,
   SparklesIcon,
+  StoreIcon,
 } from "@/components/home/home-icons";
 
 export const metadata: Metadata = {
@@ -27,6 +32,27 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 3600;
+
+function findQuickComparisonPair(
+  products: FeaturedProduct[],
+): [FeaturedProduct, FeaturedProduct] | null {
+  for (let firstIndex = 0; firstIndex < products.length; firstIndex += 1) {
+    const firstProduct = products[firstIndex];
+    const secondProduct = products
+      .slice(firstIndex + 1)
+      .find(
+        (candidate) =>
+          candidate.category.trim().toLowerCase() ===
+          firstProduct.category.trim().toLowerCase(),
+      );
+
+    if (secondProduct) {
+      return [firstProduct, secondProduct];
+    }
+  }
+
+  return null;
+}
 
 export default async function Home() {
   const [products, hero, categories, articles, footer] = await Promise.all([
@@ -37,9 +63,11 @@ export default async function Home() {
     getActiveSiteFooter(),
   ]);
 
+  const quickComparisonProducts = findQuickComparisonPair(products);
   const heroProduct = hero?.featured_product;
-  const heroCardProduct =
-    products.find((product) => product.id === heroProduct?.id) ?? products[0];
+  const heroCardProduct = heroProduct
+    ? products.find((product) => product.id === heroProduct.id)
+    : products[0];
   const heroProductImage =
     hero?.hero_image_url ??
     heroCardProduct?.imageUrl ??
@@ -50,6 +78,11 @@ export default async function Home() {
   const heroProductCategory = heroCardProduct?.category ?? "Produk pilihan";
   const heroProductScore = heroCardProduct?.score ?? "Belum dinilai";
   const heroProductPrice = heroCardProduct?.price ?? "Harga belum tersedia";
+  const heroProductStrength = heroCardProduct?.topStrength;
+  const heroProductFreshness =
+    heroCardProduct?.priceFreshness ?? "Waktu cek belum tersedia";
+  const heroProductSourceCount = heroCardProduct?.priceSourceCount ?? 0;
+  const heroProductVerdict = heroCardProduct?.scoreVerdict ?? "Belum dinilai";
   const heroPriceLabel = heroProductPrice.startsWith("Rp")
     ? "Harga mulai"
     : "Informasi harga";
@@ -71,6 +104,7 @@ export default async function Home() {
   const drawerNavigation = [
     { label: "Kategori", href: "#kategori", icon: CategoryIcon },
     { label: "Perbandingan", href: "/compare", icon: CompareIcon },
+    { label: "Metodologi", href: "#metodologi", icon: ScoreIcon },
     { label: "Artikel", href: "/articles", icon: ArticleIcon },
     { label: "Tentang Kami", href: "#tentang", icon: InfoIcon },
   ];
@@ -79,7 +113,7 @@ export default async function Home() {
     { label: "Beranda", href: "/", icon: HomeIcon },
     { label: "Kategori", href: "#kategori", icon: CategoryIcon },
     { label: "Cari", href: "/search", icon: SearchIcon },
-    { label: "Compare", href: "/compare", icon: CompareIcon },
+    { label: "Bandingkan", href: "/compare", icon: CompareIcon },
     { label: "Artikel", href: "#artikel", icon: ArticleIcon },
   ];
 
@@ -88,21 +122,25 @@ export default async function Home() {
       title: "Review Jujur",
       description: "Riset, bukan sekadar promosi",
       icon: ShieldCheckIcon,
+      href: "#metodologi",
     },
     {
       title: "BelanjaLab Score",
       description: "Kualitas diringkas jadi satu skor",
       icon: ScoreIcon,
+      href: "#metodologi",
     },
     {
       title: "Perbandingan",
       description: "Lihat beda yang benar-benar penting",
       icon: CompareIcon,
+      href: "#perbandingan",
     },
     {
-      title: "Harga Diperbarui",
-      description: "Cek harga dari sumber tersedia",
+      title: "Waktu Cek Harga",
+      description: "Lihat kapan data terakhir dicek",
       icon: RefreshIcon,
+      href: "#metodologi",
     },
   ];
 
@@ -173,6 +211,12 @@ export default async function Home() {
               className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
             >
               Perbandingan
+            </a>
+            <a
+              href="#metodologi"
+              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
+            >
+              Metodologi
             </a>
             <a
               href="/articles"
@@ -261,7 +305,7 @@ export default async function Home() {
                   name="q"
                   required
                   autoComplete="off"
-                  placeholder="Cari produk, kategori, atau merek..."
+                  placeholder="Cari produk atau merek..."
                   className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none sm:text-base"
                 />
                 <button
@@ -334,6 +378,9 @@ export default async function Home() {
                     <p className="mt-0.5 text-sm font-extrabold text-emerald-800">
                       {heroProductScore}
                     </p>
+                    <p className="mt-0.5 text-xs font-semibold text-emerald-700">
+                      {heroProductVerdict}
+                    </p>
                   </div>
                 </div>
 
@@ -350,8 +397,31 @@ export default async function Home() {
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {heroProduct?.short_description ??
+                    heroCardProduct?.shortDescription ??
                     "Pilihan yang layak dipertimbangkan berdasarkan data yang tersedia."}
                 </p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2.5">
+                  <div className="rounded-xl border border-orange-100 bg-orange-50/70 p-3">
+                    <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-orange-800">
+                      Kekuatan utama
+                    </p>
+                    <p className="mt-1 text-xs font-extrabold leading-5 text-slate-950 sm:text-sm">
+                      {heroProductStrength
+                        ? `${heroProductStrength.label} ${heroProductStrength.value.toFixed(1)}/10`
+                        : "Rincian skor menyusul"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500">
+                      <RefreshIcon className="h-3.5 w-3.5" />
+                      Status harga
+                    </p>
+                    <p className="mt-1 text-xs font-extrabold leading-5 text-slate-800 sm:text-sm">
+                      {heroProductFreshness}
+                    </p>
+                  </div>
+                </div>
 
                 <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-slate-200 pt-4">
                   <div>
@@ -360,6 +430,12 @@ export default async function Home() {
                     </p>
                     <p className="mt-1 text-base font-extrabold text-slate-950">
                       {heroProductPrice}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                      <StoreIcon className="h-3.5 w-3.5" />
+                      {heroProductSourceCount > 0
+                        ? `${heroProductSourceCount} sumber harga`
+                        : "Sumber harga belum tersedia"}
                     </p>
                   </div>
 
@@ -374,28 +450,16 @@ export default async function Home() {
                   )}
                 </div>
               </article>
-
-              <div
-                aria-hidden="true"
-                className="absolute -left-4 top-12 hidden h-14 w-14 items-center justify-center rounded-2xl border border-white/80 bg-white text-orange-700 shadow-xl shadow-slate-950/10 xl:flex"
-              >
-                <HeadphonesIcon className="h-7 w-7" />
-              </div>
-              <div
-                aria-hidden="true"
-                className="absolute -right-3 bottom-12 hidden h-14 w-14 items-center justify-center rounded-2xl border border-white/80 bg-white text-orange-700 shadow-xl shadow-slate-950/10 xl:flex"
-              >
-                <SmartphoneIcon className="h-7 w-7" />
-              </div>
             </div>
           </div>
         </section>
 
         <section aria-label="Keunggulan BelanjaLab" className="px-4 md:px-5">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:gap-3 md:grid-cols-4 md:p-4">
-            {trustItems.map(({ title, description, icon: Icon }) => (
-              <div
+            {trustItems.map(({ title, description, icon: Icon, href }) => (
+              <a
                 key={title}
+                href={href}
                 className="flex gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50 sm:p-3"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
@@ -409,14 +473,96 @@ export default async function Home() {
                     {description}
                   </p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>
 
         <section
+          id="perbandingan"
+          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
+        >
+          <div className="mx-auto max-w-7xl">
+            {quickComparisonProducts ? (
+              <QuickComparison products={quickComparisonProducts} />
+            ) : (
+              <div className="quick-compare-surface rounded-[1.75rem] border border-slate-200 p-6 sm:p-8">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                  Bandingkan cepat
+                </p>
+                <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
+                  Perbandingan akan muncul setelah dua produk tersedia.
+                </h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                  Kamu tetap bisa membuka halaman perbandingan dan memilih produk secara manual.
+                </p>
+                <a
+                  href="/compare"
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition-colors hover:bg-orange-800"
+                >
+                  Buka perbandingan <ArrowRightIcon />
+                </a>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section
+          id="produk"
+          className="scroll-mt-24 px-4 py-10 md:px-5 md:py-16"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
+              <div className="max-w-2xl">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                  Pilihan terkurasi
+                </p>
+                <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Produk Pilihan BelanjaLab
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                  Lihat alasan penilaian, kekuatan utama, sumber harga, dan waktu pembaruannya sebelum membuka analisis lengkap.
+                </p>
+              </div>
+              <a
+                href="/search"
+                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+              >
+                Lihat semua <ArrowRightIcon />
+              </a>
+            </div>
+
+            {products.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
+                {products.map((product) => (
+                  <DecisionProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                <p className="text-sm font-bold text-slate-700">
+                  Rekomendasi produk baru sedang kami siapkan.
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Gunakan pencarian untuk menjelajahi produk lainnya.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section
+          id="metodologi"
+          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
+        >
+          <div className="mx-auto max-w-7xl">
+            <ScoreMethodology />
+          </div>
+        </section>
+
+        <section
           id="kategori"
-          className="scroll-mt-24 px-4 py-10 md:px-5 md:py-14"
+          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
         >
           <div className="mx-auto max-w-7xl">
             <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
@@ -466,154 +612,6 @@ export default async function Home() {
                 </p>
               </div>
             )}
-          </div>
-        </section>
-
-        <section
-          id="produk"
-          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
-        >
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
-                  Rekomendasi
-                </p>
-                <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
-                  Produk Pilihan
-                </h2>
-              </div>
-              <a
-                href="/search"
-                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
-              >
-                Lihat semua <ArrowRightIcon />
-              </a>
-            </div>
-
-            {products.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
-                {products.map((product) => (
-                  <article
-                    key={product.id}
-                    className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-950/5 md:rounded-3xl"
-                  >
-                    <div className="p-2.5 md:p-3">
-                      <div className="flex h-36 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-100 sm:h-40 md:h-48 md:rounded-2xl">
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 flex-col p-3 pt-1 md:p-4 md:pt-1">
-                      <p className="text-xs font-semibold leading-5 text-slate-500">
-                        {product.category}
-                      </p>
-                      <h3 className="mt-1 min-h-11 text-sm font-extrabold leading-[1.35] tracking-[-0.015em] text-slate-950 sm:text-[15px] md:text-base">
-                        {product.name}
-                      </h3>
-
-                      <div className="mt-3">
-                        <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100">
-                          Score {product.score}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
-                        {product.price}
-                      </p>
-
-                      <a
-                        href={`/product/${product.slug}`}
-                        aria-label={`Lihat analisis ${product.name}`}
-                        className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-700 px-3 text-center text-[13px] font-extrabold text-white transition-colors hover:bg-orange-800 active:bg-orange-900 sm:text-sm"
-                      >
-                        Lihat analisis <ArrowRightIcon />
-                      </a>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-sm font-bold text-slate-700">
-                  Rekomendasi produk baru sedang kami siapkan.
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Gunakan pencarian untuk menjelajahi produk lainnya.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
-          id="perbandingan"
-          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
-        >
-          <div className="compare-surface mx-auto max-w-7xl overflow-hidden rounded-[1.75rem] border border-slate-200 p-5 sm:p-7 lg:p-10">
-            <div className="max-w-2xl">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
-                Pilih dengan data
-              </p>
-              <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
-                Perbandingan Unggulan
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                Lihat perbedaan produk populer dalam satu tampilan sebelum menentukan pilihan.
-              </p>
-            </div>
-
-            {products.length >= 2 ? (
-              <div className="mt-6 grid items-stretch gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center md:gap-5">
-                {products.slice(0, 2).map((product, index) => (
-                  <div key={product.id} className="contents">
-                    {index === 1 && (
-                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-sm font-extrabold text-white shadow-lg shadow-slate-950/15">
-                        VS
-                      </div>
-                    )}
-                    <article className="flex min-w-0 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:block sm:p-5 md:p-6">
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-100 sm:h-28 sm:w-full">
-                        <img
-                          src={product.imageUrl}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-full w-full object-contain p-2.5 sm:p-4"
-                        />
-                      </div>
-                      <div className="min-w-0 sm:mt-4">
-                        <p className="text-xs font-semibold text-slate-500">
-                          {product.category}
-                        </p>
-                        <h3 className="mt-1 text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
-                          {product.name}
-                        </h3>
-                        <p className="mt-2 text-sm font-extrabold text-emerald-800 sm:text-xl">
-                          {product.score}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
-                          {product.price}
-                        </p>
-                      </div>
-                    </article>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-600 shadow-sm">
-                Pilih dua produk untuk melihat perbedaan score, harga, dan spesifikasinya.
-              </div>
-            )}
-
-            <a
-              href="/compare"
-              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition-colors hover:bg-orange-800 active:bg-orange-900"
-            >
-              Bandingkan sekarang <ArrowRightIcon />
-            </a>
           </div>
         </section>
 
@@ -740,6 +738,12 @@ export default async function Home() {
                 className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
               >
                 Perbandingan
+              </a>
+              <a
+                href="#metodologi"
+                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
+              >
+                Metodologi
               </a>
               <a
                 href="#kategori"

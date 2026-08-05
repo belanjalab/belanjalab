@@ -5,6 +5,7 @@ import type { CompareProduct } from "@/lib/products";
 
 type CompareClientProps = {
   products: CompareProduct[];
+  initialProductSlugs?: string[];
 };
 
 const specificationRows = [
@@ -18,8 +19,16 @@ const specificationRows = [
 
 export default function CompareClient({
   products,
+  initialProductSlugs = [],
 }: CompareClientProps) {
-  const [selectedProducts, setSelectedProducts] = useState<CompareProduct[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<CompareProduct[]>(
+    () =>
+      initialProductSlugs.flatMap((slug) => {
+        const product = products.find((item) => item.slug === slug);
+
+        return product ? [product] : [];
+      }),
+  );
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -438,7 +447,7 @@ export default function CompareClient({
           ["⌂", "Beranda", "/"],
           ["▦", "Kategori", "/#kategori"],
           ["⌕", "Cari", "/search"],
-          ["⇄", "Compare", "/compare"],
+          ["⇄", "Bandingkan", "/compare"],
           ["▤", "Artikel", "/#artikel"],
         ].map(([icon, label, href], index) => (
           <a

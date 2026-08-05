@@ -45,10 +45,18 @@ type FeaturedProductRow = {
   id: string;
   name: string;
   slug: string;
+  short_description?: string | null;
   image_url: string | null;
   categories?: Relation<CategoryRelation>;
+  brands?: Relation<BrandRelation>;
   product_scores?: Relation<ScoreRelation>;
   product_prices?: PriceRelation[] | null;
+};
+
+export type ProductScoreDimension = {
+  key: "performance" | "design" | "features" | "value" | "ease_of_use";
+  label: string;
+  value: number;
 };
 
 export type FeaturedProduct = {
@@ -57,8 +65,17 @@ export type FeaturedProduct = {
   slug: string;
   imageUrl: string;
   category: string;
+  brand: string | null;
+  shortDescription: string | null;
   score: string;
+  scoreValue: number | null;
+  scoreVerdict: string;
+  scoreBreakdown: ProductScoreDimension[];
+  topStrength: ProductScoreDimension | null;
   price: string;
+  priceValue: number | null;
+  priceSourceCount: number;
+  priceFreshness: string;
 };
 
 export type ProductDetail = {
@@ -131,6 +148,118 @@ function getLowestPrice(prices: PriceRelation[] | null | undefined) {
   return numericPrices.length > 0 ? Math.min(...numericPrices) : null;
 }
 
+const scoreDimensionDefinitions: Array<{
+  key: ProductScoreDimension["key"];
+  label: string;
+}> = [
+  { key: "performance", label: "Performa" },
+  { key: "design", label: "Desain" },
+  { key: "features", label: "Fitur" },
+  { key: "value", label: "Value" },
+  { key: "ease_of_use", label: "Kemudahan" },
+];
+
+function getScoreBreakdown(score: ScoreRelation | null) {
+  if (!score) {
+    return [];
+  }
+
+  return scoreDimensionDefinitions.flatMap((dimension) => {
+    const numericValue = Number(score[dimension.key]);
+
+    if (!Number.isFinite(numericValue) || numericValue <= 0) {
+      return [];
+    }
+
+    return [{ ...dimension, value: numericValue }];
+  });
+}
+
+function getScoreVerdict(score: number | null) {
+  if (score === null) {
+    return "Belum dinilai";
+  }
+
+  if (score >= 8.5) {
+    return "Sangat baik";
+  }
+
+  if (score >= 7.5) {
+    return "Baik";
+  }
+
+  if (score >= 6.5) {
+    return "Cukup baik";
+  }
+
+  return "Perlu dipertimbangkan";
+}
+
+function getLatestPriceCheck(prices: PriceRelation[]) {
+  const timestamps = prices
+    .map((price) => price.last_checked_at ?? price.updated_at)
+    .filter((value): value is string => Boolean(value))
+    .map((value) => new Date(value))
+    .filter((value) => !Number.isNaN(value.getTime()));
+
+  if (timestamps.length === 0) {
+    return null;
+  }
+
+  return timestamps.reduce((latest, current) =>
+    current.getTime() > latest.getTime() ? current : latest,
+  );
+}
+
+function formatPriceFreshness(lastCheckedAt: Date | null) {
+  if (!lastCheckedAt) {
+    return "Waktu cek belum tersedia";
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const checkedDate = new Date(
+    lastCheckedAt.getFullYear(),
+    lastCheckedAt.getMonth(),
+    lastCheckedAt.getDate(),
+  );
+  const differenceInDays = Math.max(
+    0,
+    Math.floor((today.getTime() - checkedDate.getTime()) / 86_400_000),
+  );
+
+  if (differenceInDays === 0) {
+    return "Diperbarui hari ini";
+  }
+
+  if (differenceInDays === 1) {
+    return "Diperbarui kemarin";
+  }
+
+  if (differenceInDays <= 30) {
+    return `Diperbarui ${differenceInDays} hari lalu`;
+  }
+
+  return `Diperbarui ${new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year:
+      lastCheckedAt.getFullYear() === now.getFullYear()
+        ? undefined
+        : "numeric",
+  }).format(lastCheckedAt)}`;
+}
+
+function getPriceSourceCount(prices: PriceRelation[]) {
+  const marketplaceNames = new Set(
+    prices
+      .map((price) => getSingleRelation(price.marketplaces)?.name)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  return marketplaceNames.size > 0 ? marketplaceNames.size : prices.length;
+}
+
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
   const supabase = getSupabaseClient();
 
@@ -140,17 +269,31 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       id,
       name,
       slug,
+      short_description,
       image_url,
       categories (
         name
       ),
+      brands (
+        name
+      ),
       product_scores (
+        performance,
+        design,
+        features,
+        value,
+        ease_of_use,
         overall_score
       ),
       product_prices (
         price,
         is_available,
-        stock_status
+        stock_status,
+        last_checked_at,
+        updated_at,
+        marketplaces (
+          name
+        )
       )
     `)
     .eq("status", "published")
@@ -171,9 +314,20 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
 
   return rows.map((product) => {
     const category = getSingleRelation(product.categories);
+    const brand = getSingleRelation(product.brands);
     const score = getSingleRelation(product.product_scores);
-    const lowestPrice = getLowestPrice(product.product_prices);
+    const usablePrices = (product.product_prices ?? []).filter(isUsablePrice);
+    const lowestPrice = getLowestPrice(usablePrices);
     const numericScore = Number(score?.overall_score);
+    const scoreValue = Number.isFinite(numericScore) && numericScore > 0
+      ? numericScore
+      : null;
+    const scoreBreakdown = getScoreBreakdown(score);
+    const topStrength = scoreBreakdown.reduce<ProductScoreDimension | null>(
+      (highest, dimension) =>
+        !highest || dimension.value > highest.value ? dimension : highest,
+      null,
+    );
 
     return {
       id: product.id,
@@ -181,10 +335,19 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       slug: product.slug,
       imageUrl: getSafeImageUrl(product.image_url),
       category: category?.name ?? "Produk",
-      score: Number.isFinite(numericScore)
-        ? `${numericScore.toFixed(1)}/10`
+      brand: brand?.name ?? null,
+      shortDescription: product.short_description ?? null,
+      score: scoreValue !== null
+        ? `${scoreValue.toFixed(1)}/10`
         : "Belum dinilai",
+      scoreValue,
+      scoreVerdict: getScoreVerdict(scoreValue),
+      scoreBreakdown,
+      topStrength,
       price: formatRupiah(lowestPrice),
+      priceValue: lowestPrice,
+      priceSourceCount: getPriceSourceCount(usablePrices),
+      priceFreshness: formatPriceFreshness(getLatestPriceCheck(usablePrices)),
     };
   });
 }

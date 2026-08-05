@@ -12,8 +12,31 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default async function ComparePage() {
-  const products = await getCompareProducts();
+type ComparePageProps = {
+  searchParams: Promise<{
+    products?: string | string[];
+  }>;
+};
 
-  return <CompareClient products={products} />;
+export default async function ComparePage({ searchParams }: ComparePageProps) {
+  const products = await getCompareProducts();
+  const params = await searchParams;
+  const productParams = Array.isArray(params.products)
+    ? params.products
+    : [params.products];
+  const initialProductSlugs = Array.from(
+    new Set(
+      productParams
+        .flatMap((value) => value?.split(",") ?? [])
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 3);
+
+  return (
+    <CompareClient
+      products={products}
+      initialProductSlugs={initialProductSlugs}
+    />
+  );
 }
