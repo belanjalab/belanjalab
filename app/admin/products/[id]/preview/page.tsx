@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getSafeImageUrl, sanitizePublicUrl } from "@/lib/site-config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -177,6 +178,10 @@ export default async function AdminProductPreviewPage({
       numericPrice: Number(item.price),
       marketplace:
         getSingleRelation(item.marketplaces)?.name ?? "Marketplace",
+      safeAffiliateUrl: sanitizePublicUrl(item.affiliate_url, {
+        allowHash: false,
+        allowMailto: false,
+      }),
     }))
     .filter((item) => Number.isFinite(item.numericPrice))
     .sort((a, b) => a.numericPrice - b.numericPrice);
@@ -263,10 +268,7 @@ export default async function AdminProductPreviewPage({
           <div>
             <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-slate-100 p-8 md:p-14">
               <img
-                src={
-                  product.image_url ??
-                  "/images/products/product-placeholder.svg"
-                }
+                src={getSafeImageUrl(product.image_url)}
                 alt={product.name}
                 className="h-full w-full object-contain"
               />
@@ -442,9 +444,9 @@ export default async function AdminProductPreviewPage({
                       {formatRupiah(offer.numericPrice)}
                     </p>
 
-                    {offer.affiliate_url && (
+                    {offer.safeAffiliateUrl && (
                       <a
-                        href={offer.affiliate_url}
+                        href={offer.safeAffiliateUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded-xl bg-slate-950 px-4 py-3 text-xs font-bold text-white hover:bg-slate-800"

@@ -147,8 +147,7 @@ export default function MarketplaceOffers({
           const movement = getPriceMovement(offer);
           const discountPercentage = getDiscountPercentage(offer);
           const isBestOffer = bestOffer?.id === offer.id;
-          const hasValidLink =
-            Boolean(offer.affiliateUrl) && offer.affiliateUrl !== "#";
+          const hasValidLink = Boolean(offer.affiliateUrl);
           const canOpenStore =
             hasValidLink &&
             offer.isAvailable &&

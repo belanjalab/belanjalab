@@ -1,3 +1,4 @@
+import { sanitizePublicUrl } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type Relation<T> = T | T[] | null | undefined;
@@ -174,7 +175,10 @@ export async function getMarketplaceOffersByProductSlug(
         formattedShippingCost:
           shippingCost > 0 ? formatRupiah(shippingCost) : "Gratis ongkir",
         formattedTotalPrice: formatRupiah(totalPrice),
-        affiliateUrl: offer.affiliate_url,
+        affiliateUrl: sanitizePublicUrl(offer.affiliate_url, {
+          allowHash: false,
+          allowMailto: false,
+        }),
         isAvailable: offer.is_available ?? false,
         stockStatus: offer.stock_status ?? "unknown",
         lastCheckedAt: offer.last_checked_at,

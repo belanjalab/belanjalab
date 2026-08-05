@@ -1,5 +1,7 @@
 "use client";
 
+import type { MouseEvent } from "react";
+
 type ConfirmDeleteButtonProps = {
   label: string;
   message: string;
@@ -12,7 +14,7 @@ export default function ConfirmDeleteButton({
   return (
     <button
       type="submit"
-      onClick={(event) => {
+      onClick={(event: MouseEvent<HTMLButtonElement>) => {
         const confirmed = window.confirm(message);
 
         if (!confirmed) {

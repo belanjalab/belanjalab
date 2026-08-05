@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { sanitizePublicUrl } from "@/lib/site-config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getAdminProductFormOptions } from "@/lib/admin-product-options";
-import { uploadProductImage } from "@/lib/product-image-upload";
+import {
+  deleteProductImage,
+  uploadProductImage,
+} from "@/lib/product-image-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +23,7 @@ function slugify(value: string) {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .slice(0, 120);
 }
 
@@ -42,14 +47,33 @@ function parsePrice(value: FormDataEntryValue | null) {
   return Math.round(price);
 }
 
+function isHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isValidImageUrl(value: string) {
+  return (
+    !value ||
+    sanitizePublicUrl(value, {
+      allowHash: false,
+      allowMailto: false,
+    }) !== null
+  );
+}
+
 async function createProduct(formData: FormData) {
   "use server";
 
   const name = String(formData.get("name") ?? "").trim();
   const manualSlug = String(formData.get("slug") ?? "").trim();
   const slug = slugify(manualSlug || name);
-  const categoryId = String(formData.get("category_id") ?? "");
-  const brandId = String(formData.get("brand_id") ?? "");
+  const categoryId = String(formData.get("category_id") ?? "").trim();
+  const brandId = String(formData.get("brand_id") ?? "").trim();
   const shortDescription = String(
     formData.get("short_description") ?? "",
   ).trim();
@@ -57,72 +81,108 @@ async function createProduct(formData: FormData) {
   const manualImageUrl = String(formData.get("image_url") ?? "").trim();
   const imageFile = formData.get("image_file");
   const status = String(formData.get("status") ?? "draft");
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
+  const price = parsePrice(formData.get("price"));
+  const affiliateUrl = String(
+    formData.get("affiliate_url") ?? "",
+  ).trim();
+  const errorUrl = (message: string) =>
+    `/admin/products/new?error=${encodeURIComponent(message)}`;
 
   if (!name || !slug || !categoryId || !brandId) {
+    redirect(errorUrl("Nama, slug, kategori, dan merek wajib diisi."));
+  }
+
+  if (name.length > 200) {
+    redirect(errorUrl("Nama produk maksimal 200 karakter."));
+  }
+
+  if (!isValidImageUrl(manualImageUrl)) {
     redirect(
-      `/admin/products/new?error=${encodeURIComponent(
-        "Nama, slug, kategori, dan merek wajib diisi.",
-      )}`,
+      errorUrl(
+        "URL gambar harus berupa URL http/https atau path internal yang valid.",
+      ),
+    );
+  }
+
+  if (affiliateUrl && !isHttpUrl(affiliateUrl)) {
+    redirect(errorUrl("URL affiliate harus berupa URL http atau https."));
+  }
+
+  if (marketplaceId && price <= 0) {
+    redirect(errorUrl("Harga wajib lebih dari 0 jika marketplace dipilih."));
+  }
+
+  if (!marketplaceId && (price > 0 || affiliateUrl)) {
+    redirect(
+      errorUrl(
+        "Marketplace wajib dipilih jika harga atau URL affiliate diisi.",
+      ),
     );
   }
 
   const allowedStatuses = new Set(["draft", "published"]);
   const safeStatus = allowedStatuses.has(status) ? status : "draft";
-
   const supabase = await createSupabaseServerClient();
-
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     redirect("/admin/login");
   }
 
-  const { data: adminRecord } = await supabase
+  const { data: adminRecord, error: adminError } = await supabase
     .from("admin_users")
     .select("user_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!adminRecord) {
+  if (adminError || !adminRecord) {
     redirect(
       `/admin/login?error=${encodeURIComponent(
-        "Akun ini tidak memiliki akses admin.",
+        adminError?.message ?? "Akun ini tidak memiliki akses admin.",
       )}`,
     );
   }
 
-  const { data: existingProduct } = await supabase
+  const { data: existingProduct, error: duplicateError } = await supabase
     .from("products")
     .select("id")
     .eq("slug", slug)
     .maybeSingle();
 
+  if (duplicateError) {
+    redirect(errorUrl(`Gagal memeriksa slug: ${duplicateError.message}`));
+  }
+
   if (existingProduct) {
-    redirect(
-      `/admin/products/new?error=${encodeURIComponent(
-        "Slug sudah digunakan oleh produk lain.",
-      )}`,
-    );
+    redirect(errorUrl("Slug sudah digunakan oleh produk lain."));
   }
 
   let imageUrl =
     manualImageUrl || "/images/products/product-placeholder.svg";
+  let uploadedImagePath: string | null = null;
 
   if (imageFile instanceof File && imageFile.size > 0) {
     const uploadResult = await uploadProductImage(imageFile, slug);
 
-    if (!uploadResult.ok) {
-      redirect(
-        `/admin/products/new?error=${encodeURIComponent(
-          uploadResult.error,
-        )}`,
-      );
+    if (uploadResult.ok) {
+      imageUrl = uploadResult.publicUrl;
+      uploadedImagePath = uploadResult.path;
+    } else {
+      redirect(errorUrl(uploadResult.error));
     }
-
-    imageUrl = uploadResult.publicUrl;
   }
+
+  const cleanupUploadedImage = async () => {
+    if (uploadedImagePath) {
+      await deleteProductImage(uploadedImagePath);
+    }
+  };
 
   const { data: product, error: productError } = await supabase
     .from("products")
@@ -140,40 +200,55 @@ async function createProduct(formData: FormData) {
     .single();
 
   if (productError || !product) {
-    console.error("Gagal membuat produk:", productError);
-
-    redirect(
-      `/admin/products/new?error=${encodeURIComponent(
-        productError?.message ?? "Produk gagal dibuat.",
-      )}`,
-    );
+    await cleanupUploadedImage();
+    redirect(errorUrl(productError?.message ?? "Produk gagal dibuat."));
   }
 
-  const scorePayload = {
-    product_id: product.id,
-    performance: parseScore(formData.get("performance")),
-    design: parseScore(formData.get("design")),
-    features: parseScore(formData.get("features")),
-    value: parseScore(formData.get("value")),
-    ease_of_use: parseScore(formData.get("ease_of_use")),
+  const rollbackProduct = async () => {
+    const { data: priceRows } = await supabase
+      .from("product_prices")
+      .select("id")
+      .eq("product_id", product.id);
+    const priceIds = (priceRows ?? []).map((item: { id: string }) => item.id);
+
+    if (priceIds.length > 0) {
+      await supabase
+        .from("product_price_history")
+        .delete()
+        .in("product_price_id", priceIds);
+    }
+
+    await supabase
+      .from("product_prices")
+      .delete()
+      .eq("product_id", product.id);
+    await supabase
+      .from("product_scores")
+      .delete()
+      .eq("product_id", product.id);
+    await supabase.from("products").delete().eq("id", product.id);
+    await cleanupUploadedImage();
   };
 
   const { error: scoreError } = await supabase
     .from("product_scores")
-    .insert(scorePayload);
+    .insert({
+      product_id: product.id,
+      performance: parseScore(formData.get("performance")),
+      design: parseScore(formData.get("design")),
+      features: parseScore(formData.get("features")),
+      value: parseScore(formData.get("value")),
+      ease_of_use: parseScore(formData.get("ease_of_use")),
+    });
 
   if (scoreError) {
-    console.error("Gagal menyimpan skor produk:", scoreError);
+    await rollbackProduct();
+    redirect(errorUrl(`Skor produk gagal disimpan: ${scoreError.message}`));
   }
 
-  const marketplaceId = String(formData.get("marketplace_id") ?? "");
-  const price = parsePrice(formData.get("price"));
-  const affiliateUrl = String(
-    formData.get("affiliate_url") ?? "",
-  ).trim();
-
-  if (marketplaceId && price > 0) {
-    const { error: priceError } = await supabase
+  if (marketplaceId) {
+    const now = new Date().toISOString();
+    const { data: priceRow, error: priceError } = await supabase
       .from("product_prices")
       .insert({
         product_id: product.id,
@@ -181,15 +256,39 @@ async function createProduct(formData: FormData) {
         price,
         original_price: price,
         shipping_cost: 0,
-        affiliate_url: affiliateUrl || "#",
+        affiliate_url: affiliateUrl || null,
         is_available: true,
         stock_status: "in_stock",
-        last_checked_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        last_checked_at: now,
+        updated_at: now,
+      })
+      .select("id")
+      .single();
+
+    if (priceError || !priceRow) {
+      await rollbackProduct();
+      redirect(
+        errorUrl(
+          `Harga produk gagal disimpan: ${
+            priceError?.message ?? "Data harga tidak terbentuk."
+          }`,
+        ),
+      );
+    }
+
+    const { error: historyError } = await supabase
+      .from("product_price_history")
+      .insert({
+        product_price_id: priceRow.id,
+        price,
+        captured_at: now,
       });
 
-    if (priceError) {
-      console.error("Gagal menyimpan harga produk:", priceError);
+    if (historyError) {
+      await rollbackProduct();
+      redirect(
+        errorUrl(`Riwayat harga gagal disimpan: ${historyError.message}`),
+      );
     }
   }
 

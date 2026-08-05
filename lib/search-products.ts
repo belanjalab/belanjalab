@@ -1,4 +1,4 @@
-import { PRODUCT_PLACEHOLDER_PATH } from "./site-config";
+import { getSafeImageUrl } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type CategoryRelation = {
@@ -103,8 +103,7 @@ function mapSearchProduct(product: SearchProductRow): SearchProduct {
     slug: product.slug,
     shortDescription:
       product.short_description ?? "Deskripsi belum tersedia.",
-    imageUrl:
-      product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
+    imageUrl: getSafeImageUrl(product.image_url),
     category: category?.name ?? "Produk",
     brand: brand?.name ?? "Tanpa merek",
     score:

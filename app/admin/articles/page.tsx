@@ -147,16 +147,16 @@ async function createArticle(formData: FormData) {
   if (coverFile instanceof File && coverFile.size > 0) {
     const uploadResult = await uploadArticleImage(coverFile, slug);
 
-    if (!uploadResult.ok) {
+    if (uploadResult.ok) {
+      uploadedCover = {
+        publicUrl: uploadResult.publicUrl,
+        path: uploadResult.path,
+      };
+    } else {
       redirect(
         `/admin/articles?error=${encodeURIComponent(uploadResult.error)}`,
       );
     }
-
-    uploadedCover = {
-      publicUrl: uploadResult.publicUrl,
-      path: uploadResult.path,
-    };
   }
 
   const { error } = await supabase.from("articles").insert({

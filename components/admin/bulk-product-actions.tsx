@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 
 type BulkProductItem = {
   id: string;
@@ -129,7 +129,9 @@ export default function BulkProductActions({
           <select
             name="category_name"
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+              setCategory(event.target.value)
+            }
             className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
           >
             <option value="">Pilih kategori</option>
@@ -155,7 +157,9 @@ export default function BulkProductActions({
           <select
             name="brand_name"
             value={brand}
-            onChange={(event) => setBrand(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+              setBrand(event.target.value)
+            }
             className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
           >
             <option value="">Pilih merek</option>
@@ -181,7 +185,9 @@ export default function BulkProductActions({
           <select
             name="marketplace_name"
             value={marketplace}
-            onChange={(event) => setMarketplace(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+              setMarketplace(event.target.value)
+            }
             className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
           >
             <option value="">Pilih marketplace</option>
@@ -199,7 +205,9 @@ export default function BulkProductActions({
             step="1"
             inputMode="numeric"
             value={marketplacePrice}
-            onChange={(event) => setMarketplacePrice(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              setMarketplacePrice(event.target.value)
+            }
             placeholder="Harga untuk produk terpilih"
             className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
           />
@@ -208,7 +216,9 @@ export default function BulkProductActions({
             type="url"
             name="marketplace_affiliate_url"
             value={affiliateUrl}
-            onChange={(event) => setAffiliateUrl(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              setAffiliateUrl(event.target.value)
+            }
             placeholder="URL affiliate (opsional)"
             className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400"
           />

@@ -33,7 +33,7 @@ function parseSortOrder(value: FormDataEntryValue | null) {
     return 0;
   }
 
-  return Math.max(0, Math.round(number));
+  return Math.min(9999, Math.max(0, Math.round(number)));
 }
 
 async function saveSpecification(formData: FormData) {
@@ -57,6 +57,14 @@ async function saveSpecification(formData: FormData) {
     );
   }
 
+  if (label.length > 120 || valueText.length > 500) {
+    redirect(
+      `/admin/products/${productId}/specifications?error=${encodeURIComponent(
+        "Label maksimal 120 karakter dan nilai maksimal 500 karakter.",
+      )}`,
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -67,16 +75,16 @@ async function saveSpecification(formData: FormData) {
     redirect("/admin/login");
   }
 
-  const { data: adminRecord } = await supabase
+  const { data: adminRecord, error: adminError } = await supabase
     .from("admin_users")
     .select("user_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!adminRecord) {
+  if (adminError || !adminRecord) {
     redirect(
       `/admin/login?error=${encodeURIComponent(
-        "Akun ini tidak memiliki akses admin.",
+        adminError?.message ?? "Akun ini tidak memiliki akses admin.",
       )}`,
     );
   }
@@ -90,15 +98,18 @@ async function saveSpecification(formData: FormData) {
   };
 
   if (specificationId) {
-    const { error } = await supabase
+    const { data: updatedSpecification, error } = await supabase
       .from("product_specifications")
       .update(payload)
-      .eq("id", specificationId);
+      .eq("id", specificationId)
+      .eq("product_id", productId)
+      .select("id")
+      .maybeSingle();
 
-    if (error) {
+    if (error || !updatedSpecification) {
       redirect(
         `/admin/products/${productId}/specifications?error=${encodeURIComponent(
-          error.message,
+          error?.message ?? "Spesifikasi tidak ditemukan pada produk ini.",
         )}`,
       );
     }
@@ -145,29 +156,32 @@ async function deleteSpecification(formData: FormData) {
     redirect("/admin/login");
   }
 
-  const { data: adminRecord } = await supabase
+  const { data: adminRecord, error: adminError } = await supabase
     .from("admin_users")
     .select("user_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!adminRecord) {
+  if (adminError || !adminRecord) {
     redirect(
       `/admin/login?error=${encodeURIComponent(
-        "Akun ini tidak memiliki akses admin.",
+        adminError?.message ?? "Akun ini tidak memiliki akses admin.",
       )}`,
     );
   }
 
-  const { error } = await supabase
+  const { data: deletedSpecification, error } = await supabase
     .from("product_specifications")
     .delete()
-    .eq("id", specificationId);
+    .eq("id", specificationId)
+    .eq("product_id", productId)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !deletedSpecification) {
     redirect(
       `/admin/products/${productId}/specifications?error=${encodeURIComponent(
-        error.message,
+        error?.message ?? "Spesifikasi tidak ditemukan pada produk ini.",
       )}`,
     );
   }

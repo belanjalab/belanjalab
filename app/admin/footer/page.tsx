@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { sanitizePublicUrl } from "@/lib/site-config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -23,18 +24,29 @@ type FooterRecord = {
   is_active: boolean;
 };
 
-function normalizeInternalUrl(value: FormDataEntryValue | null) {
-  const url = String(value ?? "").trim();
+function normalizeFooterUrl(
+  value: FormDataEntryValue | null,
+  options: { allowMailto?: boolean } = {},
+) {
+  const rawUrl = String(value ?? "").trim();
 
-  if (!url) {
+  if (!rawUrl) {
     return null;
   }
 
-  if (!url.startsWith("/") || url.startsWith("//")) {
-    throw new Error("URL harus berupa path internal yang diawali /.");
+  const safeUrl = sanitizePublicUrl(rawUrl, {
+    allowMailto: options.allowMailto,
+  });
+
+  if (!safeUrl) {
+    throw new Error(
+      options.allowMailto
+        ? "URL harus berupa path internal, http/https, atau mailto yang valid."
+        : "URL harus berupa path internal atau URL http/https yang valid.",
+    );
   }
 
-  return url;
+  return safeUrl;
 }
 
 async function requireAdmin() {
@@ -81,18 +93,30 @@ async function saveFooter(formData: FormData) {
     );
   }
 
-  let contactUrl: string | null;
-  let careersUrl: string | null;
-  let privacyUrl: string | null;
-  let termsUrl: string | null;
-  let disclaimerUrl: string | null;
+  let footerUrls: {
+    contactUrl: string | null;
+    careersUrl: string | null;
+    privacyUrl: string | null;
+    termsUrl: string | null;
+    disclaimerUrl: string | null;
+  } = {
+    contactUrl: null,
+    careersUrl: null,
+    privacyUrl: null,
+    termsUrl: null,
+    disclaimerUrl: null,
+  };
 
   try {
-    contactUrl = normalizeInternalUrl(formData.get("contact_url"));
-    careersUrl = normalizeInternalUrl(formData.get("careers_url"));
-    privacyUrl = normalizeInternalUrl(formData.get("privacy_url"));
-    termsUrl = normalizeInternalUrl(formData.get("terms_url"));
-    disclaimerUrl = normalizeInternalUrl(formData.get("disclaimer_url"));
+    footerUrls = {
+      contactUrl: normalizeFooterUrl(formData.get("contact_url"), {
+        allowMailto: true,
+      }),
+      careersUrl: normalizeFooterUrl(formData.get("careers_url")),
+      privacyUrl: normalizeFooterUrl(formData.get("privacy_url")),
+      termsUrl: normalizeFooterUrl(formData.get("terms_url")),
+      disclaimerUrl: normalizeFooterUrl(formData.get("disclaimer_url")),
+    };
   } catch (error) {
     redirect(
       `/admin/footer?error=${encodeURIComponent(
@@ -105,11 +129,11 @@ async function saveFooter(formData: FormData) {
 
   const payload = {
     company_description: companyDescription,
-    contact_url: contactUrl,
-    careers_url: careersUrl,
-    privacy_url: privacyUrl,
-    terms_url: termsUrl,
-    disclaimer_url: disclaimerUrl,
+    contact_url: footerUrls.contactUrl,
+    careers_url: footerUrls.careersUrl,
+    privacy_url: footerUrls.privacyUrl,
+    terms_url: footerUrls.termsUrl,
+    disclaimer_url: footerUrls.disclaimerUrl,
     is_active: true,
     updated_at: new Date().toISOString(),
   };
@@ -216,8 +240,8 @@ export default async function AdminFooterPage({
                 <input
                   type="text"
                   name="contact_url"
-                  defaultValue={footer?.contact_url ?? "/contact"}
-                  placeholder="/contact"
+                  defaultValue={footer?.contact_url ?? ""}
+                  placeholder="mailto:halo@belanjalab.com atau /contact"
                   className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
                 />
               </label>
@@ -227,7 +251,7 @@ export default async function AdminFooterPage({
                 <input
                   type="text"
                   name="careers_url"
-                  defaultValue={footer?.careers_url ?? "/careers"}
+                  defaultValue={footer?.careers_url ?? ""}
                   placeholder="/careers"
                   className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
                 />
@@ -238,7 +262,7 @@ export default async function AdminFooterPage({
                 <input
                   type="text"
                   name="privacy_url"
-                  defaultValue={footer?.privacy_url ?? "/privacy"}
+                  defaultValue={footer?.privacy_url ?? ""}
                   placeholder="/privacy"
                   className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
                 />
@@ -249,7 +273,7 @@ export default async function AdminFooterPage({
                 <input
                   type="text"
                   name="terms_url"
-                  defaultValue={footer?.terms_url ?? "/terms"}
+                  defaultValue={footer?.terms_url ?? ""}
                   placeholder="/terms"
                   className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
                 />
@@ -260,7 +284,7 @@ export default async function AdminFooterPage({
                 <input
                   type="text"
                   name="disclaimer_url"
-                  defaultValue={footer?.disclaimer_url ?? "/disclaimer"}
+                  defaultValue={footer?.disclaimer_url ?? ""}
                   placeholder="/disclaimer"
                   className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
                 />
@@ -268,8 +292,9 @@ export default async function AdminFooterPage({
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700">
-              Gunakan path internal seperti <strong>/contact</strong>. Halaman
-              tujuan harus dibuat agar tautan tidak menghasilkan 404.
+              Kosongkan tautan yang belum tersedia. Kamu bisa memakai path
+              internal seperti <strong>/privacy</strong>, URL https, atau
+              <strong> mailto:</strong> untuk kontak.
             </div>
 
             <button

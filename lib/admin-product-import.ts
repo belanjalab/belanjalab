@@ -40,6 +40,21 @@ export type ProductCsvImportResult = {
 };
 
 const MAX_IMPORT_ROWS = 200;
+const SCORE_FIELDS = [
+  "performance",
+  "design",
+  "features",
+  "value",
+  "ease_of_use",
+] as const;
+
+type ServerSupabaseClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
+
+type AdminClientResult =
+  | { ok: true; supabase: ServerSupabaseClient }
+  | { ok: false; message: string };
 
 function slugify(value: string) {
   return value
@@ -63,15 +78,20 @@ function parseScore(value: string | undefined) {
     : 0;
 }
 
-function parsePrice(value: string | undefined) {
+function parsePriceInput(value: string | undefined) {
   if (!value?.trim()) {
     return 0;
   }
 
-  const price = Number(value);
-  return Number.isFinite(price) && price > 0
-    ? Math.round(price)
-    : 0;
+  const normalized = value
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/^rp/i, "")
+    .replace(/[.,](?=\d{3}(?:[.,]|$))/g, "")
+    .replace(/,/g, ".");
+
+  const price = Number(normalized);
+  return Number.isFinite(price) && price > 0 ? Math.round(price) : 0;
 }
 
 function normalizeLookup(value: string) {
@@ -91,33 +111,58 @@ function isHttpUrl(value: string) {
   }
 }
 
-
-function parsePriceInput(value: string | undefined) {
+function isValidScore(value: string | undefined) {
   if (!value?.trim()) {
-    return 0;
+    return true;
   }
 
-  const normalized = value
-    .trim()
-    .replace(/\s/g, "")
-    .replace(/^rp/i, "")
-    .replace(/[.,](?=\d{3}(?:[.,]|$))/g, "")
-    .replace(/,/g, ".");
-
-  const price = Number(normalized);
-  return Number.isFinite(price) && price > 0 ? Math.round(price) : 0;
+  const score = Number(value);
+  return Number.isFinite(score) && score >= 0 && score <= 10;
 }
 
-export async function validateProductsCsv(
-  rows: ProductCsvImportRow[],
-): Promise<ProductCsvValidationResult> {
-  const issues: ProductCsvValidationIssue[] = [];
+async function requireAdminClient(): Promise<AdminClientResult> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
+  if (userError || !user) {
+    return {
+      ok: false,
+      message: "Sesi admin tidak valid. Silakan login ulang.",
+    };
+  }
+
+  const { data: adminRecord, error: adminError } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (adminError || !adminRecord) {
+    return {
+      ok: false,
+      message:
+        adminError?.message ?? "Akun ini tidak memiliki akses admin.",
+    };
+  }
+
+  return { ok: true, supabase };
+}
+
+function validateCsvShape(
+  rows: ProductCsvImportRow[],
+): ProductCsvValidationResult | null {
   if (!Array.isArray(rows) || rows.length === 0) {
     return {
       ok: false,
       issues: [
-        { rowNumber: 0, field: "file", message: "CSV tidak memiliki data produk." },
+        {
+          rowNumber: 0,
+          field: "file",
+          message: "CSV tidak memiliki data produk.",
+        },
       ],
     };
   }
@@ -135,7 +180,14 @@ export async function validateProductsCsv(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
+  return null;
+}
+
+async function validateProductsCsvWithClient(
+  rows: ProductCsvImportRow[],
+  supabase: ServerSupabaseClient,
+): Promise<ProductCsvValidationResult> {
+  const issues: ProductCsvValidationIssue[] = [];
   const [
     { data: categoryRows, error: categoryError },
     { data: brandRows, error: brandError },
@@ -154,7 +206,11 @@ export async function validateProductsCsv(
   ]);
 
   const setupError =
-    categoryError ?? brandError ?? marketplaceError ?? productError ?? priceError;
+    categoryError ??
+    brandError ??
+    marketplaceError ??
+    productError ??
+    priceError;
 
   if (setupError) {
     return {
@@ -170,21 +226,24 @@ export async function validateProductsCsv(
   }
 
   const categories = new Set(
-    (categoryRows ?? []).map((item) => normalizeLookup(item.name)),
+    (categoryRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
   );
   const brands = new Set(
-    (brandRows ?? []).map((item) => normalizeLookup(item.name)),
+    (brandRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
   );
   const marketplaces = new Set(
-    (marketplaceRows ?? []).map((item) => normalizeLookup(item.name)),
+    (marketplaceRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
   );
   const existingSlugs = new Set(
-    (existingProducts ?? []).map((item) => item.slug),
+    (existingProducts ?? []).map((item: { slug: string }) => item.slug),
   );
   const existingAffiliateUrls = new Set(
     (existingPrices ?? [])
-      .map((item) => item.affiliate_url?.trim())
-      .filter((value): value is string => Boolean(value && value !== "#")),
+      .map((item: { affiliate_url: string | null }) => item.affiliate_url?.trim())
+      .filter(
+        (value: string | undefined): value is string =>
+          Boolean(value && value !== "#"),
+      ),
   );
   const csvSlugs = new Set<string>();
   const csvAffiliateUrls = new Set<string>();
@@ -197,10 +256,18 @@ export async function validateProductsCsv(
     const brand = normalizeLookup(row.brand ?? "");
     const marketplace = normalizeLookup(row.marketplace ?? "");
     const affiliateUrl = row.affiliate_url?.trim() ?? "";
+    const rawPrice = row.price?.trim() ?? "";
     const price = parsePriceInput(row.price);
+    const status = row.status?.trim().toLowerCase() ?? "";
 
     if (!name) {
       issues.push({ rowNumber, field: "name", message: "name wajib diisi." });
+    } else if (name.length > 200) {
+      issues.push({
+        rowNumber,
+        field: "name",
+        message: "name maksimal 200 karakter.",
+      });
     }
 
     if (!slug) {
@@ -237,11 +304,37 @@ export async function validateProductsCsv(
       });
     }
 
+    if (status && status !== "draft" && status !== "published") {
+      issues.push({
+        rowNumber,
+        field: "status",
+        message: 'status hanya boleh "draft" atau "published".',
+      });
+    }
+
+    SCORE_FIELDS.forEach((field) => {
+      if (!isValidScore(row[field])) {
+        issues.push({
+          rowNumber,
+          field,
+          message: `${field} harus berupa angka 0-10.`,
+        });
+      }
+    });
+
     if (marketplace && !marketplaces.has(marketplace)) {
       issues.push({
         rowNumber,
         field: "marketplace",
         message: `Marketplace "${row.marketplace ?? ""}" tidak ditemukan.`,
+      });
+    }
+
+    if (rawPrice && price <= 0) {
+      issues.push({
+        rowNumber,
+        field: "price",
+        message: "price harus berupa angka lebih dari 0.",
       });
     }
 
@@ -253,7 +346,7 @@ export async function validateProductsCsv(
       });
     }
 
-    if (!marketplace && (row.price?.trim() || affiliateUrl)) {
+    if (!marketplace && (rawPrice || affiliateUrl)) {
       issues.push({
         rowNumber,
         field: "marketplace",
@@ -297,6 +390,33 @@ export async function validateProductsCsv(
   return { ok: issues.length === 0, issues };
 }
 
+export async function validateProductsCsv(
+  rows: ProductCsvImportRow[],
+): Promise<ProductCsvValidationResult> {
+  const shapeError = validateCsvShape(rows);
+
+  if (shapeError) {
+    return shapeError;
+  }
+
+  const admin = await requireAdminClient();
+
+  if (!admin.ok) {
+    return {
+      ok: false,
+      issues: [
+        {
+          rowNumber: 0,
+          field: "authorization",
+          message: admin.message,
+        },
+      ],
+    };
+  }
+
+  return validateProductsCsvWithClient(rows, admin.supabase);
+}
+
 export async function importProductsFromCsv(
   rows: ProductCsvImportRow[],
   fileName?: string,
@@ -307,24 +427,35 @@ export async function importProductsFromCsv(
   errorCount: number;
   runId?: string;
 }> {
-  if (!Array.isArray(rows) || rows.length === 0) {
+  const shapeError = validateCsvShape(rows);
+
+  if (shapeError) {
+    const results = shapeError.issues.map((issue) => ({
+      rowNumber: issue.rowNumber,
+      name: "File CSV",
+      status: "error" as const,
+      message: issue.message,
+    }));
+
     return {
       ok: false,
-      results: [],
+      results,
       successCount: 0,
-      errorCount: 0,
+      errorCount: results.length,
     };
   }
 
-  if (rows.length > MAX_IMPORT_ROWS) {
+  const admin = await requireAdminClient();
+
+  if (!admin.ok) {
     return {
       ok: false,
       results: [
         {
           rowNumber: 0,
-          name: "File CSV",
+          name: "Akses admin",
           status: "error",
-          message: `Maksimal ${MAX_IMPORT_ROWS} produk per proses import.`,
+          message: admin.message,
         },
       ],
       successCount: 0,
@@ -332,29 +463,8 @@ export async function importProductsFromCsv(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return {
-      ok: false,
-      results: [
-        {
-          rowNumber: 0,
-          name: "Sesi admin",
-          status: "error",
-          message: "Sesi admin tidak valid. Silakan login ulang.",
-        },
-      ],
-      successCount: 0,
-      errorCount: 1,
-    };
-  }
-
-  const validation = await validateProductsCsv(rows);
+  const { supabase } = admin;
+  const validation = await validateProductsCsvWithClient(rows, supabase);
 
   if (!validation.ok) {
     const validationResults = validation.issues.map((issue) => ({
@@ -408,7 +518,6 @@ export async function importProductsFromCsv(
     const rowNumber = index + 2;
     const name = row.name?.trim() || "Tanpa nama";
     const slug = slugify(row.slug?.trim() || name);
-
     const payload = {
       name,
       slug,
@@ -416,7 +525,9 @@ export async function importProductsFromCsv(
       brand: row.brand?.trim() || "",
       short_description: row.short_description?.trim() || "",
       description: row.description?.trim() || "",
-      image_url: row.image_url?.trim() || "/images/products/product-placeholder.svg",
+      image_url:
+        row.image_url?.trim() ||
+        "/images/products/product-placeholder.svg",
       status:
         row.status?.trim().toLowerCase() === "published"
           ? "published"
@@ -457,14 +568,13 @@ export async function importProductsFromCsv(
   const successCount = results.filter(
     (result) => result.status === "success",
   ).length;
-  const errorCount = results.length - successCount;
-
+  const importErrorCount = results.length - successCount;
   const { error: finishError } = await supabase.rpc(
     "finish_product_csv_import",
     {
       p_run_id: runId,
       p_success_count: successCount,
-      p_error_count: errorCount,
+      p_error_count: importErrorCount,
       p_results: results,
     },
   );
@@ -479,10 +589,10 @@ export async function importProductsFromCsv(
   }
 
   return {
-    ok: errorCount === 0 && !finishError,
+    ok: importErrorCount === 0 && !finishError,
     results,
     successCount,
-    errorCount: errorCount + (finishError ? 1 : 0),
+    errorCount: importErrorCount + (finishError ? 1 : 0),
     runId: typeof runId === "string" ? runId : undefined,
   };
 }

@@ -1,36 +1,70 @@
-# BelanjaLab Release Finalization RC2
+# BelanjaLab MVP Release Candidate 2
 
-## Perbaikan dalam paket ini
+Tanggal finalisasi: 4 Agustus 2026
 
-- Canonical homepage dipindahkan dari root layout agar tidak diwariskan ke semua halaman.
-- Canonical `/articles` ditambahkan.
-- Halaman admin diberi `noindex` dan `nofollow`.
-- URL situs dipusatkan di `lib/site-config.ts`.
-- Reset password tidak lagi memakai domain Worker yang ditulis langsung di source.
-- Middleware tidak lagi berpotensi redirect loop saat environment variable belum tersedia.
-- Relasi Supabase kategori, brand, skor, dan marketplace mendukung bentuk object maupun array.
-- Harga nol, stok habis, dan penawaran tidak tersedia tidak dipakai sebagai harga terendah.
-- Fallback gambar Logitech dihapus dari alur publik dan admin.
-- Hero gagal dimuat tidak lagi menjatuhkan seluruh homepage.
-- Halaman artikel publik tidak memakai cookie sehingga ISR dapat bekerja.
-- Dependency yang tidak digunakan dihapus.
-- Script `npm run typecheck` ditambahkan.
+Versi aplikasi: `1.0.0-rc.2`
 
-## Pemeriksaan setelah deploy
+## Status
 
-- [ ] Cloudflare build berhasil.
-- [ ] Homepage menampilkan kategori, skor, dan harga dengan benar.
-- [ ] Detail produk menampilkan nama brand dan marketplace yang benar.
-- [ ] Search tidak menampilkan harga Rp0.
-- [ ] Produk tanpa gambar memakai placeholder netral.
-- [ ] `/articles` dan artikel detail dapat dibuka.
-- [ ] `/robots.txt` dan `/sitemap.xml` dapat dibuka.
-- [ ] Login admin dan reset password berhasil.
-- [ ] Akun non-admin ditolak dari `/admin`.
-- [ ] CSV Import atomic berhasil.
+Fondasi MVP telah difinalisasi sebagai Release Candidate. Status production final ditetapkan setelah Cloudflare build berhasil dan semua smoke test pada release checklist lolos.
 
-## Environment variable wajib
+## Finalisasi yang diterapkan
 
-- `NEXT_PUBLIC_SITE_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+### Dependency dan runtime
+
+- Next.js diperbarui ke `15.5.21`.
+- React dan React DOM diperbarui ke `19.2.6`.
+- Minimum Node.js ditetapkan ke `20.11.0`.
+- Script `npm run check` ditambahkan.
+- `.env.example` dilengkapi.
+
+### Admin dan data integrity
+
+- Create Product memiliki validasi URL, harga, dan marketplace.
+- Gambar upload dibersihkan jika penyimpanan produk gagal.
+- Product, score, price, dan initial price history dibatalkan jika salah satu tahap gagal.
+- Edit Product mengembalikan data produk sebelumnya jika penyimpanan score gagal.
+- Product Price menyimpan `null`, bukan `#`, untuk affiliate URL kosong.
+- Perubahan harga mencatat history dan melakukan rollback jika history gagal.
+- Aksi harga dibatasi berdasarkan `product_id` dan `price_id`.
+- Bulk update harga marketplace sekarang berjalan dalam satu RPC atomic dan ikut mencatat price history.
+
+### CSV import
+
+- Validasi dan import hanya dapat dipanggil admin.
+- Validasi skor, status, URL, harga, slug, kategori, brand, marketplace, dan duplikasi diperketat.
+- RPC import tetap atomic per produk.
+- Initial price history ikut dibuat saat CSV import.
+- Import run tetap tercatat pada `product_csv_import_runs`.
+
+### Security dan public content
+
+- URL dari Hero dan Footer disanitasi sebelum dirender.
+- Link Footer yang belum tersedia tidak lagi diarahkan ke halaman palsu/404.
+- URL gambar publik disanitasi dan memakai placeholder aman jika invalid.
+- Affiliate URL publik dan preview admin disanitasi saat dibaca.
+- Placeholder affiliate lama `#` dibersihkan menjadi `null` melalui migration.
+- Secret Supabase tidak disimpan di source code.
+- Route admin tetap memerlukan session dan record `admin_users`.
+
+### SEO dan stability
+
+- Metadata global, product, dan article tersedia.
+- Sitemap hanya memuat halaman publik yang dapat diindeks.
+- Robots memblokir admin dan auth.
+- JSON-LD Product dan Article memakai data aktual.
+- Error, global error, loading, dan not-found page tersedia.
+
+## Fitur yang sengaja belum masuk release ini
+
+- Marketplace price sync otomatis
+- Product Score Engine otomatis
+- Affiliate click analytics
+- Multi-role admin/editor
+- Browser extension import marketplace
+
+Fitur tersebut adalah roadmap setelah MVP stabil dan bukan blocker untuk Release Candidate.
+
+## Upload image
+
+Server Action menerima body sampai 6 MB. Validasi aplikasi tetap menolak file gambar di atas 5 MB.

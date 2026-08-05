@@ -1,3 +1,4 @@
+import { sanitizePublicUrl } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export type HeroFeaturedProduct = {
@@ -56,5 +57,18 @@ export async function getActiveHero(): Promise<ActiveHero | null> {
     return null;
   }
 
-  return data as unknown as ActiveHero | null;
+  if (!data) {
+    return null;
+  }
+
+  const hero = data as unknown as ActiveHero;
+
+  return {
+    ...hero,
+    primary_button_url: sanitizePublicUrl(hero.primary_button_url),
+    secondary_button_url: sanitizePublicUrl(hero.secondary_button_url),
+    hero_image_url: sanitizePublicUrl(hero.hero_image_url, {
+      allowHash: false,
+    }),
+  };
 }

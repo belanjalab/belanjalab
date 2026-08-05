@@ -228,94 +228,28 @@ async function updateBulkProductStatus(formData: FormData) {
       }
     }
 
-    const { data: marketplaceRecord, error: marketplaceError } =
-      await supabase
-        .from("marketplaces")
-        .select("id, name")
-        .eq("name", marketplaceName)
-        .maybeSingle();
+    const { data: processedCount, error: bulkPriceError } =
+      await supabase.rpc("upsert_marketplace_prices_bulk_atomic", {
+        p_product_ids: productIds,
+        p_marketplace_name: marketplaceName,
+        p_price: marketplacePrice,
+        p_affiliate_url: marketplaceAffiliateUrl || null,
+      });
 
-    if (marketplaceError || !marketplaceRecord) {
+    if (bulkPriceError) {
       redirect(
-        `/admin?error=${encodeURIComponent(
-          marketplaceError?.message ?? "Marketplace tidak ditemukan.",
-        )}`,
+        `/admin?error=${encodeURIComponent(bulkPriceError.message)}`,
       );
     }
 
-    const { data: existingPrices, error: existingPriceError } =
-      await supabase
-        .from("product_prices")
-        .select("id, product_id")
-        .eq("marketplace_id", marketplaceRecord.id)
-        .in("product_id", productIds);
-
-    if (existingPriceError) {
-      redirect(
-        `/admin?error=${encodeURIComponent(existingPriceError.message)}`,
-      );
-    }
-
-    const now = new Date().toISOString();
-    const affiliateUrl = marketplaceAffiliateUrl || "#";
-    const existingProductIds = new Set(
-      (existingPrices ?? []).map((item) => item.product_id),
-    );
-
-    const existingIds = (existingPrices ?? []).map((item) => item.id);
-
-    if (existingIds.length > 0) {
-      const { error: updatePriceError } = await supabase
-        .from("product_prices")
-        .update({
-          price: marketplacePrice,
-          original_price: marketplacePrice,
-          shipping_cost: 0,
-          affiliate_url: affiliateUrl,
-          is_available: true,
-          stock_status: "in_stock",
-          last_checked_at: now,
-          updated_at: now,
-        })
-        .in("id", existingIds);
-
-      if (updatePriceError) {
-        redirect(
-          `/admin?error=${encodeURIComponent(updatePriceError.message)}`,
-        );
-      }
-    }
-
-    const newPriceRows = productIds
-      .filter((productId) => !existingProductIds.has(productId))
-      .map((productId) => ({
-        product_id: productId,
-        marketplace_id: marketplaceRecord.id,
-        price: marketplacePrice,
-        original_price: marketplacePrice,
-        shipping_cost: 0,
-        affiliate_url: affiliateUrl,
-        is_available: true,
-        stock_status: "in_stock",
-        last_checked_at: now,
-        updated_at: now,
-      }));
-
-    if (newPriceRows.length > 0) {
-      const { error: insertPriceError } = await supabase
-        .from("product_prices")
-        .insert(newPriceRows);
-
-      if (insertPriceError) {
-        redirect(
-          `/admin?error=${encodeURIComponent(insertPriceError.message)}`,
-        );
-      }
-    }
+    const importedCount = Number(processedCount);
+    const successCount = Number.isFinite(importedCount)
+      ? importedCount
+      : productIds.length;
 
     redirect(
       `/admin?bulk_updated=${encodeURIComponent(
-        `Harga ${marketplaceRecord.name} untuk ${productIds.length} produk berhasil disimpan.`,
+        `Harga ${marketplaceName} untuk ${successCount} produk berhasil disimpan.`,
       )}`,
     );
   }
@@ -344,7 +278,7 @@ async function updateBulkProductStatus(formData: FormData) {
     }
 
     const cleanupResults = await Promise.allSettled(
-      (productsToDelete ?? []).map((product) =>
+      (productsToDelete ?? []).map((product: { image_url: string | null }) =>
         deleteProductImageByUrl(product.image_url),
       ),
     );
@@ -474,15 +408,15 @@ export default async function AdminPage({
   ]);
 
   const categories = (categoryRows ?? [])
-    .map((item) => item.name)
+    .map((item: { name: string }) => item.name)
     .filter(Boolean);
 
   const brands = (brandRows ?? [])
-    .map((item) => item.name)
+    .map((item: { name: string }) => item.name)
     .filter(Boolean);
 
   const marketplaces = (marketplaceRows ?? [])
-    .map((item) => item.name)
+    .map((item: { name: string }) => item.name)
     .filter(Boolean);
 
   const itemsPerPage = 10;

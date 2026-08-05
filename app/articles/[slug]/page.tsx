@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SITE_URL } from "@/lib/site-config";
+import { sanitizePublicUrl, SITE_URL, toAbsoluteSiteUrl } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 3600;
@@ -52,7 +52,18 @@ async function getArticle(slug: string) {
     throw new Error(`Gagal mengambil artikel: ${error.message}`);
   }
 
-  return data as PublicArticle | null;
+  if (!data) {
+    return null;
+  }
+
+  const article = data as PublicArticle;
+
+  return {
+    ...article,
+    cover_image: sanitizePublicUrl(article.cover_image, {
+      allowHash: false,
+    }),
+  };
 }
 
 export async function generateMetadata({
@@ -71,6 +82,9 @@ export async function generateMetadata({
   const description =
     article.excerpt ?? "Artikel dan panduan belanja dari BelanjaLab.";
   const canonicalPath = `/articles/${article.slug}`;
+  const coverImage = article.cover_image
+    ? toAbsoluteSiteUrl(article.cover_image)
+    : null;
 
   return {
     title: article.title,
@@ -87,15 +101,15 @@ export async function generateMetadata({
       locale: "id_ID",
       publishedTime: article.created_at,
       modifiedTime: article.updated_at,
-      images: article.cover_image
-        ? [{ url: article.cover_image, alt: article.title }]
+      images: coverImage
+        ? [{ url: coverImage, alt: article.title }]
         : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: article.title,
       description,
-      images: article.cover_image ? [article.cover_image] : undefined,
+      images: coverImage ? [coverImage] : undefined,
     },
   };
 }
@@ -117,6 +131,9 @@ export default async function ArticlePage({
     .filter(Boolean);
 
   const articleUrl = `${SITE_URL}/articles/${article.slug}`;
+  const coverImage = article.cover_image
+    ? toAbsoluteSiteUrl(article.cover_image)
+    : null;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -141,7 +158,7 @@ export default async function ArticlePage({
         url: `${SITE_URL}/icon.png`,
       },
     },
-    ...(article.cover_image ? { image: [article.cover_image] } : {}),
+    ...(coverImage ? { image: [coverImage] } : {}),
   };
 
   return (

@@ -176,7 +176,9 @@ async function updateProductPrice(formData: FormData) {
   const { data: currentPriceRow, error: currentPriceError } =
     await supabase
       .from("product_prices")
-      .select("price")
+      .select(
+        "id, product_id, marketplace_id, price, original_price, shipping_cost, affiliate_url, is_available, stock_status, last_checked_at, updated_at",
+      )
       .eq("id", priceId)
       .maybeSingle();
 
@@ -190,23 +192,27 @@ async function updateProductPrice(formData: FormData) {
 
   const previousPrice = Number(currentPriceRow.price);
 
-  const { error } = await supabase
+  const { data: updatedPrice, error } = await supabase
     .from("product_prices")
     .update({
       price: roundedPrice,
       original_price: Math.round(originalPrice),
       shipping_cost: Math.round(shippingCost),
-      affiliate_url: affiliateUrl || "#",
+      affiliate_url: affiliateUrl || null,
       is_available: isAvailable,
       stock_status: stockStatus,
       last_checked_at: now,
       updated_at: now,
     })
-    .eq("id", priceId);
+    .eq("id", priceId)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !updatedPrice) {
     redirect(
-      `/admin/prices?error=${encodeURIComponent(error.message)}`,
+      `/admin/prices?error=${encodeURIComponent(
+        error?.message ?? "Data harga gagal diperbarui.",
+      )}`,
     );
   }
 
@@ -220,14 +226,35 @@ async function updateProductPrice(formData: FormData) {
       .eq("product_price_id", priceId);
 
     if (historyCountError) {
+      const { error: rollbackError } = await supabase
+        .from("product_prices")
+        .update({
+          marketplace_id: currentPriceRow.marketplace_id,
+          price: currentPriceRow.price,
+          original_price: currentPriceRow.original_price,
+          shipping_cost: currentPriceRow.shipping_cost,
+          affiliate_url: currentPriceRow.affiliate_url,
+          is_available: currentPriceRow.is_available,
+          stock_status: currentPriceRow.stock_status,
+          last_checked_at: currentPriceRow.last_checked_at,
+          updated_at: currentPriceRow.updated_at,
+        })
+        .eq("id", priceId);
+
       redirect(
         `/admin/prices?error=${encodeURIComponent(
-          `Harga berhasil diperbarui, tetapi riwayat gagal diperiksa: ${historyCountError.message}`,
+          rollbackError
+            ? `Riwayat gagal diperiksa dan rollback harga gagal: ${historyCountError.message}`
+            : `Riwayat gagal diperiksa. Perubahan harga telah dibatalkan: ${historyCountError.message}`,
         )}`,
       );
     }
 
-    const historyEntries = [];
+    const historyEntries: Array<{
+      product_price_id: string;
+      price: number;
+      captured_at: string;
+    }> = [];
 
     if ((count ?? 0) === 0) {
       historyEntries.push({
@@ -250,9 +277,26 @@ async function updateProductPrice(formData: FormData) {
       .insert(historyEntries);
 
     if (historyError) {
+      const { error: rollbackError } = await supabase
+        .from("product_prices")
+        .update({
+          marketplace_id: currentPriceRow.marketplace_id,
+          price: currentPriceRow.price,
+          original_price: currentPriceRow.original_price,
+          shipping_cost: currentPriceRow.shipping_cost,
+          affiliate_url: currentPriceRow.affiliate_url,
+          is_available: currentPriceRow.is_available,
+          stock_status: currentPriceRow.stock_status,
+          last_checked_at: currentPriceRow.last_checked_at,
+          updated_at: currentPriceRow.updated_at,
+        })
+        .eq("id", priceId);
+
       redirect(
         `/admin/prices?error=${encodeURIComponent(
-          `Harga berhasil diperbarui, tetapi riwayat gagal disimpan: ${historyError.message}`,
+          rollbackError
+            ? `Riwayat gagal disimpan dan rollback harga gagal: ${historyError.message}`
+            : `Riwayat gagal disimpan. Perubahan harga telah dibatalkan: ${historyError.message}`,
         )}`,
       );
     }

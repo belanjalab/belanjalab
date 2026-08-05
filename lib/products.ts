@@ -1,4 +1,4 @@
-import { PRODUCT_PLACEHOLDER_PATH } from "./site-config";
+import { getSafeImageUrl } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type Relation<T> = T | T[] | null | undefined;
@@ -179,7 +179,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      imageUrl: product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
+      imageUrl: getSafeImageUrl(product.image_url),
       category: category?.name ?? "Produk",
       score: Number.isFinite(numericScore)
         ? `${numericScore.toFixed(1)}/10`
@@ -248,6 +248,7 @@ export async function getProductBySlug(
 
   return {
     ...product,
+    image_url: getSafeImageUrl(product.image_url),
     product_prices: (product.product_prices ?? []).filter(isUsablePrice),
   };
 }
@@ -306,7 +307,7 @@ export async function getCompareProducts(): Promise<CompareProduct[]> {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      imageUrl: product.image_url ?? PRODUCT_PLACEHOLDER_PATH,
+      imageUrl: getSafeImageUrl(product.image_url),
       category: category?.name ?? "Produk",
       score: Number.isFinite(numericScore) ? numericScore : 0,
       price: lowestPrice,

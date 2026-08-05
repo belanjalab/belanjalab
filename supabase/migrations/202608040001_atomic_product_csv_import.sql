@@ -1,6 +1,11 @@
 -- Atomic CSV product import and import audit log.
 -- Safe to run more than once in Supabase SQL Editor.
 
+-- Clean up the legacy fake affiliate-link placeholder.
+update public.product_prices
+set affiliate_url = null
+where trim(coalesce(affiliate_url, '')) = '#';
+
 create table if not exists public.product_csv_import_runs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -109,11 +114,12 @@ declare
   v_category_id public.categories.id%type;
   v_brand_id public.brands.id%type;
   v_marketplace_id public.marketplaces.id%type;
+  v_product_price_id public.product_prices.id%type;
   v_name text := trim(coalesce(p_data->>'name', ''));
   v_slug text := trim(coalesce(p_data->>'slug', ''));
   v_marketplace text := trim(coalesce(p_data->>'marketplace', ''));
   v_affiliate_url text := nullif(trim(coalesce(p_data->>'affiliate_url', '')), '');
-  v_price numeric := coalesce((p_data->>'price')::numeric, 0);
+  v_price numeric := coalesce(nullif(p_data->>'price', '')::numeric, 0);
 begin
   if auth.uid() is null or not exists (
     select 1 from public.admin_users where user_id = auth.uid()
@@ -230,6 +236,17 @@ begin
       'in_stock',
       now(),
       now()
+    )
+    returning id into v_product_price_id;
+
+    insert into public.product_price_history (
+      product_price_id,
+      price,
+      captured_at
+    ) values (
+      v_product_price_id,
+      v_price,
+      now()
     );
   end if;
 
@@ -244,3 +261,168 @@ revoke all on function public.import_product_from_csv_atomic(jsonb) from public;
 grant execute on function public.start_product_csv_import(integer, text) to authenticated;
 grant execute on function public.finish_product_csv_import(uuid, integer, integer, jsonb) to authenticated;
 grant execute on function public.import_product_from_csv_atomic(jsonb) to authenticated;
+
+
+-- Atomic bulk marketplace price upsert used by the admin dashboard.
+create or replace function public.upsert_marketplace_prices_bulk_atomic(
+  p_product_ids uuid[],
+  p_marketplace_name text,
+  p_price numeric,
+  p_affiliate_url text default null
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_marketplace_id public.marketplaces.id%type;
+  v_product_id public.products.id%type;
+  v_price_row public.product_prices%rowtype;
+  v_affiliate_url text := nullif(trim(coalesce(p_affiliate_url, '')), '');
+  v_now timestamptz := now();
+  v_processed_count integer := 0;
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.admin_users where user_id = auth.uid()
+  ) then
+    raise exception 'Akses admin diperlukan.' using errcode = '42501';
+  end if;
+
+  if coalesce(array_length(p_product_ids, 1), 0) = 0 then
+    raise exception 'Pilih minimal satu produk.';
+  end if;
+
+  if array_length(p_product_ids, 1) > 200 then
+    raise exception 'Maksimal 200 produk dalam satu perubahan massal.';
+  end if;
+
+  if p_price is null or p_price <= 0 then
+    raise exception 'Harga wajib lebih dari 0.';
+  end if;
+
+  if v_affiliate_url is not null
+     and v_affiliate_url !~* '^https?://[^[:space:]]+$' then
+    raise exception 'URL affiliate harus menggunakan http atau https.';
+  end if;
+
+  select id into v_marketplace_id
+  from public.marketplaces
+  where lower(trim(name)) = lower(trim(coalesce(p_marketplace_name, '')))
+  limit 1;
+
+  if v_marketplace_id is null then
+    raise exception 'Marketplace tidak ditemukan.';
+  end if;
+
+  for v_product_id in
+    select distinct selected.product_id
+    from unnest(p_product_ids) as selected(product_id)
+  loop
+    if not exists (
+      select 1 from public.products where id = v_product_id
+    ) then
+      raise exception 'Produk % tidak ditemukan.', v_product_id;
+    end if;
+
+    select * into v_price_row
+    from public.product_prices
+    where product_id = v_product_id
+      and marketplace_id = v_marketplace_id
+    order by updated_at desc nulls last, id
+    limit 1
+    for update;
+
+    if found then
+      if v_price_row.price is distinct from p_price then
+        if v_price_row.price is not null
+           and v_price_row.price > 0
+           and not exists (
+             select 1
+             from public.product_price_history
+             where product_price_id = v_price_row.id
+           ) then
+          insert into public.product_price_history (
+            product_price_id,
+            price,
+            captured_at
+          ) values (
+            v_price_row.id,
+            v_price_row.price,
+            v_now - interval '1 second'
+          );
+        end if;
+
+        insert into public.product_price_history (
+          product_price_id,
+          price,
+          captured_at
+        ) values (
+          v_price_row.id,
+          p_price,
+          v_now
+        );
+      end if;
+
+      update public.product_prices
+      set
+        price = p_price,
+        original_price = p_price,
+        shipping_cost = 0,
+        affiliate_url = v_affiliate_url,
+        is_available = true,
+        stock_status = 'in_stock',
+        last_checked_at = v_now,
+        updated_at = v_now
+      where id = v_price_row.id;
+    else
+      insert into public.product_prices (
+        product_id,
+        marketplace_id,
+        price,
+        original_price,
+        shipping_cost,
+        affiliate_url,
+        is_available,
+        stock_status,
+        last_checked_at,
+        updated_at
+      ) values (
+        v_product_id,
+        v_marketplace_id,
+        p_price,
+        p_price,
+        0,
+        v_affiliate_url,
+        true,
+        'in_stock',
+        v_now,
+        v_now
+      )
+      returning * into v_price_row;
+
+      insert into public.product_price_history (
+        product_price_id,
+        price,
+        captured_at
+      ) values (
+        v_price_row.id,
+        p_price,
+        v_now
+      );
+    end if;
+
+    v_processed_count := v_processed_count + 1;
+  end loop;
+
+  return v_processed_count;
+end;
+$$;
+
+revoke all on function public.upsert_marketplace_prices_bulk_atomic(
+  uuid[], text, numeric, text
+) from public;
+
+grant execute on function public.upsert_marketplace_prices_bulk_atomic(
+  uuid[], text, numeric, text
+) to authenticated;

@@ -74,9 +74,6 @@ async function updateArticle(formData: FormData) {
   const content = String(formData.get("content") ?? "").trim();
   const coverFile = formData.get("cover_file");
   const removeCover = formData.get("remove_cover") === "on";
-  const currentCoverImage = String(
-    formData.get("current_cover_image") ?? "",
-  ).trim();
   const published = formData.get("published") === "on";
 
   if (!articleId) {
@@ -117,6 +114,23 @@ async function updateArticle(formData: FormData) {
 
   const supabase = await requireAdmin();
 
+  const { data: currentArticle, error: currentArticleError } =
+    await supabase
+      .from("articles")
+      .select("cover_image")
+      .eq("id", articleId)
+      .maybeSingle();
+
+  if (currentArticleError || !currentArticle) {
+    redirect(
+      `/admin/articles/${articleId}/edit?error=${encodeURIComponent(
+        currentArticleError?.message ?? "Artikel tidak ditemukan.",
+      )}`,
+    );
+  }
+
+  const currentCoverImage = currentArticle.cover_image ?? "";
+
   const { data: duplicateArticle, error: duplicateError } = await supabase
     .from("articles")
     .select("id")
@@ -150,18 +164,18 @@ async function updateArticle(formData: FormData) {
   if (coverFile instanceof File && coverFile.size > 0) {
     const uploadResult = await uploadArticleImage(coverFile, slug);
 
-    if (!uploadResult.ok) {
+    if (uploadResult.ok) {
+      uploadedCover = {
+        publicUrl: uploadResult.publicUrl,
+        path: uploadResult.path,
+      };
+    } else {
       redirect(
         `/admin/articles/${articleId}/edit?error=${encodeURIComponent(
           uploadResult.error,
         )}`,
       );
     }
-
-    uploadedCover = {
-      publicUrl: uploadResult.publicUrl,
-      path: uploadResult.path,
-    };
   }
 
   const nextCoverImage = uploadedCover
@@ -170,7 +184,7 @@ async function updateArticle(formData: FormData) {
       ? null
       : currentCoverImage || null;
 
-  const { error } = await supabase
+  const { data: updatedArticle, error } = await supabase
     .from("articles")
     .update({
       title,
@@ -180,16 +194,18 @@ async function updateArticle(formData: FormData) {
       cover_image: nextCoverImage,
       published,
     })
-    .eq("id", articleId);
+    .eq("id", articleId)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !updatedArticle) {
     if (uploadedCover) {
       await deleteArticleImageByUrl(uploadedCover.publicUrl);
     }
 
     redirect(
       `/admin/articles/${articleId}/edit?error=${encodeURIComponent(
-        error.message,
+        error?.message ?? "Artikel gagal diperbarui.",
       )}`,
     );
   }
@@ -269,11 +285,6 @@ export default async function EditArticlePage({
           className="mt-8 grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7"
         >
           <input type="hidden" name="article_id" value={article.id} />
-          <input
-            type="hidden"
-            name="current_cover_image"
-            value={article.cover_image ?? ""}
-          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-bold text-slate-700">

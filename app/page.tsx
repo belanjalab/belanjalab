@@ -27,6 +27,19 @@ export default async function Home() {
     "/images/products/product-placeholder.svg";
   const heroProductName =
     heroProduct?.name ?? products[0]?.name ?? "Produk pilihan BelanjaLab";
+  const companyLinks = [
+    { label: "Kontak", href: footer.contactUrl },
+    { label: "Karier", href: footer.careersUrl },
+  ].filter(
+    (link): link is { label: string; href: string } => Boolean(link.href),
+  );
+  const legalLinks = [
+    { label: "Kebijakan Privasi", href: footer.privacyUrl },
+    { label: "Syarat Penggunaan", href: footer.termsUrl },
+    { label: "Disclaimer", href: footer.disclaimerUrl },
+  ].filter(
+    (link): link is { label: string; href: string } => Boolean(link.href),
+  );
 
   return (
     <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
@@ -533,27 +546,34 @@ export default async function Home() {
               <a href="#tentang" className="block hover:text-white">
                 Tentang Kami
               </a>
-              <a href={footer.contactUrl} className="block hover:text-white">
-                Kontak
-              </a>
-              <a href={footer.careersUrl} className="block hover:text-white">
-                Karier
-              </a>
+              {companyLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="block hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
           </div>
 
           <div>
             <h3 className="text-sm font-bold">Legal</h3>
             <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <a href={footer.privacyUrl} className="block hover:text-white">
-                Kebijakan Privasi
-              </a>
-              <a href={footer.termsUrl} className="block hover:text-white">
-                Syarat Penggunaan
-              </a>
-              <a href={footer.disclaimerUrl} className="block hover:text-white">
-                Disclaimer
-              </a>
+              {legalLinks.length > 0 ? (
+                legalLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    className="block hover:text-white"
+                  >
+                    {link.label}
+                  </a>
+                ))
+              ) : (
+                <p>Belum tersedia</p>
+              )}
             </div>
           </div>
         </div>

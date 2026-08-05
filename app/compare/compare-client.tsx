@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import type { CompareProduct } from "@/lib/products";
 
 type CompareClientProps = {
@@ -244,7 +244,9 @@ export default function CompareClient({
                 <input
                   type="search"
                   value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    setSearchQuery(event.target.value)
+                  }
                   placeholder="Cari nama atau kategori produk..."
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                 />
@@ -435,7 +437,7 @@ export default function CompareClient({
         {[
           ["⌂", "Beranda", "/"],
           ["▦", "Kategori", "/#kategori"],
-          ["⌕", "Cari", "#"],
+          ["⌕", "Cari", "/search"],
           ["⇄", "Compare", "/compare"],
           ["▤", "Artikel", "/#artikel"],
         ].map(([icon, label, href], index) => (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { sanitizePublicUrl } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 3600;
@@ -48,7 +49,12 @@ async function getPublishedArticles() {
     throw new Error(`Gagal mengambil daftar artikel: ${error.message}`);
   }
 
-  return (data ?? []) as ArticleListItem[];
+  return ((data ?? []) as ArticleListItem[]).map((article) => ({
+    ...article,
+    cover_image: sanitizePublicUrl(article.cover_image, {
+      allowHash: false,
+    }),
+  }));
 }
 
 export default async function ArticlesPage() {

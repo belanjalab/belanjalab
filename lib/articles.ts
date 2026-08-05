@@ -1,3 +1,4 @@
+import { sanitizePublicUrl } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type ArticleRow = {
@@ -61,7 +62,7 @@ export async function getHomepageArticles(): Promise<HomepageArticle[]> {
     title: article.title,
     slug: article.slug,
     excerpt: article.excerpt ?? "",
-    imageUrl: article.cover_image,
+    imageUrl: sanitizePublicUrl(article.cover_image, { allowHash: false }),
     publishedAt: article.created_at,
     readingTime: estimateReadingTime(article.content),
   }));

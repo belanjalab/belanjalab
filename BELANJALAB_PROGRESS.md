@@ -103,10 +103,12 @@ Sudah dipasang:
 - `lib/admin-product-import.ts`
 - `components/admin/product-csv-import-client.tsx`
 
-Belum dikonfirmasi:
+Sudah tersedia di repository:
 
 - `supabase/migrations/202608040001_atomic_product_csv_import.sql`
 - `public/images/products/product-placeholder.svg`
+
+Eksekusi migration di Supabase tetap harus diverifikasi setelah paket final dipasang.
 
 ### Langkah yang masih harus dilakukan
 
@@ -130,8 +132,8 @@ Belum dikonfirmasi:
 |---|---:|---|
 | `components/admin/product-csv-import-client.tsx` | 1, 2, 3 | Sudah dipasang |
 | `lib/admin-product-import.ts` | 2, 3 | Sudah dipasang |
-| `supabase/migrations/202608040001_atomic_product_csv_import.sql` | 3 | Belum dikonfirmasi |
-| `public/images/products/product-placeholder.svg` | 3 | Belum dikonfirmasi |
+| `supabase/migrations/202608040001_atomic_product_csv_import.sql` | 3 | Tersedia; eksekusi perlu verifikasi |
+| `public/images/products/product-placeholder.svg` | 3 | Sudah tersedia |
 
 ---
 
@@ -162,3 +164,32 @@ Simpan file ini di root repository dengan nama:
 `BELANJALAB_PROGRESS.md`
 
 Perbarui bagian status setiap kali file sudah dipasang, migration sudah dijalankan, atau satu tahap selesai.
+
+---
+
+## Finalization RC — 4 Agustus 2026
+
+- Dependency security baseline diperbarui.
+- CSV Import admin authorization dan validasi diperketat.
+- Manual create/edit product diberi rollback dan cleanup gambar.
+- Price history dan rollback harga diperkuat.
+- Hero, Footer, article image, dan product image URL disanitasi.
+- Footer tidak lagi membuat tautan palsu untuk halaman yang belum ada.
+- Dokumentasi deployment dan release checklist diperbarui.
+
+Status: **MVP Release Candidate `1.0.0-rc.1`**.
+
+
+---
+
+## Finalization RC2 — 4 Agustus 2026
+
+- Versi release candidate dinaikkan menjadi `1.0.0-rc.2`.
+- Bulk update harga marketplace dipindahkan ke RPC atomic.
+- Price history dibuat untuk bulk update dan harga baru.
+- URL affiliate publik dan admin preview disanitasi ulang saat dibaca.
+- Placeholder affiliate legacy `#` dibersihkan lewat migration.
+- Batas Server Action diatur 6 MB agar upload maksimum 5 MB dapat diproses.
+- Dependency, dokumentasi, dan release checklist diselaraskan.
+
+Status: **source finalisasi lengkap; menunggu Cloudflare build dan smoke test untuk keputusan production**.

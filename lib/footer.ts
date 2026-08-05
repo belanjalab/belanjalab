@@ -1,3 +1,4 @@
+import { sanitizePublicUrl } from "./site-config";
 import { getSupabaseClient } from "./supabase";
 
 type SiteFooterRow = {
@@ -13,22 +14,22 @@ type SiteFooterRow = {
 export type SiteFooter = {
   id: string;
   companyDescription: string;
-  contactUrl: string;
-  careersUrl: string;
-  privacyUrl: string;
-  termsUrl: string;
-  disclaimerUrl: string;
+  contactUrl: string | null;
+  careersUrl: string | null;
+  privacyUrl: string | null;
+  termsUrl: string | null;
+  disclaimerUrl: string | null;
 };
 
 const fallbackFooter: SiteFooter = {
   id: "fallback",
   companyDescription:
     "Membantu masyarakat Indonesia memilih produk dengan lebih cerdas.",
-  contactUrl: "/contact",
-  careersUrl: "/careers",
-  privacyUrl: "/privacy",
-  termsUrl: "/terms",
-  disclaimerUrl: "/disclaimer",
+  contactUrl: null,
+  careersUrl: null,
+  privacyUrl: null,
+  termsUrl: null,
+  disclaimerUrl: null,
 };
 
 export async function getActiveSiteFooter(): Promise<SiteFooter> {
@@ -62,11 +63,15 @@ export async function getActiveSiteFooter(): Promise<SiteFooter> {
 
   return {
     id: footer.id,
-    companyDescription: footer.company_description,
-    contactUrl: footer.contact_url ?? fallbackFooter.contactUrl,
-    careersUrl: footer.careers_url ?? fallbackFooter.careersUrl,
-    privacyUrl: footer.privacy_url ?? fallbackFooter.privacyUrl,
-    termsUrl: footer.terms_url ?? fallbackFooter.termsUrl,
-    disclaimerUrl: footer.disclaimer_url ?? fallbackFooter.disclaimerUrl,
+    companyDescription:
+      footer.company_description?.trim() ||
+      fallbackFooter.companyDescription,
+    contactUrl: sanitizePublicUrl(footer.contact_url, {
+      allowMailto: true,
+    }),
+    careersUrl: sanitizePublicUrl(footer.careers_url),
+    privacyUrl: sanitizePublicUrl(footer.privacy_url),
+    termsUrl: sanitizePublicUrl(footer.terms_url),
+    disclaimerUrl: sanitizePublicUrl(footer.disclaimer_url),
   };
 }

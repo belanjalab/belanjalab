@@ -27,14 +27,54 @@ function parseMoney(value: FormDataEntryValue | null) {
   return Math.round(number);
 }
 
+function isHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+async function requireAdmin() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect("/admin/login");
+  }
+
+  const { data: adminRecord, error: adminError } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (adminError || !adminRecord) {
+    redirect(
+      `/admin/login?error=${encodeURIComponent(
+        adminError?.message ?? "Akun ini tidak memiliki akses admin.",
+      )}`,
+    );
+  }
+
+  return supabase;
+}
+
 async function savePrice(formData: FormData) {
   "use server";
 
-  const productId = String(formData.get("product_id") ?? "");
-  const priceId = String(formData.get("price_id") ?? "");
-  const marketplaceId = String(formData.get("marketplace_id") ?? "");
+  const productId = String(formData.get("product_id") ?? "").trim();
+  const priceId = String(formData.get("price_id") ?? "").trim();
+  const marketplaceId = String(
+    formData.get("marketplace_id") ?? "",
+  ).trim();
   const price = parseMoney(formData.get("price"));
-  const originalPrice = parseMoney(formData.get("original_price"));
+  const originalPriceInput = parseMoney(formData.get("original_price"));
+  const originalPrice = originalPriceInput > 0 ? originalPriceInput : price;
   const shippingCost = parseMoney(formData.get("shipping_cost"));
   const affiliateUrl = String(
     formData.get("affiliate_url") ?? "",
@@ -44,13 +84,22 @@ async function savePrice(formData: FormData) {
   );
   const isAvailable =
     String(formData.get("is_available") ?? "true") === "true";
+  const pageUrl = `/admin/products/${productId}/prices`;
+  const errorUrl = (message: string) =>
+    `${pageUrl}?error=${encodeURIComponent(message)}`;
 
   if (!productId || !marketplaceId || price <= 0) {
+    redirect(errorUrl("Marketplace dan harga wajib diisi."));
+  }
+
+  if (originalPrice < price) {
     redirect(
-      `/admin/products/${productId}/prices?error=${encodeURIComponent(
-        "Marketplace dan harga wajib diisi.",
-      )}`,
+      errorUrl("Harga normal tidak boleh lebih kecil dari harga saat ini."),
     );
+  }
+
+  if (affiliateUrl && !isHttpUrl(affiliateUrl)) {
+    redirect(errorUrl("URL affiliate harus berupa URL http atau https."));
   }
 
   const allowedStockStatuses = new Set([
@@ -60,77 +109,154 @@ async function savePrice(formData: FormData) {
     "preorder",
     "unknown",
   ]);
-
   const safeStockStatus = allowedStockStatuses.has(stockStatus)
     ? stockStatus
     : "unknown";
-
-  const supabase = await createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
-
-  const { data: adminRecord } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!adminRecord) {
-    redirect(
-      `/admin/login?error=${encodeURIComponent(
-        "Akun ini tidak memiliki akses admin.",
-      )}`,
-    );
-  }
-
+  const supabase = await requireAdmin();
+  const now = new Date().toISOString();
   const payload = {
     product_id: productId,
     marketplace_id: marketplaceId,
     price,
-    original_price: originalPrice > 0 ? originalPrice : price,
+    original_price: originalPrice,
     shipping_cost: shippingCost,
-    affiliate_url: affiliateUrl || "#",
+    affiliate_url: affiliateUrl || null,
     is_available: isAvailable,
     stock_status: safeStockStatus,
-    last_checked_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_checked_at: now,
+    updated_at: now,
   };
 
   if (priceId) {
-    const { error } = await supabase
+    const { data: currentPrice, error: currentPriceError } = await supabase
       .from("product_prices")
-      .update(payload)
-      .eq("id", priceId);
+      .select(
+        "id, product_id, marketplace_id, price, original_price, shipping_cost, affiliate_url, is_available, stock_status, last_checked_at, updated_at",
+      )
+      .eq("id", priceId)
+      .eq("product_id", productId)
+      .maybeSingle();
 
-    if (error) {
+    if (currentPriceError || !currentPrice) {
       redirect(
-        `/admin/products/${productId}/prices?error=${encodeURIComponent(
-          error.message,
-        )}`,
+        errorUrl(
+          currentPriceError?.message ?? "Data harga tidak ditemukan.",
+        ),
       );
     }
-  } else {
-    const { error } = await supabase
-      .from("product_prices")
-      .insert(payload);
 
-    if (error) {
+    const { data: updatedPrice, error: updateError } = await supabase
+      .from("product_prices")
+      .update(payload)
+      .eq("id", priceId)
+      .eq("product_id", productId)
+      .select("id")
+      .maybeSingle();
+
+    if (updateError || !updatedPrice) {
       redirect(
-        `/admin/products/${productId}/prices?error=${encodeURIComponent(
-          error.message,
-        )}`,
+        errorUrl(updateError?.message ?? "Harga gagal diperbarui."),
+      );
+    }
+
+    const previousPrice = Number(currentPrice.price);
+
+    if (Number.isFinite(previousPrice) && previousPrice !== price) {
+      const { count, error: historyCountError } = await supabase
+        .from("product_price_history")
+        .select("product_price_id", { count: "exact", head: true })
+        .eq("product_price_id", priceId);
+      const historyEntries: Array<{
+        product_price_id: string;
+        price: number;
+        captured_at: string;
+      }> = [];
+
+      if (!historyCountError && (count ?? 0) === 0) {
+        historyEntries.push({
+          product_price_id: priceId,
+          price: previousPrice,
+          captured_at: new Date(new Date(now).getTime() - 1000).toISOString(),
+        });
+      }
+
+      historyEntries.push({
+        product_price_id: priceId,
+        price,
+        captured_at: now,
+      });
+
+      const historyError = historyCountError
+        ? historyCountError
+        : (
+            await supabase
+              .from("product_price_history")
+              .insert(historyEntries)
+          ).error;
+
+      if (historyError) {
+        const { error: rollbackError } = await supabase
+          .from("product_prices")
+          .update({
+            marketplace_id: currentPrice.marketplace_id,
+            price: currentPrice.price,
+            original_price: currentPrice.original_price,
+            shipping_cost: currentPrice.shipping_cost,
+            affiliate_url: currentPrice.affiliate_url,
+            is_available: currentPrice.is_available,
+            stock_status: currentPrice.stock_status,
+            last_checked_at: currentPrice.last_checked_at,
+            updated_at: currentPrice.updated_at,
+          })
+          .eq("id", priceId)
+          .eq("product_id", productId);
+
+        redirect(
+          errorUrl(
+            rollbackError
+              ? `Riwayat harga gagal disimpan dan rollback harga gagal: ${historyError.message}. Periksa data sebelum mencoba lagi.`
+              : `Riwayat harga gagal disimpan. Perubahan harga telah dibatalkan: ${historyError.message}`,
+          ),
+        );
+      }
+    }
+  } else {
+    const { data: insertedPrice, error: insertError } = await supabase
+      .from("product_prices")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (insertError || !insertedPrice) {
+      redirect(
+        errorUrl(insertError?.message ?? "Harga gagal ditambahkan."),
+      );
+    }
+
+    const { error: historyError } = await supabase
+      .from("product_price_history")
+      .insert({
+        product_price_id: insertedPrice.id,
+        price,
+        captured_at: now,
+      });
+
+    if (historyError) {
+      await supabase
+        .from("product_prices")
+        .delete()
+        .eq("id", insertedPrice.id)
+        .eq("product_id", productId);
+      redirect(
+        errorUrl(
+          `Riwayat harga gagal disimpan. Harga baru telah dibatalkan: ${historyError.message}`,
+        ),
       );
     }
   }
 
   redirect(
-    `/admin/products/${productId}/prices?message=${encodeURIComponent(
+    `${pageUrl}?message=${encodeURIComponent(
       "Harga marketplace berhasil disimpan.",
     )}`,
   );
@@ -139,41 +265,19 @@ async function savePrice(formData: FormData) {
 async function deletePrice(formData: FormData) {
   "use server";
 
-  const productId = String(formData.get("product_id") ?? "");
-  const priceId = String(formData.get("price_id") ?? "");
+  const productId = String(formData.get("product_id") ?? "").trim();
+  const priceId = String(formData.get("price_id") ?? "").trim();
 
   if (!productId || !priceId) {
     redirect(`/admin/products/${productId}/prices`);
   }
 
-  const supabase = await createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
-
-  const { data: adminRecord } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!adminRecord) {
-    redirect(
-      `/admin/login?error=${encodeURIComponent(
-        "Akun ini tidak memiliki akses admin.",
-      )}`,
-    );
-  }
-
+  const supabase = await requireAdmin();
   const { error } = await supabase
     .from("product_prices")
     .delete()
-    .eq("id", priceId);
+    .eq("id", priceId)
+    .eq("product_id", productId);
 
   if (error) {
     redirect(

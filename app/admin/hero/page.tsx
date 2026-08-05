@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { sanitizePublicUrl } from "@/lib/site-config";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -33,17 +34,22 @@ type HeroRecord = {
 };
 
 function normalizeInternalUrl(value: FormDataEntryValue | null) {
-  const url = String(value ?? "").trim();
+  const rawUrl = String(value ?? "").trim();
 
-  if (!url) {
+  if (!rawUrl) {
     return null;
   }
 
-  if (!url.startsWith("/") || url.startsWith("//")) {
+  const safeUrl = sanitizePublicUrl(rawUrl, {
+    allowHash: false,
+    allowMailto: false,
+  });
+
+  if (!safeUrl?.startsWith("/")) {
     throw new Error("URL tombol harus berupa path internal yang diawali /.");
   }
 
-  return url;
+  return safeUrl;
 }
 
 async function requireAdmin() {
@@ -84,8 +90,15 @@ async function saveHero(formData: FormData) {
     String(formData.get("primary_button_text") ?? "").trim() || null;
   const secondaryButtonText =
     String(formData.get("secondary_button_text") ?? "").trim() || null;
-  const heroImageUrl =
-    String(formData.get("hero_image_url") ?? "").trim() || null;
+  const heroImageUrlRaw = String(
+    formData.get("hero_image_url") ?? "",
+  ).trim();
+  const heroImageUrl = heroImageUrlRaw
+    ? sanitizePublicUrl(heroImageUrlRaw, {
+        allowHash: false,
+        allowMailto: false,
+      })
+    : null;
   const featuredProductId =
     String(formData.get("featured_product_id") ?? "").trim() || null;
   const sortOrderRaw = String(formData.get("sort_order") ?? "0").trim();
@@ -119,6 +132,14 @@ async function saveHero(formData: FormData) {
     redirect(
       `/admin/hero?error=${encodeURIComponent(
         "Teks tombol sekunder maksimal 40 karakter.",
+      )}`,
+    );
+  }
+
+  if (heroImageUrlRaw && !heroImageUrl) {
+    redirect(
+      `/admin/hero?error=${encodeURIComponent(
+        "URL gambar Hero harus berupa path internal atau URL HTTP/HTTPS yang valid.",
       )}`,
     );
   }

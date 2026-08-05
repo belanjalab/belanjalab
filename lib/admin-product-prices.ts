@@ -1,3 +1,4 @@
+import { sanitizePublicUrl } from "./site-config";
 import { createSupabaseServerClient } from "./supabase-server";
 
 type MarketplaceRelation = {
@@ -92,9 +93,10 @@ export async function getAdminProductPrices(
       originalPrice: toNumber(item.original_price),
       shippingCost: toNumber(item.shipping_cost),
       affiliateUrl:
-        item.affiliate_url && item.affiliate_url !== "#"
-          ? item.affiliate_url
-          : "",
+        sanitizePublicUrl(item.affiliate_url, {
+          allowHash: false,
+          allowMailto: false,
+        }) ?? "",
       isAvailable: item.is_available ?? true,
       stockStatus: item.stock_status ?? "unknown",
       lastCheckedAt: item.last_checked_at,
