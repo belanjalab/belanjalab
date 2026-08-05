@@ -1,0 +1,8 @@
+BELANJALAB UI/UX STAGE 1
+
+1. Ganti file app/page.tsx dengan file app/page.tsx dari paket ini.
+2. Ganti file app/globals.css dengan file app/globals.css dari paket ini.
+3. Jalankan npm run typecheck lalu npm run build di project lokal.
+
+Commit message:
+fix(ui): improve homepage responsive accessibility
