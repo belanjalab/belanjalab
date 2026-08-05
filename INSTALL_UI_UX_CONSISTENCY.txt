@@ -1,0 +1,27 @@
+BELANJALAB UI/UX CONSISTENCY PASS
+================================
+
+1. Ekstrak paket replacement di root project BelanjaLab.
+2. Izinkan seluruh file lama ditimpa.
+3. Pastikan folder baru berikut ikut tersalin:
+
+   components/site/
+
+4. Jalankan:
+
+   npm run typecheck
+   npm run build
+
+5. Periksa halaman berikut pada mobile, tablet, dan desktop:
+
+   /
+   /search
+   /compare
+   /articles
+   /product/[slug]
+   /admin
+
+Perubahan tidak memerlukan migration database.
+
+Commit message:
+refactor(ui): unify public pages and improve category discovery

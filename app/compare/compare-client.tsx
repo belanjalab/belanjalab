@@ -1,6 +1,13 @@
 "use client";
 
 import { useMemo, useState, type ChangeEvent } from "react";
+import {
+  ArrowRightIcon,
+  CloseIcon,
+  CompareIcon,
+  SearchIcon,
+  ScoreIcon,
+} from "@/components/home/home-icons";
 import type { CompareProduct } from "@/lib/products";
 
 type CompareClientProps = {
@@ -25,7 +32,6 @@ export default function CompareClient({
     () =>
       initialProductSlugs.flatMap((slug) => {
         const product = products.find((item) => item.slug === slug);
-
         return product ? [product] : [];
       }),
   );
@@ -40,13 +46,8 @@ export default function CompareClient({
         (selected) => selected.id === product.id,
       );
 
-      if (isSelected) {
-        return false;
-      }
-
-      if (!normalizedQuery) {
-        return true;
-      }
+      if (isSelected) return false;
+      if (!normalizedQuery) return true;
 
       return (
         product.name.toLowerCase().includes(normalizedQuery) ||
@@ -54,6 +55,22 @@ export default function CompareClient({
       );
     });
   }, [products, searchQuery, selectedProducts]);
+
+  const comparedCategories = useMemo(
+    () =>
+      Array.from(
+        new Set(selectedProducts.map((product) => product.category.trim())),
+      ),
+    [selectedProducts],
+  );
+
+  const topScoredProduct = useMemo(
+    () =>
+      selectedProducts.length > 0
+        ? [...selectedProducts].sort((a, b) => b.score - a.score)[0]
+        : null,
+    [selectedProducts],
+  );
 
   function removeProduct(productId: string) {
     setSelectedProducts((current) =>
@@ -63,149 +80,92 @@ export default function CompareClient({
 
   function addProduct(product: CompareProduct) {
     setSelectedProducts((current) => {
-      if (current.length >= 3) {
+      if (current.length >= 3 || current.some((item) => item.id === product.id)) {
         return current;
       }
-
-      if (current.some((item) => item.id === product.id)) {
-        return current;
-      }
-
       return [...current, product];
     });
-
     setIsPickerOpen(false);
     setSearchQuery("");
   }
 
-  const columnCount = Math.max(selectedProducts.length, 1);
-
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-5 md:py-4">
-          <a href="/" className="mr-3 text-lg md:hidden">
-            ‹
-          </a>
-
-          <a href="/" className="flex items-center gap-2">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-7 w-7 rounded-full object-cover md:h-10 md:w-10"
-            />
-
-            <span className="text-sm font-black md:text-xl">
-              Belanja<span className="text-orange-500">Lab</span>
-            </span>
-          </a>
-
-          <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <a href="/#kategori" className="hover:text-slate-950">
-              Kategori
-            </a>
-            <a href="/compare" className="text-orange-500">
-              Perbandingan
-            </a>
-            <a href="/#artikel" className="hover:text-slate-950">
-              Artikel
-            </a>
-          </nav>
-
-          <button
-            type="button"
-            aria-label="Bagikan"
-            className="ml-auto text-lg"
-          >
-            ↗
-          </button>
-        </div>
-      </header>
-
-      <section className="px-4 py-5 md:px-5 md:py-12">
+    <>
+      <section className="px-4 pb-6 md:px-5 md:pb-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500 md:text-sm md:tracking-[0.2em]">
-            Bandingkan sebelum membeli
-          </p>
+          {comparedCategories.length > 1 && (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Produk berasal dari kategori berbeda. Gunakan hasil ini sebagai gambaran umum, bukan perbandingan spesifikasi langsung.
+            </div>
+          )}
 
-          <h1 className="mt-2 text-xl font-black leading-tight md:mt-3 md:max-w-3xl md:text-5xl">
-            Temukan produk yang paling cocok untuk kebutuhanmu.
-          </h1>
-
-          <p className="mt-3 max-w-2xl text-[10px] leading-5 text-slate-500 md:mt-5 md:text-base md:leading-7">
-            Bandingkan harga, skor, dan spesifikasi hingga tiga produk.
-          </p>
-        </div>
-      </section>
-
-      <section className="px-4 pb-5 md:px-5 md:pb-10">
-        <div className="mx-auto max-w-7xl">
           {selectedProducts.length > 0 ? (
-            <div
-              className="grid gap-2 md:gap-5"
-              style={{
-                gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-              }}
-            >
+            <div className="category-rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:px-0">
               {selectedProducts.map((product) => (
                 <article
                   key={product.id}
-                  className="relative rounded-xl border border-slate-200 bg-white p-2 shadow-sm md:rounded-3xl md:p-5"
+                  className="public-card relative w-[72vw] max-w-xs shrink-0 rounded-[1.5rem] border border-slate-200 bg-white p-4 md:w-auto md:max-w-none md:p-5"
                 >
                   <button
                     type="button"
                     onClick={() => removeProduct(product.id)}
                     aria-label={`Hapus ${product.name}`}
-                    className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-xs text-slate-500 hover:bg-slate-50 md:right-4 md:top-4 md:h-8 md:w-8 md:text-sm"
+                    className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white/95 text-slate-600 shadow-sm transition hover:bg-slate-100 hover:text-slate-950"
                   >
-                    ×
+                    <CloseIcon className="h-4 w-4" />
                   </button>
 
-                  <div className="flex h-24 items-center justify-center overflow-hidden rounded-lg bg-slate-100 md:h-44 md:rounded-2xl">
+                  <div className="flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 p-5 ring-1 ring-inset ring-slate-100 md:h-48">
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="h-full w-full object-contain p-2 md:p-5"
+                      className="h-full w-full object-contain"
                     />
                   </div>
 
-                  <p className="mt-2 text-[8px] text-slate-400 md:mt-5 md:text-xs">
+                  <p className="mt-4 text-xs font-bold uppercase tracking-[0.1em] text-orange-700">
                     {product.category}
                   </p>
-
-                  <h2 className="mt-1 min-h-8 text-[9px] font-black leading-4 md:min-h-12 md:text-base md:leading-6">
+                  <h2 className="mt-1.5 min-h-12 text-base font-extrabold leading-6 tracking-[-0.02em] text-slate-950">
                     {product.name}
                   </h2>
 
-                  <p className="mt-2 text-[10px] font-black text-orange-500 md:mt-4 md:text-2xl">
-                    {product.formattedPrice}
-                  </p>
-
-                  <div className="mt-2 rounded-lg bg-green-50 px-2 py-2 text-center md:mt-4 md:rounded-xl md:px-4 md:py-3">
-                    <p className="text-[8px] font-semibold text-green-700 md:text-[10px]">
-                      BelanjaLab Score
-                    </p>
-                    <p className="mt-1 text-sm font-black text-green-600 md:text-xl">
-                      {product.score.toFixed(1)}/10
-                    </p>
+                  <div className="mt-4 grid grid-cols-2 gap-2.5">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-500">Harga mulai</p>
+                      <p className="mt-1 text-sm font-extrabold text-slate-950">
+                        {product.formattedPrice}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                      <p className="flex items-center gap-1 text-xs font-semibold text-emerald-800">
+                        <ScoreIcon className="h-3.5 w-3.5" /> Skor
+                      </p>
+                      <p className="mt-1 text-sm font-extrabold text-emerald-800">
+                        {product.score.toFixed(1)}/10
+                      </p>
+                    </div>
                   </div>
 
                   <a
                     href={`/product/${product.slug}`}
-                    className="mt-2 block rounded-lg bg-orange-500 px-2 py-2 text-center text-[8px] font-bold text-white hover:bg-orange-600 md:mt-5 md:rounded-xl md:px-4 md:py-3 md:text-sm"
+                    className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-extrabold text-white transition hover:bg-slate-800"
                   >
-                    Lihat Produk
+                    Lihat analisis <ArrowRightIcon />
                   </a>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-              <p className="text-sm font-bold">
-                Belum ada produk yang dipilih.
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Tambahkan produk untuk mulai membandingkan.
+            <div className="public-card rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                <CompareIcon className="h-7 w-7" />
+              </span>
+              <h2 className="mt-4 text-xl font-extrabold text-slate-950">
+                Belum ada produk yang dipilih
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Tambahkan dua atau tiga produk untuk mulai melihat perbedaannya.
               </p>
             </div>
           )}
@@ -216,40 +176,40 @@ export default function CompareClient({
               setIsPickerOpen((current) => !current);
               setSearchQuery("");
             }}
-            disabled={
-              selectedProducts.length >= 3 ||
-              products.length === 0
-            }
-            className="mt-4 w-full rounded-xl border-2 border-dashed border-slate-300 px-4 py-3 text-[10px] font-bold text-slate-500 hover:border-orange-400 hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-40 md:mt-6 md:rounded-2xl md:px-6 md:py-5 md:text-sm"
+            disabled={selectedProducts.length >= 3 || products.length === 0}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            + Tambahkan Produk
+            <span aria-hidden="true" className="text-lg">+</span>
+            {selectedProducts.length >= 3 ? "Maksimal tiga produk" : "Tambahkan produk"}
           </button>
 
           {isPickerOpen && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg md:p-6">
-              <div className="flex items-center justify-between">
+            <section aria-label="Pilih produk" className="public-card mt-4 rounded-[1.75rem] border border-slate-200 bg-white p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-sm font-black md:text-lg">
-                    Pilih Produk
+                  <h2 className="text-xl font-extrabold tracking-[-0.02em] text-slate-950">
+                    Pilih produk
                   </h2>
-                  <p className="mt-1 text-[9px] text-slate-500 md:text-xs">
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
                     Maksimal tiga produk dalam satu perbandingan.
                   </p>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => {
                     setIsPickerOpen(false);
                     setSearchQuery("");
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-sm"
+                  aria-label="Tutup pemilih produk"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100"
                 >
-                  ×
+                  <CloseIcon className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="mt-4">
+              <label className="mt-5 flex min-h-12 items-center rounded-xl border border-slate-300 px-3 focus-within:border-orange-700 focus-within:ring-4 focus-within:ring-orange-100">
+                <SearchIcon className="h-5 w-5 shrink-0 text-slate-500" />
+                <span className="sr-only">Cari produk untuk dibandingkan</span>
                 <input
                   type="search"
                   value={searchQuery}
@@ -257,213 +217,130 @@ export default function CompareClient({
                     setSearchQuery(event.target.value)
                   }
                   placeholder="Cari nama atau kategori produk..."
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                  className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-slate-500"
                 />
-              </div>
+              </label>
 
               {availableProducts.length > 0 ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {availableProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => addProduct(product)}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-orange-400 hover:bg-orange-50"
-                  >
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="h-full w-full object-contain p-1"
-                      />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-black md:text-sm">
-                        {product.name}
-                      </p>
-                      <p className="mt-1 text-[9px] text-slate-500 md:text-xs">
-                        {product.formattedPrice}
-                      </p>
-                    </div>
-                  </button>
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => addProduct(product)}
+                      className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition hover:border-orange-300 hover:bg-orange-50"
+                    >
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1 ring-1 ring-inset ring-slate-100">
+                        <img
+                          src={product.imageUrl}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-full w-full object-contain"
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 text-sm font-extrabold leading-5 text-slate-950">
+                          {product.name}
+                        </span>
+                        <span className="mt-1 block text-xs font-semibold text-slate-500">
+                          {product.formattedPrice}
+                        </span>
+                      </span>
+                    </button>
                   ))}
                 </div>
               ) : (
-                <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                  <p className="text-sm font-bold text-slate-700">
-                    Produk tidak ditemukan.
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Coba kata kunci lain atau tambahkan produk published dari CMS.
-                  </p>
+                <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                  <p className="text-sm font-bold text-slate-700">Produk tidak ditemukan.</p>
+                  <p className="mt-1 text-sm text-slate-600">Coba kata kunci lain.</p>
                 </div>
               )}
-            </div>
+            </section>
           )}
         </div>
       </section>
 
-      <section className="bg-slate-50 px-4 py-6 md:px-5 md:py-14">
+      <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
         <div className="mx-auto max-w-7xl">
-          <h2 className="text-base font-black md:text-3xl">
-            Perbandingan Spesifikasi
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+            Detail perbandingan
+          </p>
+          <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            Harga, skor, dan spesifikasi
           </h2>
 
           {selectedProducts.length > 0 ? (
-            <div className="mt-4 space-y-4 md:mt-7">
-              <div>
-                <h3 className="text-[10px] font-black md:text-sm">
-                  Harga
-                </h3>
-
-                <div
-                  className="mt-2 grid overflow-hidden rounded-xl border border-slate-200 bg-white"
-                  style={{
-                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {selectedProducts.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className={`px-2 py-3 text-center text-[9px] font-semibold md:px-5 md:py-5 md:text-sm ${
-                        index !== selectedProducts.length - 1
-                          ? "border-r border-slate-200"
-                          : ""
-                      }`}
-                    >
-                      {product.formattedPrice}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-[10px] font-black md:text-sm">
-                  BelanjaLab Score
-                </h3>
-
-                <div
-                  className="mt-2 grid overflow-hidden rounded-xl border border-slate-200 bg-white"
-                  style={{
-                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {selectedProducts.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className={`px-2 py-3 text-center text-[9px] font-black text-green-600 md:px-5 md:py-5 md:text-sm ${
-                        index !== selectedProducts.length - 1
-                          ? "border-r border-slate-200"
-                          : ""
-                      }`}
-                    >
-                      {product.score.toFixed(1)}/10
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {specificationRows.map((row) => (
-                <div key={row.key}>
-                  <h3 className="text-[10px] font-black md:text-sm">
-                    {row.label}
-                  </h3>
-
-                  <div
-                    className="mt-2 grid overflow-hidden rounded-xl border border-slate-200 bg-white"
-                    style={{
-                      gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                    }}
-                  >
-                    {selectedProducts.map((product, index) => (
-                      <div
-                        key={product.id}
-                        className={`px-2 py-3 text-center text-[9px] font-semibold md:px-5 md:py-5 md:text-sm ${
-                          index !== selectedProducts.length - 1
-                            ? "border-r border-slate-200"
-                            : ""
-                        }`}
-                      >
-                        {product.specifications[row.key] ?? "—"}
-                      </div>
+            <div className="mt-6 overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-950 text-white">
+                    <th scope="col" className="w-44 px-4 py-4 font-extrabold">Aspek</th>
+                    {selectedProducts.map((product) => (
+                      <th key={product.id} scope="col" className="min-w-44 px-4 py-4 font-extrabold">
+                        {product.name}
+                      </th>
                     ))}
-                  </div>
-                </div>
-              ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Harga</th>
+                    {selectedProducts.map((product) => (
+                      <td key={product.id} className="px-4 py-4 font-extrabold text-slate-950">{product.formattedPrice}</td>
+                    ))}
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">BelanjaLab Score</th>
+                    {selectedProducts.map((product) => (
+                      <td key={product.id} className="px-4 py-4 font-extrabold text-emerald-800">{product.score.toFixed(1)}/10</td>
+                    ))}
+                  </tr>
+                  {specificationRows.map((row) => (
+                    <tr key={row.key} className="border-b border-slate-100 last:border-b-0">
+                      <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">{row.label}</th>
+                      {selectedProducts.map((product) => (
+                        <td key={product.id} className="px-4 py-4 font-semibold text-slate-700">
+                          {product.specifications[row.key] ?? "—"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-slate-500">
-              Tambahkan produk untuk melihat perbandingan.
+            <p className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+              Tambahkan produk untuk melihat tabel perbandingan.
             </p>
           )}
         </div>
       </section>
 
-      {selectedProducts.length > 0 && (
-        <section className="px-4 py-6 md:px-5 md:py-12">
-          <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-slate-50 p-4 md:rounded-3xl md:p-8">
-            <p className="text-[10px] font-black md:text-sm">
-              Kesimpulan BelanjaLab
+      {topScoredProduct && (
+        <section className="px-4 py-10 md:px-5 md:py-14">
+          <div className="quick-compare-surface mx-auto max-w-7xl rounded-[1.75rem] border border-slate-200 p-6 sm:p-8">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+              Ringkasan sementara
             </p>
-
-            {(() => {
-              const winner = [...selectedProducts].sort(
-                (a, b) => b.score - a.score,
-              )[0];
-
-              return (
-                <>
-                  <h2 className="mt-2 text-lg font-black text-green-600 md:text-3xl">
-                    {winner.name}
-                  </h2>
-
-                  <p className="mt-2 text-[10px] leading-5 text-slate-500 md:text-sm md:leading-7">
-                    Produk dengan skor BelanjaLab tertinggi dari pilihan
-                    yang sedang dibandingkan.
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-green-500 px-4 py-2 text-[9px] font-bold text-white md:text-xs">
-                      PEMENANG
-                    </span>
-
-                    <a
-                      href={`/product/${winner.slug}`}
-                      className="rounded-full bg-orange-500 px-4 py-2 text-[9px] font-bold text-white md:text-xs"
-                    >
-                      Lihat Produk
-                    </a>
-                  </div>
-                </>
-              );
-            })()}
+            <div className="mt-2 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                  {topScoredProduct.name}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Memiliki skor tertinggi di antara produk yang sedang dipilih. Tetap periksa kebutuhan, harga, dan spesifikasi sebelum memutuskan.
+                </p>
+              </div>
+              <a
+                href={`/product/${topScoredProduct.slug}`}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white hover:bg-orange-800"
+              >
+                Lihat analisis <ArrowRightIcon />
+              </a>
+            </div>
           </div>
         </section>
       )}
-
-      <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
-        {[
-          ["⌂", "Beranda", "/"],
-          ["▦", "Kategori", "/#kategori"],
-          ["⌕", "Cari", "/search"],
-          ["⇄", "Bandingkan", "/compare"],
-          ["▤", "Artikel", "/#artikel"],
-        ].map(([icon, label, href], index) => (
-          <a
-            key={label}
-            href={href}
-            className={`flex flex-col items-center gap-1 text-[9px] ${
-              index === 3
-                ? "text-orange-500"
-                : "text-slate-500"
-            }`}
-          >
-            <span className="text-base">{icon}</span>
-            <span>{label}</span>
-          </a>
-        ))}
-      </nav>
-    </main>
+    </>
   );
 }

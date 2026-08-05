@@ -332,9 +332,9 @@ export default async function ProductPricesPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-500">Lab</span>
+                Belanja<span className="text-orange-700">Lab</span>
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Harga Marketplace
               </p>
             </div>
@@ -351,7 +351,7 @@ export default async function ProductPricesPage({
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
             CMS Admin
           </p>
 
@@ -540,7 +540,7 @@ export default async function ProductPricesPage({
                           <div className="flex gap-2">
                             <button
                               type="submit"
-                              className="rounded-lg bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600"
+                              className="rounded-lg bg-orange-700 px-4 py-2 text-xs font-bold text-white hover:bg-orange-800"
                             >
                               Simpan
                             </button>
@@ -710,7 +710,7 @@ export default async function ProductPricesPage({
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+                  className="w-full rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
                 >
                   Tambah Harga
                 </button>

@@ -10,15 +10,14 @@ import {
 import DecisionProductCard from "@/components/home/decision-product-card";
 import QuickComparison from "@/components/home/quick-comparison";
 import ScoreMethodology from "@/components/home/score-methodology";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
 import {
   ArrowRightIcon,
   ArticleIcon,
   CategoryGlyph,
-  CategoryIcon,
   CompareIcon,
-  HomeIcon,
-  InfoIcon,
-  MenuIcon,
   RefreshIcon,
   ScoreIcon,
   SearchIcon,
@@ -87,36 +86,6 @@ export default async function Home() {
     ? "Harga mulai"
     : "Informasi harga";
 
-  const companyLinks = [
-    { label: "Kontak", href: footer.contactUrl },
-    { label: "Karier", href: footer.careersUrl },
-  ].filter(
-    (link): link is { label: string; href: string } => Boolean(link.href),
-  );
-  const legalLinks = [
-    { label: "Kebijakan Privasi", href: footer.privacyUrl },
-    { label: "Syarat Penggunaan", href: footer.termsUrl },
-    { label: "Disclaimer", href: footer.disclaimerUrl },
-  ].filter(
-    (link): link is { label: string; href: string } => Boolean(link.href),
-  );
-
-  const drawerNavigation = [
-    { label: "Kategori", href: "#kategori", icon: CategoryIcon },
-    { label: "Perbandingan", href: "/compare", icon: CompareIcon },
-    { label: "Metodologi", href: "#metodologi", icon: ScoreIcon },
-    { label: "Artikel", href: "/articles", icon: ArticleIcon },
-    { label: "Tentang Kami", href: "#tentang", icon: InfoIcon },
-  ];
-
-  const mobileNavigation = [
-    { label: "Beranda", href: "/", icon: HomeIcon },
-    { label: "Kategori", href: "#kategori", icon: CategoryIcon },
-    { label: "Cari", href: "/search", icon: SearchIcon },
-    { label: "Bandingkan", href: "/compare", icon: CompareIcon },
-    { label: "Artikel", href: "#artikel", icon: ArticleIcon },
-  ];
-
   const trustItems = [
     {
       title: "Review Jujur",
@@ -146,112 +115,65 @@ export default async function Home() {
 
   return (
     <>
-      <a
-        href="#konten-utama"
-        className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-lg transition-transform focus:translate-y-0"
-      >
-        Lewati ke konten utama
-      </a>
-
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto flex max-w-7xl items-center px-3 py-2 sm:px-4 md:px-5 md:py-2.5">
-          <details className="group relative mr-1 lg:hidden">
-            <summary className="mobile-menu-summary flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100">
-              <MenuIcon />
-              <span className="sr-only">Buka menu utama</span>
-            </summary>
-
-            <nav
-              aria-label="Menu utama"
-              className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-950/10"
-            >
-              {drawerNavigation.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                    <Icon className="h-[18px] w-[18px]" />
-                  </span>
-                  {label}
-                </a>
-              ))}
-            </nav>
-          </details>
-
-          <a
-            href="/"
-            aria-label="BelanjaLab, kembali ke beranda"
-            className="flex min-h-11 items-center gap-2 rounded-xl"
-          >
-            <img
-              src="/images/logo-belanjalab.png"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
-            <span className="text-base font-extrabold tracking-[-0.035em] text-slate-950 md:text-xl">
-              Belanja<span className="text-orange-700">Lab</span>
-            </span>
-          </a>
-
-          <nav
-            aria-label="Navigasi utama"
-            className="ml-7 hidden items-center gap-1 text-sm font-semibold text-slate-600 lg:flex xl:ml-10"
-          >
-            <a
-              href="#kategori"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
-            >
-              Kategori
-            </a>
-            <a
-              href="/compare"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
-            >
-              Perbandingan
-            </a>
-            <a
-              href="#metodologi"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
-            >
-              Metodologi
-            </a>
-            <a
-              href="/articles"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
-            >
-              Artikel
-            </a>
-            <a
-              href="#tentang"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 transition-colors hover:bg-slate-100 hover:text-slate-950"
-            >
-              Tentang Kami
-            </a>
-          </nav>
-
-          <a
-            href="/search"
-            aria-label="Buka pencarian produk"
-            className="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
-          >
-            <SearchIcon />
-          </a>
-
-          <a
-            href="/search"
-            className="ml-auto hidden min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 md:inline-flex"
-          >
-            <SearchIcon className="h-[18px] w-[18px]" />
-            Cari produk
-          </a>
-        </div>
-      </header>
+      <SiteHeader active="home" />
 
       <main id="konten-utama" className="min-h-screen bg-white text-slate-900">
-        <section className="px-4 py-6 sm:py-8 md:px-5 md:py-10">
+        <section
+          id="kategori"
+          className="scroll-mt-24 px-4 pt-5 md:px-5 md:pt-7"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                  Jelajahi kategori
+                </p>
+                <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
+                  Mulai dari kebutuhanmu
+                </h2>
+              </div>
+              <a
+                href="/search"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+              >
+                Lihat semua <ArrowRightIcon />
+              </a>
+            </div>
+
+            {categories.length > 0 ? (
+              <div className="category-rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-4 md:px-0">
+                {categories.map((category) => (
+                  <a
+                    key={category.id}
+                    href={`/search?q=${encodeURIComponent(category.name)}`}
+                    className="group public-card flex min-h-28 w-28 shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md sm:w-32 md:min-h-32 md:w-auto md:p-4"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-orange-50 group-hover:text-orange-700 sm:h-12 sm:w-12"
+                    >
+                      <CategoryGlyph icon={category.icon} />
+                    </span>
+                    <span className="mt-3 text-xs font-extrabold leading-5 text-slate-800 sm:text-sm">
+                      {category.name}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                <p className="text-sm font-bold text-slate-700">
+                  Kategori pilihan sedang kami siapkan.
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Gunakan pencarian untuk menemukan produk yang kamu butuhkan.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="px-4 pb-6 pt-5 sm:pb-8 sm:pt-6 md:px-5 md:pb-10 md:pt-7">
           <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-[1.75rem] border border-orange-100 px-5 py-7 sm:px-7 sm:py-9 md:grid md:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] md:gap-10 md:rounded-[2rem] md:px-10 md:py-12 lg:gap-14 lg:px-14 lg:py-16">
             <div className="relative z-10 flex min-w-0 flex-col justify-center">
               <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-orange-800 shadow-sm backdrop-blur">
@@ -561,61 +483,6 @@ export default async function Home() {
         </section>
 
         <section
-          id="kategori"
-          className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-16"
-        >
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
-                  Jelajahi
-                </p>
-                <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
-                  Kategori Populer
-                </h2>
-              </div>
-              <a
-                href="/search"
-                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
-              >
-                Lihat semua <ArrowRightIcon />
-              </a>
-            </div>
-
-            {categories.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-4">
-                {categories.map((category) => (
-                  <a
-                    key={category.id}
-                    href={`/search?q=${encodeURIComponent(category.name)}`}
-                    className="group flex min-h-28 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md sm:min-h-32 sm:p-4"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-orange-50 group-hover:text-orange-700 sm:h-12 sm:w-12"
-                    >
-                      <CategoryGlyph icon={category.icon} />
-                    </span>
-                    <span className="mt-3 text-xs font-extrabold leading-5 text-slate-800 sm:text-sm">
-                      {category.name}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-sm font-bold text-slate-700">
-                  Kategori pilihan sedang kami siapkan.
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Coba gunakan pencarian untuk menemukan produk yang kamu butuhkan.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
           id="artikel"
           className="scroll-mt-24 px-4 pb-10 md:px-5 md:pb-20"
         >
@@ -697,129 +564,8 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer
-        id="tentang"
-        className="scroll-mt-24 bg-slate-950 px-4 py-10 pb-[calc(7rem+env(safe-area-inset-bottom))] text-white md:px-5 md:py-12 md:pb-12"
-      >
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 md:grid-cols-4 md:gap-10">
-          <div className="col-span-2 md:col-span-1">
-            <a
-              href="/"
-              aria-label="BelanjaLab, kembali ke beranda"
-              className="inline-flex min-h-11 items-center gap-3 rounded-xl"
-            >
-              <img
-                src="/images/logo-belanjalab.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              <span className="text-xl font-extrabold tracking-[-0.035em]">
-                Belanja<span className="text-orange-500">Lab</span>
-              </span>
-            </a>
-
-            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-300">
-              {footer.companyDescription}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-extrabold text-white">Produk</h3>
-            <div className="mt-3 space-y-1 text-sm text-slate-300">
-              <a
-                href="#produk"
-                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-              >
-                Rekomendasi
-              </a>
-              <a
-                href="/compare"
-                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-              >
-                Perbandingan
-              </a>
-              <a
-                href="#metodologi"
-                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-              >
-                Metodologi
-              </a>
-              <a
-                href="#kategori"
-                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-              >
-                Kategori
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-extrabold text-white">Perusahaan</h3>
-            <div className="mt-3 space-y-1 text-sm text-slate-300">
-              <a
-                href="#tentang"
-                className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-              >
-                Tentang Kami
-              </a>
-              {companyLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="col-span-2 md:col-span-1">
-            <h3 className="text-sm font-extrabold text-white">Legal</h3>
-            <div className="mt-3 space-y-1 text-sm text-slate-300">
-              {legalLinks.length > 0 ? (
-                legalLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    className="flex min-h-11 items-center rounded-md transition-colors hover:text-white"
-                  >
-                    {link.label}
-                  </a>
-                ))
-              ) : (
-                <p className="py-2 leading-6">Informasi legal segera tersedia.</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs leading-5 text-slate-400">
-          © {new Date().getFullYear()} BelanjaLab. All rights reserved.
-        </div>
-      </footer>
-
-      <nav
-        aria-label="Navigasi utama mobile"
-        className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-1 pt-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden"
-      >
-        {mobileNavigation.map(({ label, href, icon: Icon }, index) => (
-          <a
-            key={label}
-            href={href}
-            aria-current={index === 0 ? "page" : undefined}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-semibold transition-colors ${
-              index === 0
-                ? "text-orange-700"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-            }`}
-          >
-            <Icon className="h-5 w-5" />
-            <span>{label}</span>
-          </a>
-        ))}
-      </nav>
+      <SiteFooter footer={footer} />
+      <MobileBottomNav active="home" />
     </>
   );
 }

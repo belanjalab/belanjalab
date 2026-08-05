@@ -72,7 +72,7 @@ export default function BulkProductActions({
             checked={allSelected}
             onChange={toggleAll}
             disabled={products.length === 0}
-            className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
+            className="h-4 w-4 rounded border-slate-300 text-orange-700 focus:ring-orange-400"
           />
           Pilih semua produk di halaman ini
         </label>
@@ -256,14 +256,14 @@ export default function BulkProductActions({
                 type="checkbox"
                 checked={selected}
                 onChange={() => toggleProduct(product.id)}
-                className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
+                className="h-4 w-4 rounded border-slate-300 text-orange-700 focus:ring-orange-400"
               />
 
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-bold text-slate-700">
                   {product.name}
                 </span>
-                <span className="mt-0.5 block text-[10px] capitalize text-slate-400">
+                <span className="mt-0.5 block text-xs capitalize text-slate-400">
                   {product.status}
                 </span>
               </span>

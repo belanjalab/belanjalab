@@ -337,7 +337,7 @@ export default async function AdminArticlesPage({
 
             <button
               type="submit"
-              className="w-fit rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              className="w-fit rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
             >
               Simpan Artikel
             </button>
@@ -370,7 +370,7 @@ export default async function AdminArticlesPage({
                   key={article.id}
                   className="grid gap-4 px-5 py-5 md:grid-cols-[96px_1fr_auto] md:items-center"
                 >
-                  <div className="flex h-20 w-24 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-[10px] font-bold text-slate-400">
+                  <div className="flex h-20 w-24 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-xs font-bold text-slate-400">
                     {article.cover_image ? (
                       <img
                         src={article.cover_image}
@@ -389,7 +389,7 @@ export default async function AdminArticlesPage({
                       </h3>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-[10px] font-bold ${
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
                           article.published
                             ? "bg-green-50 text-green-700"
                             : "bg-amber-50 text-amber-700"
@@ -409,7 +409,7 @@ export default async function AdminArticlesPage({
                       </p>
                     )}
 
-                    <p className="mt-2 text-[10px] text-slate-400">
+                    <p className="mt-2 text-xs text-slate-400">
                       Dibuat {formatDate(article.created_at)}
                     </p>
                   </div>
@@ -433,7 +433,7 @@ export default async function AdminArticlesPage({
                       href={`/articles/${article.slug}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                     >
                       Preview
                     </a>

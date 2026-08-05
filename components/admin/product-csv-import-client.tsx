@@ -420,8 +420,7 @@ export default function ProductCsvImportClient() {
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-slate-500">
             Gunakan CSV UTF-8 dengan header sesuai template BelanjaLab.
-            Merek baru akan dibuat otomatis. Slug duplikat dalam satu CSV
-            akan diberi akhiran -2, -3, dan seterusnya.
+            Merek yang belum tersedia akan dibuat otomatis saat import.
           </p>
 
           <button
@@ -641,7 +640,7 @@ export default function ProductCsvImportClient() {
                 isValidating ||
                 importResults.length > 0
               }
-              className="rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-orange-700 px-6 py-3 text-sm font-bold text-white hover:bg-orange-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isValidating
                 ? "Memvalidasi..."

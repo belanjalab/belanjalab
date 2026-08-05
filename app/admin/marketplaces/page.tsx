@@ -324,7 +324,7 @@ export default async function AdminMarketplacesPage({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
               href="/admin/prices"
-              className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              className="inline-flex items-center justify-center rounded-xl bg-orange-700 px-4 py-3 text-sm font-bold text-white hover:bg-orange-800"
             >
               Kelola Harga
             </Link>
@@ -388,7 +388,7 @@ export default async function AdminMarketplacesPage({
 
             <button
               type="submit"
-              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
             >
               Tambah Marketplace
             </button>
@@ -463,7 +463,7 @@ export default async function AdminMarketplacesPage({
                   <div className="flex items-center gap-2 lg:flex-col lg:items-stretch">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                           Produk
                         </p>
                         <p className="mt-1 text-sm font-black text-slate-800">
@@ -472,7 +472,7 @@ export default async function AdminMarketplacesPage({
                       </div>
 
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                           Harga
                         </p>
                         <p className="mt-1 text-sm font-black text-slate-800">

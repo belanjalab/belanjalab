@@ -494,14 +494,81 @@ function CategoryGlyph({ icon, className = "h-6 w-6" }: IconProps & { icon: stri
   }
 }
 
+function ChevronLeftIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+function CloseIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
+function ShareIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 5h5v5M13 11l6-6" />
+      <path d="M19 13v6H5V5h6" />
+    </svg>
+  );
+}
+
+function ClockIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function TagIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 13 13 20 4 11V4h7l9 9Z" />
+      <circle cx="8.5" cy="8.5" r="1" />
+    </svg>
+  );
+}
+
 export {
   ActivityIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  CloseIcon,
   ArrowRightIcon,
   ArticleIcon,
   CategoryGlyph,
   CategoryIcon,
   CheckIcon,
   CompareIcon,
+  ExternalLinkIcon,
   HeadphonesIcon,
   HomeIcon,
   InfoIcon,
@@ -509,8 +576,10 @@ export {
   RefreshIcon,
   ScoreIcon,
   SearchIcon,
+  ShareIcon,
   ShieldCheckIcon,
   SmartphoneIcon,
   SparklesIcon,
   StoreIcon,
+  TagIcon,
 };

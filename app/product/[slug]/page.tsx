@@ -2,10 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  getProductBySlug,
-  getSingleRelation,
-} from "@/lib/products";
+  ArrowRightIcon,
+  CompareIcon,
+  RefreshIcon,
+  ScoreIcon,
+  StoreIcon,
+} from "@/components/home/home-icons";
+import Breadcrumbs from "@/components/site/breadcrumbs";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
+import { getActiveSiteFooter } from "@/lib/footer";
 import { getMarketplaceOffersByProductSlug } from "@/lib/marketplace-prices";
+import { getProductBySlug, getSingleRelation } from "@/lib/products";
 import {
   PRODUCT_PLACEHOLDER_PATH,
   SITE_URL,
@@ -16,14 +25,10 @@ import MarketplaceOffers from "./marketplace-offers";
 export const revalidate = 3600;
 
 type ProductPageProps = {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: ProductPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
@@ -34,8 +39,7 @@ export async function generateMetadata({
     };
   }
 
-  const category =
-    getSingleRelation(product.categories)?.name ?? "Produk";
+  const category = getSingleRelation(product.categories)?.name ?? "Produk";
   const description =
     product.short_description ??
     product.description ??
@@ -53,9 +57,7 @@ export async function generateMetadata({
       category,
       "BelanjaLab",
     ],
-    alternates: {
-      canonical: canonicalPath,
-    },
+    alternates: { canonical: canonicalPath },
     openGraph: {
       type: "website",
       locale: "id_ID",
@@ -63,12 +65,7 @@ export async function generateMetadata({
       siteName: "BelanjaLab",
       title: product.name,
       description,
-      images: [
-        {
-          url: imageUrl,
-          alt: product.name,
-        },
-      ],
+      images: [{ url: imageUrl, alt: product.name }],
     },
     twitter: {
       card: "summary_large_image",
@@ -88,17 +85,11 @@ function formatRupiah(value: number) {
 }
 
 function getLowestPrice(
-  prices:
-    | Array<{
-        price: number | string | null;
-      }>
-    | null
-    | undefined,
+  prices: Array<{ price: number | string | null }> | null | undefined,
 ) {
   const numericPrices = (prices ?? [])
     .map((item) => Number(item.price))
-    .filter((price) => Number.isFinite(price));
-
+    .filter((price) => Number.isFinite(price) && price > 0);
   return numericPrices.length > 0 ? Math.min(...numericPrices) : null;
 }
 
@@ -110,24 +101,40 @@ function getScoreLabel(score: number) {
   return "Perlu Dipertimbangkan";
 }
 
-export default async function ProductPage({
-  params,
-}: ProductPageProps) {
-  const { slug } = await params;
+function getLatestPriceCheck(
+  prices:
+    | Array<{ last_checked_at?: string | null; updated_at?: string | null }>
+    | null
+    | undefined,
+) {
+  const dates = (prices ?? [])
+    .map((price) => price.last_checked_at ?? price.updated_at)
+    .filter((value): value is string => Boolean(value))
+    .map((value) => new Date(value))
+    .filter((value) => !Number.isNaN(value.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime());
 
-  const [product, marketplaceData] = await Promise.all([
+  if (dates.length === 0) return "Waktu cek belum tersedia";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(dates[0]);
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug } = await params;
+  const [product, marketplaceData, footer] = await Promise.all([
     getProductBySlug(slug),
     getMarketplaceOffersByProductSlug(slug),
+    getActiveSiteFooter(),
   ]);
 
-  if (!product) {
-    notFound();
-  }
+  if (!product) notFound();
 
-  const category =
-    getSingleRelation(product.categories)?.name ?? "Produk";
-  const brand =
-    getSingleRelation(product.brands)?.name ?? "Tanpa merek";
+  const category = getSingleRelation(product.categories)?.name ?? "Produk";
+  const brand = getSingleRelation(product.brands)?.name ?? "Tanpa merek";
   const score = getSingleRelation(product.product_scores);
 
   const overallScore = Number(score?.overall_score ?? 0);
@@ -136,8 +143,9 @@ export default async function ProductPage({
   const featuresScore = Number(score?.features ?? 0);
   const valueScore = Number(score?.value ?? 0);
   const easeOfUseScore = Number(score?.ease_of_use ?? 0);
-
   const lowestPrice = getLowestPrice(product.product_prices);
+  const sourceCount = product.product_prices?.length ?? 0;
+  const latestPriceCheck = getLatestPriceCheck(product.product_prices);
 
   const scoreItems = [
     ["Performa", performanceScore],
@@ -159,10 +167,7 @@ export default async function ProductPage({
       `Informasi dan perbandingan harga ${product.name}.`,
     image: [productImage],
     url: productUrl,
-    brand: {
-      "@type": "Brand",
-      name: brand,
-    },
+    brand: { "@type": "Brand", name: brand },
     category,
     ...(lowestPrice !== null
       ? {
@@ -179,260 +184,183 @@ export default async function ProductPage({
   };
 
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-        }}
-      />
+    <>
+      <SiteHeader />
+      <main id="konten-utama" className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
+        />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-6 md:py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
+        <Breadcrumbs
+          items={[
+            { label: "Beranda", href: "/" },
+            { label: category, href: `/search?q=${encodeURIComponent(category)}` },
+            { label: product.name },
+          ]}
+        />
 
-            <span className="text-base font-black md:text-xl">
-              Belanja<span className="text-orange-500">Lab</span>
-            </span>
-          </Link>
-
-          <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <Link href="/#kategori" className="hover:text-slate-950">
-              Kategori
-            </Link>
-            <Link href="/compare" className="hover:text-slate-950">
-              Perbandingan
-            </Link>
-            <Link href="/search" className="hover:text-slate-950">
-              Cari
-            </Link>
-          </nav>
-
-          <Link
-            href="/search"
-            className="ml-auto rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500 md:px-4 md:text-sm"
-          >
-            Cari Produk
-          </Link>
-        </div>
-      </header>
-
-      <section className="border-b border-slate-100 px-4 py-4 md:px-6">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-hidden text-[10px] text-slate-400 md:text-xs">
-          <Link href="/" className="shrink-0 hover:text-orange-500">
-            Beranda
-          </Link>
-          <span>/</span>
-          <span className="shrink-0">{category}</span>
-          <span>/</span>
-          <span className="truncate font-semibold text-slate-600">
-            {product.name}
-          </span>
-        </div>
-      </section>
-
-      <section className="px-4 py-7 md:px-6 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
-          <div>
-            <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-slate-100 p-8 md:p-14">
+        <section className="px-4 py-8 md:px-5 md:py-14">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14">
+            <div className="public-card flex aspect-square items-center justify-center overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 p-7 sm:p-10 md:rounded-[2rem] md:p-14">
               <img
-                src={
-                  product.image_url ??
-                  PRODUCT_PLACEHOLDER_PATH
-                }
+                src={product.image_url ?? PRODUCT_PLACEHOLDER_PATH}
                 alt={product.name}
                 className="h-full w-full object-contain"
               />
             </div>
-          </div>
 
-          <div className="flex flex-col justify-center">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold text-orange-600 md:text-xs">
-                {category}
-              </span>
-
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold text-slate-600 md:text-xs">
-                {brand}
-              </span>
-            </div>
-
-            <h1 className="mt-4 text-3xl font-black leading-tight md:text-5xl">
-              {product.name}
-            </h1>
-
-            <p className="mt-4 text-sm leading-7 text-slate-500 md:text-base">
-              {product.short_description ??
-                "Ringkasan produk belum tersedia."}
-            </p>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                  Harga mulai
-                </p>
-                <p className="mt-2 text-xl font-black text-orange-500 md:text-2xl">
-                  {lowestPrice !== null
-                    ? formatRupiah(lowestPrice)
-                    : "Belum tersedia"}
-                </p>
+            <div className="flex flex-col justify-center">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/search?q=${encodeURIComponent(category)}`}
+                  className="inline-flex min-h-9 items-center rounded-full bg-orange-50 px-3 text-xs font-extrabold text-orange-800 ring-1 ring-orange-100"
+                >
+                  {category}
+                </Link>
+                <span className="inline-flex min-h-9 items-center rounded-full bg-slate-100 px-3 text-xs font-extrabold text-slate-700">
+                  {brand}
+                </span>
               </div>
 
-              <div className="rounded-2xl bg-green-50 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
-                  BelanjaLab Score
-                </p>
-                <div className="mt-2 flex items-end gap-2">
-                  <p className="text-2xl font-black text-green-600 md:text-3xl">
-                    {overallScore > 0
-                      ? overallScore.toFixed(1)
-                      : "—"}
-                  </p>
-
-                  {overallScore > 0 && (
-                    <span className="pb-1 text-xs font-bold text-green-700">
-                      /10
-                    </span>
-                  )}
-                </div>
-
-                {overallScore > 0 && (
-                  <p className="mt-1 text-[10px] font-bold text-green-700">
-                    {getScoreLabel(overallScore)}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#harga-marketplace"
-                className="flex-1 rounded-xl bg-orange-500 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-600"
-              >
-                Bandingkan Harga
-              </a>
-
-              <Link
-                href="/compare"
-                className="flex-1 rounded-xl border border-slate-200 px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:border-orange-300 hover:text-orange-500"
-              >
-                Tambah ke Compare
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-50 px-4 py-8 md:px-6 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
-              Tentang Produk
-            </p>
-
-            <h2 className="mt-2 text-2xl font-black md:text-3xl">
-              Ringkasan BelanjaLab
-            </h2>
-
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-              <p className="text-sm leading-7 text-slate-600 md:text-base md:leading-8">
-                {product.description ??
-                  product.short_description ??
-                  "Deskripsi lengkap produk belum tersedia."}
+              <h1 className="brand-text-balance mt-5 text-3xl font-extrabold leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-4xl md:text-5xl">
+                {product.name}
+              </h1>
+              <p className="mt-5 text-sm leading-7 text-slate-600 sm:text-base">
+                {product.short_description ?? "Ringkasan produk belum tersedia."}
               </p>
-            </div>
-          </div>
 
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
-              Penilaian
-            </p>
-
-            <h2 className="mt-2 text-2xl font-black md:text-3xl">
-              Rincian Skor
-            </h2>
-
-            <div className="mt-5 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-              {scoreItems.map(([label, value]) => (
-                <div key={label}>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-bold text-slate-700">
-                      {label}
-                    </span>
-                    <span className="text-sm font-black text-slate-900">
-                      {value > 0 ? `${value.toFixed(1)}/10` : "—"}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-orange-500"
-                      style={{
-                        width: `${Math.min(Math.max(value * 10, 0), 100)}%`,
-                      }}
-                    />
-                  </div>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500">
+                    Harga mulai
+                  </p>
+                  <p className="mt-2 text-lg font-extrabold text-slate-950 sm:text-xl">
+                    {lowestPrice !== null ? formatRupiah(lowestPrice) : "Belum tersedia"}
+                  </p>
+                  <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                    <StoreIcon className="h-3.5 w-3.5" />
+                    {sourceCount > 0 ? `${sourceCount} sumber harga` : "Belum ada sumber"}
+                  </p>
                 </div>
-              ))}
+
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                  <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
+                    <ScoreIcon className="h-3.5 w-3.5" /> BelanjaLab Score
+                  </p>
+                  <div className="mt-2 flex items-end gap-1.5">
+                    <p className="text-2xl font-extrabold text-emerald-800 sm:text-3xl">
+                      {overallScore > 0 ? overallScore.toFixed(1) : "—"}
+                    </p>
+                    {overallScore > 0 && (
+                      <span className="pb-1 text-xs font-bold text-emerald-800">/10</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs font-bold text-emerald-800">
+                    {overallScore > 0 ? getScoreLabel(overallScore) : "Belum dinilai"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-600">
+                <RefreshIcon className="h-4 w-4 text-slate-500" />
+                Harga terakhir dicek: {latestPriceCheck}
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href="#harga-marketplace"
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition hover:bg-orange-800"
+                >
+                  Bandingkan harga <ArrowRightIcon />
+                </a>
+                <Link
+                  href={`/compare?products=${encodeURIComponent(product.slug)}`}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
+                >
+                  <CompareIcon className="h-5 w-5" /> Tambah ke compare
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section
-        id="harga-marketplace"
-        className="scroll-mt-24 px-4 py-8 md:px-6 md:py-14"
-      >
-        <div className="mx-auto max-w-7xl">
-          <MarketplaceOffers
-            offers={marketplaceData?.offers ?? []}
-          />
-        </div>
-      </section>
+        <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                Tentang produk
+              </p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Ringkasan BelanjaLab
+              </h2>
+              <div className="public-card mt-5 rounded-[1.5rem] border border-slate-200 bg-white p-5 sm:p-7">
+                <p className="text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+                  {product.description ??
+                    product.short_description ??
+                    "Deskripsi lengkap produk belum tersedia."}
+                </p>
+              </div>
+            </div>
 
-      <section className="bg-slate-950 px-4 py-8 text-white md:px-6 md:py-12">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-400">
-              Belanja lebih yakin
-            </p>
-            <h2 className="mt-2 text-2xl font-black md:text-3xl">
-              Bandingkan dengan produk lain.
-            </h2>
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                Penilaian
+              </p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Rincian skor
+              </h2>
+              <div className="public-card mt-5 space-y-5 rounded-[1.5rem] border border-slate-200 bg-white p-5 sm:p-7">
+                {scoreItems.map(([label, value]) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm font-bold text-slate-700">{label}</span>
+                      <span className="text-sm font-extrabold text-slate-950">
+                        {value > 0 ? `${value.toFixed(1)}/10` : "—"}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-orange-700"
+                        style={{ width: `${Math.min(Math.max(value * 10, 0), 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </section>
 
-          <Link
-            href="/compare"
-            className="rounded-xl bg-orange-500 px-5 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
-          >
-            Buka Perbandingan
-          </Link>
-        </div>
-      </section>
+        <section id="harga-marketplace" className="scroll-mt-24 px-4 py-10 md:px-5 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <MarketplaceOffers offers={marketplaceData?.offers ?? []} />
+          </div>
+        </section>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
-        {[
-          ["⌂", "Beranda", "/"],
-          ["▦", "Kategori", "/#kategori"],
-          ["⌕", "Cari", "/search"],
-          ["⇄", "Compare", "/compare"],
-          ["▤", "Artikel", "/#artikel"],
-        ].map(([icon, label, href]) => (
-          <Link
-            key={label}
-            href={href}
-            className="flex flex-col items-center gap-1 text-[9px] text-slate-500"
-          >
-            <span className="text-base">{icon}</span>
-            <span>{label}</span>
-          </Link>
-        ))}
-      </nav>
-    </main>
+        <section className="bg-slate-950 px-4 py-10 text-white md:px-5 md:py-12">
+          <div className="mx-auto flex max-w-7xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-400">
+                Belanja lebih yakin
+              </p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl">
+                Bandingkan dengan produk lain.
+              </h2>
+            </div>
+            <Link
+              href={`/compare?products=${encodeURIComponent(product.slug)}`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 text-sm font-extrabold text-white hover:bg-orange-500"
+            >
+              Buka perbandingan <ArrowRightIcon />
+            </Link>
+          </div>
+        </section>
+      </main>
+      <SiteFooter footer={footer} />
+      <MobileBottomNav />
+    </>
   );
 }

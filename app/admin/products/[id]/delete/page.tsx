@@ -134,9 +134,9 @@ export default async function DeleteProductPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-500">Lab</span>
+              Belanja<span className="text-orange-700">Lab</span>
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
             </p>
           </div>
@@ -173,7 +173,7 @@ export default async function DeleteProductPage({
               {product.slug}
             </p>
             <span
-              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${
+              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold capitalize ${
                 product.status === "published"
                   ? "bg-green-50 text-green-700"
                   : "bg-amber-50 text-amber-700"

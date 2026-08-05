@@ -86,16 +86,16 @@ export default async function AdminLoginPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-500">Lab</span>
+              Belanja<span className="text-orange-700">Lab</span>
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
             </p>
           </div>
         </Link>
 
         <div className="mt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
             Area Terbatas
           </p>
 
@@ -159,7 +159,7 @@ export default async function AdminLoginPage({
 
               <Link
                 href="/admin/forgot-password"
-                className="text-xs font-bold text-orange-500 hover:text-orange-600"
+                className="text-xs font-bold text-orange-700 hover:text-orange-800"
               >
                 Lupa password?
               </Link>
@@ -178,13 +178,13 @@ export default async function AdminLoginPage({
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-orange-600"
+            className="w-full rounded-xl bg-orange-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800"
           >
             Masuk
           </button>
         </form>
 
-        <p className="mt-6 text-center text-[11px] leading-5 text-slate-400">
+        <p className="mt-6 text-center text-xs leading-5 text-slate-400">
           Hanya akun yang terdaftar sebagai admin yang dapat mengakses CMS.
         </p>
       </section>

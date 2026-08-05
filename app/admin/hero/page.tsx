@@ -443,7 +443,7 @@ export default async function AdminHeroPage({
 
             <button
               type="submit"
-              className="w-fit rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              className="w-fit rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
             >
               Simpan Hero
             </button>

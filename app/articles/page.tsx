@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-
+import {
+  ArrowRightIcon,
+  ArticleIcon,
+  ClockIcon,
+} from "@/components/home/home-icons";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import PageIntro from "@/components/site/page-intro";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
+import { getActiveSiteFooter } from "@/lib/footer";
 import { sanitizePublicUrl } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -38,7 +47,6 @@ function estimateReadingTime(content: string | null) {
 
 async function getPublishedArticles() {
   const supabase = getSupabaseClient();
-
   const { data, error } = await supabase
     .from("articles")
     .select("id,title,slug,excerpt,cover_image,created_at,content")
@@ -51,121 +59,103 @@ async function getPublishedArticles() {
 
   return ((data ?? []) as ArticleListItem[]).map((article) => ({
     ...article,
-    cover_image: sanitizePublicUrl(article.cover_image, {
-      allowHash: false,
-    }),
+    cover_image: sanitizePublicUrl(article.cover_image, { allowHash: false }),
   }));
 }
 
 export default async function ArticlesPage() {
-  const articles = await getPublishedArticles();
+  const [articles, footer] = await Promise.all([
+    getPublishedArticles(),
+    getActiveSiteFooter(),
+  ]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-9 w-9 rounded-full object-cover"
-            />
-            <p className="text-sm font-black">
-              Belanja<span className="text-orange-500">Lab</span>
-            </p>
-          </Link>
+    <>
+      <SiteHeader active="articles" />
+      <main id="konten-utama" className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
+        <PageIntro
+          eyebrow="Insight belanja"
+          title="Artikel dan panduan untuk memilih lebih yakin."
+          description="Baca panduan, rekomendasi, dan penjelasan produk yang fokus pada keputusan belanja—bukan sekadar daftar spesifikasi."
+          compact
+        />
 
-          <Link
-            href="/"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-          >
-            Kembali ke Homepage
-          </Link>
-        </div>
-      </header>
+        <section className="px-4 pb-12 md:px-5 md:pb-16">
+          <div className="mx-auto max-w-7xl">
+            {articles.length === 0 ? (
+              <div className="public-card rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                  <ArticleIcon className="h-7 w-7" />
+                </span>
+                <h2 className="mt-4 text-xl font-extrabold text-slate-950">
+                  Artikel sedang disiapkan
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Artikel yang sudah dipublikasikan akan muncul otomatis di halaman ini.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {articles.map((article) => (
+                  <article
+                    key={article.id}
+                    className="public-card group overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg"
+                  >
+                    <Link href={`/articles/${article.slug}`} className="block">
+                      <div className="aspect-[16/10] overflow-hidden bg-slate-50 ring-1 ring-inset ring-slate-100">
+                        {article.cover_image ? (
+                          <img
+                            src={article.cover_image}
+                            alt={article.title}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                          />
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
+                            <ArticleIcon className="h-8 w-8" />
+                            <span className="text-xs font-bold">Gambar belum tersedia</span>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
 
-      <section className="px-4 py-12 sm:px-6 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
-              Insight Belanja
-            </p>
-            <h1 className="mt-3 text-4xl font-black leading-tight md:text-5xl">
-              Artikel & Panduan Belanja
-            </h1>
-            <p className="mt-4 text-base leading-7 text-slate-500">
-              Temukan panduan, rekomendasi, dan insight produk untuk membantu
-              keputusan belanja yang lebih cerdas.
-            </p>
-          </div>
+                    <div className="p-5">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                        <span>{formatDate(article.created_at)}</span>
+                        <span aria-hidden="true">•</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <ClockIcon className="h-3.5 w-3.5" />
+                          {estimateReadingTime(article.content)} menit baca
+                        </span>
+                      </div>
 
-          {articles.length === 0 ? (
-            <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <p className="text-sm font-black">
-                Belum ada artikel yang dipublikasikan.
-              </p>
-              <p className="mt-2 text-xs text-slate-500">
-                Artikel published akan muncul otomatis di halaman ini.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {articles.map((article) => (
-                <article
-                  key={article.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                >
-                  <Link href={`/articles/${article.slug}`}>
-                    <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                      {article.cover_image ? (
-                        <img
-                          src={article.cover_image}
-                          alt={article.title}
-                          className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-xs font-bold text-slate-400">
-                          NO IMAGE
-                        </div>
+                      <h2 className="mt-3 text-xl font-extrabold leading-7 tracking-[-0.025em] text-slate-950">
+                        <Link href={`/articles/${article.slug}`} className="transition-colors hover:text-orange-800">
+                          {article.title}
+                        </Link>
+                      </h2>
+
+                      {article.excerpt && (
+                        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+                          {article.excerpt}
+                        </p>
                       )}
-                    </div>
-                  </Link>
 
-                  <div className="p-5">
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-400">
-                      <span>{formatDate(article.created_at)}</span>
-                      <span>•</span>
-                      <span>{estimateReadingTime(article.content)} menit baca</span>
-                    </div>
-
-                    <h2 className="mt-3 text-xl font-black leading-7">
                       <Link
                         href={`/articles/${article.slug}`}
-                        className="hover:text-orange-500"
+                        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
                       >
-                        {article.title}
+                        Baca artikel <ArrowRightIcon />
                       </Link>
-                    </h2>
-
-                    {article.excerpt && (
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">
-                        {article.excerpt}
-                      </p>
-                    )}
-
-                    <Link
-                      href={`/articles/${article.slug}`}
-                      className="mt-5 inline-flex text-sm font-black text-orange-500 hover:text-orange-600"
-                    >
-                      Baca artikel →
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-    </main>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+      <SiteFooter footer={footer} />
+      <MobileBottomNav active="articles" />
+    </>
   );
 }

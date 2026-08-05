@@ -494,9 +494,9 @@ export default async function AdminPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-500">Lab</span>
+                Belanja<span className="text-orange-700">Lab</span>
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Admin
               </p>
             </div>
@@ -507,7 +507,7 @@ export default async function AdminPage({
               <p className="text-xs font-bold text-slate-700">
                 {adminRecord.display_name ?? "BelanjaLab Admin"}
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 {user.email}
               </p>
             </div>
@@ -580,7 +580,7 @@ export default async function AdminPage({
 
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
                 CMS Admin
               </p>
 
@@ -597,49 +597,49 @@ export default async function AdminPage({
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <Link
                 href="/admin/taxonomies"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Kelola Kategori & Merek
               </Link>
 
               <Link
                 href="/admin/marketplaces"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Kelola Marketplace
               </Link>
 
               <Link
                 href="/admin/hero"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Kelola Hero Homepage
               </Link>
 
               <Link
                 href="/admin/footer"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Kelola Footer Homepage
               </Link>
 
               <Link
                 href="/admin/articles"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Kelola Artikel
               </Link>
 
               <Link
                 href="/admin/products/import"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-500"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
               >
                 Import Produk CSV
               </Link>
 
               <Link
                 href="/admin/products/new"
-                className="rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
+                className="rounded-xl bg-orange-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-800"
               >
                 + Tambah Produk
               </Link>
@@ -843,7 +843,7 @@ export default async function AdminPage({
                   className={`rounded-full px-4 py-2 text-xs font-bold transition ${
                     isActive
                       ? "bg-slate-950 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-700"
                   }`}
                 >
                   {String(label)} ({Number(count)})
@@ -900,7 +900,7 @@ export default async function AdminPage({
                         <p className="mt-1 truncate text-xs text-slate-500">
                           {product.brand} · {product.slug}
                         </p>
-                        <p className="mt-1 text-[10px] text-slate-400">
+                        <p className="mt-1 text-xs text-slate-400">
                           {formatDate(product.createdAt)}
                         </p>
                       </div>
@@ -935,7 +935,7 @@ export default async function AdminPage({
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/products/${product.id}/preview`}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                       >
                         Preview
                       </Link>
@@ -973,7 +973,7 @@ export default async function AdminPage({
                           </h2>
 
                           <span
-                            className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-bold capitalize ${
+                            className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold capitalize ${
                               product.status === "published"
                                 ? "bg-green-50 text-green-700"
                                 : "bg-amber-50 text-amber-700"
@@ -983,11 +983,11 @@ export default async function AdminPage({
                           </span>
                         </div>
 
-                        <p className="mt-1 text-[10px] text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500">
                           {product.brand} · {product.category}
                         </p>
 
-                        <p className="mt-3 text-sm font-black text-orange-500">
+                        <p className="mt-3 text-sm font-black text-orange-700">
                           {product.formattedPrice}
                         </p>
 
@@ -1001,21 +1001,21 @@ export default async function AdminPage({
                     </div>
 
                     <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         {formatDate(product.createdAt)}
                       </p>
 
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/products/${product.id}/preview`}
-                          className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600"
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600"
                         >
                           Preview
                         </Link>
 
                         <Link
                           href={`/admin/products/${product.id}/edit`}
-                          className="rounded-lg bg-slate-950 px-3 py-2 text-[10px] font-bold text-white"
+                          className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white"
                         >
                           Edit
                         </Link>
@@ -1036,7 +1036,7 @@ export default async function AdminPage({
 
               <Link
                 href="/admin/products/new"
-                className="mt-5 inline-flex rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+                className="mt-5 inline-flex rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
               >
                 + Tambah Produk
               </Link>
@@ -1058,7 +1058,7 @@ export default async function AdminPage({
                 {currentPage > 1 ? (
                   <Link
                     href={buildAdminUrl(currentPage - 1)}
-                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                   >
                     ← Sebelumnya
                   </Link>
@@ -1075,7 +1075,7 @@ export default async function AdminPage({
                 {currentPage < totalPages ? (
                   <Link
                     href={buildAdminUrl(currentPage + 1)}
-                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                   >
                     Berikutnya →
                   </Link>

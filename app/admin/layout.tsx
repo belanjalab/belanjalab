@@ -14,5 +14,5 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <>{children}</>;
+  return <div className="admin-scope">{children}</div>;
 }

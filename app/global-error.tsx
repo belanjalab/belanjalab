@@ -15,24 +15,24 @@ export default function GlobalError({
 
   return (
     <html lang="id">
-      <body>
-        <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-slate-900">
-          <section className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
+      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif", background: "#f8fafc", color: "#0f172a" }}>
+        <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+          <section style={{ width: "100%", maxWidth: "560px", border: "1px solid #e2e8f0", borderRadius: "28px", background: "white", padding: "40px", textAlign: "center", boxShadow: "0 18px 45px -34px rgba(15,23,42,.38)" }}>
+            <p style={{ margin: 0, fontSize: "12px", fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "#c2410c" }}>
               Terjadi gangguan
             </p>
-            <h1 className="mt-3 text-3xl font-black">
+            <h1 style={{ margin: "10px 0 0", fontSize: "34px", lineHeight: 1.15, letterSpacing: "-.04em" }}>
               BelanjaLab belum dapat dimuat
             </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
+            <p style={{ margin: "16px 0 0", fontSize: "15px", lineHeight: 1.7, color: "#475569" }}>
               Silakan coba kembali. Data yang sudah tersimpan tidak berubah.
             </p>
             <button
               type="button"
               onClick={reset}
-              className="mt-6 rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              style={{ minHeight: "44px", marginTop: "28px", border: 0, borderRadius: "12px", background: "#c2410c", padding: "0 22px", color: "white", fontWeight: 800, cursor: "pointer" }}
             >
-              Coba Lagi
+              Coba lagi
             </button>
           </section>
         </main>

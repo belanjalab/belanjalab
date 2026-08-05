@@ -1,3 +1,9 @@
+import {
+  ClockIcon,
+  ExternalLinkIcon,
+  StoreIcon,
+  TagIcon,
+} from "@/components/home/home-icons";
 import type { MarketplaceOffer } from "@/lib/marketplace-prices";
 
 type MarketplaceOffersProps = {
@@ -6,7 +12,6 @@ type MarketplaceOffersProps = {
 
 function formatCheckedAt(value: string | null) {
   if (!value) return "Belum pernah diperiksa";
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Waktu pemeriksaan tidak valid";
 
@@ -29,25 +34,21 @@ function getStockLabel(status: string, isAvailable: boolean) {
 
 function getStockClass(status: string, isAvailable: boolean) {
   if (!isAvailable || status === "out_of_stock") {
-    return "bg-red-50 text-red-700";
+    return "bg-red-50 text-red-800 ring-red-100";
   }
-
   if (status === "low_stock" || status === "preorder") {
-    return "bg-amber-50 text-amber-700";
+    return "bg-amber-50 text-amber-900 ring-amber-100";
   }
-
-  return "bg-green-50 text-green-700";
+  return "bg-emerald-50 text-emerald-800 ring-emerald-100";
 }
 
 function getPriceMovement(offer: MarketplaceOffer) {
   const history = offer.priceHistory;
   if (history.length < 2) return null;
 
-  const difference =
-    history[history.length - 1].price - history[0].price;
-
+  const difference = history[history.length - 1].price - history[0].price;
   if (difference === 0) {
-    return { label: "Harga stabil", className: "text-slate-500" };
+    return { label: "Harga stabil", className: "text-slate-600" };
   }
 
   const formattedDifference = new Intl.NumberFormat("id-ID", {
@@ -57,14 +58,8 @@ function getPriceMovement(offer: MarketplaceOffer) {
   }).format(Math.abs(difference));
 
   return difference < 0
-    ? {
-        label: `Turun ${formattedDifference}`,
-        className: "text-green-600",
-      }
-    : {
-        label: `Naik ${formattedDifference}`,
-        className: "text-red-600",
-      };
+    ? { label: `Turun ${formattedDifference}`, className: "text-emerald-800" }
+    : { label: `Naik ${formattedDifference}`, className: "text-red-700" };
 }
 
 function getDiscountPercentage(offer: MarketplaceOffer) {
@@ -81,16 +76,17 @@ function getDiscountPercentage(offer: MarketplaceOffer) {
   );
 }
 
-export default function MarketplaceOffers({
-  offers,
-}: MarketplaceOffersProps) {
+export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
   if (offers.length === 0) {
     return (
-      <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-        <h2 className="text-base font-black">
+      <section className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-500 ring-1 ring-slate-200">
+          <StoreIcon className="h-7 w-7" />
+        </span>
+        <h2 className="mt-4 text-xl font-extrabold text-slate-950">
           Harga marketplace belum tersedia
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <p className="mt-2 text-sm leading-6 text-slate-600">
           Kami belum memiliki data harga terbaru untuk produk ini.
         </p>
       </section>
@@ -98,44 +94,43 @@ export default function MarketplaceOffers({
   }
 
   const availableOffers = offers.filter(
-    (offer) =>
-      offer.isAvailable && offer.stockStatus !== "out_of_stock",
+    (offer) => offer.isAvailable && offer.stockStatus !== "out_of_stock",
   );
   const bestOffer = availableOffers[0] ?? null;
 
   return (
     <section>
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
-            Perbandingan Harga
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+            Perbandingan harga
           </p>
-          <h2 className="mt-2 text-2xl font-black md:text-3xl">
+          <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
             Harga dari marketplace
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Urutan berdasarkan total harga produk dan ongkir.
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Penawaran diurutkan berdasarkan total harga produk dan ongkir.
           </p>
         </div>
 
         {bestOffer ? (
-          <div className="rounded-xl bg-green-50 px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-green-700">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
               Penawaran terbaik
             </p>
-            <p className="mt-1 text-lg font-black text-green-700">
+            <p className="mt-1 text-lg font-extrabold text-emerald-900">
               {bestOffer.marketplace}
             </p>
-            <p className="text-sm font-bold text-green-600">
+            <p className="text-sm font-bold text-emerald-800">
               {bestOffer.formattedTotalPrice}
             </p>
           </div>
         ) : (
-          <div className="rounded-xl bg-red-50 px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-red-800">
               Ketersediaan
             </p>
-            <p className="mt-1 text-sm font-black text-red-700">
+            <p className="mt-1 text-sm font-extrabold text-red-800">
               Semua penawaran sedang tidak tersedia
             </p>
           </div>
@@ -147,120 +142,102 @@ export default function MarketplaceOffers({
           const movement = getPriceMovement(offer);
           const discountPercentage = getDiscountPercentage(offer);
           const isBestOffer = bestOffer?.id === offer.id;
-          const hasValidLink = Boolean(offer.affiliateUrl);
           const canOpenStore =
-            hasValidLink &&
+            Boolean(offer.affiliateUrl) &&
             offer.isAvailable &&
             offer.stockStatus !== "out_of_stock";
 
           return (
             <article
               key={offer.id}
-              className={`rounded-2xl border bg-white p-4 shadow-sm md:p-5 ${
+              className={`public-card rounded-[1.5rem] border bg-white p-4 sm:p-5 ${
                 isBestOffer
-                  ? "border-green-300 ring-1 ring-green-100"
+                  ? "border-emerald-300 ring-1 ring-emerald-100"
                   : "border-slate-200"
               }`}
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="min-w-0 md:w-48">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+                <div className="min-w-0 lg:w-52">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-black">
+                    <h3 className="text-lg font-extrabold text-slate-950">
                       {offer.marketplace}
                     </h3>
-
                     {isBestOffer && (
-                      <span className="rounded-full bg-green-500 px-2 py-1 text-[9px] font-bold text-white">
-                        TERMURAH
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2.5 py-1.5 text-xs font-extrabold text-white">
+                        <TagIcon className="h-3.5 w-3.5" /> Termurah
                       </span>
                     )}
                   </div>
-
                   <span
-                    className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${getStockClass(
+                    className={`mt-2 inline-flex rounded-full px-2.5 py-1.5 text-xs font-bold ring-1 ${getStockClass(
                       offer.stockStatus,
                       offer.isAvailable,
                     )}`}
                   >
-                    {getStockLabel(
-                      offer.stockStatus,
-                      offer.isAvailable,
-                    )}
+                    {getStockLabel(offer.stockStatus, offer.isAvailable)}
                   </span>
                 </div>
 
-                <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-4">
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Harga produk
-                    </p>
-
+                <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <p className="text-xs font-semibold text-slate-500">Harga produk</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-black text-orange-500">
+                      <p className="text-sm font-extrabold text-slate-950">
                         {offer.formattedPrice}
                       </p>
-
                       {discountPercentage !== null && (
-                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-black text-red-600">
+                        <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-extrabold text-red-700">
                           -{discountPercentage}%
                         </span>
                       )}
                     </div>
-
                     {offer.formattedOriginalPrice &&
                       offer.originalPrice !== offer.price && (
-                        <p className="mt-1 text-[10px] text-slate-400 line-through">
+                        <p className="mt-1 text-xs text-slate-500 line-through">
                           {offer.formattedOriginalPrice}
                         </p>
                       )}
                   </div>
 
-                  <div>
-                    <p className="text-[10px] text-slate-400">Ongkir</p>
-                    <p className="mt-1 text-sm font-bold">
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <p className="text-xs font-semibold text-slate-500">Ongkir</p>
+                    <p className="mt-1 text-sm font-bold text-slate-800">
                       {offer.formattedShippingCost}
                     </p>
                   </div>
 
-                  <div>
-                    <p className="text-[10px] text-slate-400">Total</p>
-                    <p className="mt-1 text-sm font-black">
+                  <div className="rounded-xl bg-orange-50 p-3">
+                    <p className="text-xs font-semibold text-orange-800">Total</p>
+                    <p className="mt-1 text-sm font-extrabold text-orange-900">
                       {offer.formattedTotalPrice}
                     </p>
                   </div>
 
-                  <div>
-                    <p className="text-[10px] text-slate-400">
-                      Riwayat harga
-                    </p>
-                    <p
-                      className={`mt-1 text-sm font-bold ${
-                        movement?.className ?? "text-slate-500"
-                      }`}
-                    >
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <p className="text-xs font-semibold text-slate-500">Riwayat harga</p>
+                    <p className={`mt-1 text-sm font-bold ${movement?.className ?? "text-slate-600"}`}>
                       {movement?.label ?? "Data awal"}
                     </p>
                   </div>
                 </div>
 
-                <div className="md:w-40">
+                <div className="lg:w-44">
                   {canOpenStore ? (
                     <a
                       href={offer.affiliateUrl ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer sponsored"
-                      className="block rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-600"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-extrabold text-white transition hover:bg-orange-800"
                     >
-                      Buka Toko
+                      Buka toko <ExternalLinkIcon className="h-4 w-4" />
                     </a>
                   ) : (
                     <button
                       type="button"
                       disabled
-                      className="w-full cursor-not-allowed rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400"
+                      className="min-h-11 w-full cursor-not-allowed rounded-xl bg-slate-100 px-4 text-sm font-bold text-slate-400"
                     >
-                      {!offer.isAvailable ||
-                      offer.stockStatus === "out_of_stock"
+                      {!offer.isAvailable || offer.stockStatus === "out_of_stock"
                         ? "Stok tidak tersedia"
                         : "Link belum tersedia"}
                     </button>
@@ -268,7 +245,8 @@ export default function MarketplaceOffers({
                 </div>
               </div>
 
-              <p className="mt-4 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
+              <p className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-500">
+                <ClockIcon className="h-3.5 w-3.5" />
                 Terakhir diperiksa: {formatCheckedAt(offer.lastCheckedAt)}
               </p>
             </article>
@@ -276,9 +254,8 @@ export default function MarketplaceOffers({
         })}
       </div>
 
-      <p className="mt-4 text-[10px] leading-5 text-slate-400">
-        Harga dan ketersediaan dapat berubah sewaktu-waktu. Periksa kembali
-        detail akhir di marketplace sebelum melakukan pembelian.
+      <p className="mt-4 text-xs leading-5 text-slate-500">
+        Harga dan ketersediaan dapat berubah sewaktu-waktu. Periksa detail akhir di marketplace sebelum membeli.
       </p>
     </section>
   );

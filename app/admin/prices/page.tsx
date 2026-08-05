@@ -442,7 +442,7 @@ export default async function AdminPricesPage({
                       <p className="mt-1 text-xs text-slate-400">
                         {marketplace?.name ?? "Marketplace tidak ditemukan"}
                       </p>
-                      <p className="mt-2 text-[10px] text-slate-400">
+                      <p className="mt-2 text-xs text-slate-400">
                         Dicek: {formatDate(item.last_checked_at)}
                       </p>
                     </div>
@@ -529,7 +529,7 @@ export default async function AdminPricesPage({
 
                     <button
                       type="submit"
-                      className="rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white hover:bg-orange-600"
+                      className="rounded-xl bg-orange-700 px-4 py-3 text-sm font-bold text-white hover:bg-orange-800"
                     >
                       Sync Manual
                     </button>

@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import PageIntro from "@/components/site/page-intro";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
+import { getActiveSiteFooter } from "@/lib/footer";
 import { getCompareProducts } from "@/lib/products";
 import CompareClient from "./compare-client";
 
@@ -19,7 +24,10 @@ type ComparePageProps = {
 };
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
-  const products = await getCompareProducts();
+  const [products, footer] = await Promise.all([
+    getCompareProducts(),
+    getActiveSiteFooter(),
+  ]);
   const params = await searchParams;
   const productParams = Array.isArray(params.products)
     ? params.products
@@ -34,9 +42,22 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
   ).slice(0, 3);
 
   return (
-    <CompareClient
-      products={products}
-      initialProductSlugs={initialProductSlugs}
-    />
+    <>
+      <SiteHeader active="compare" />
+      <main id="konten-utama" className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
+        <PageIntro
+          eyebrow="Bandingkan sebelum membeli"
+          title="Lihat perbedaan yang benar-benar penting."
+          description="Pilih hingga tiga produk untuk membandingkan harga, BelanjaLab Score, dan spesifikasi dalam satu tampilan."
+          compact
+        />
+        <CompareClient
+          products={products}
+          initialProductSlugs={initialProductSlugs}
+        />
+      </main>
+      <SiteFooter footer={footer} />
+      <MobileBottomNav active="compare" />
+    </>
   );
 }

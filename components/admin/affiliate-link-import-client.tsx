@@ -376,7 +376,7 @@ export default function AffiliateLinkImportClient({
             <button
               type="button"
               onClick={handleValidate}
-              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
+              className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-800"
             >
               Validasi & Preview
             </button>
@@ -496,7 +496,7 @@ export default function AffiliateLinkImportClient({
                               href={row.normalizedUrl}
                               target="_blank"
                               rel="noreferrer noopener"
-                              className="block max-w-xl break-all font-semibold text-slate-700 hover:text-orange-600"
+                              className="block max-w-xl break-all font-semibold text-slate-700 hover:text-orange-800"
                             >
                               {row.normalizedUrl}
                             </a>
@@ -505,7 +505,7 @@ export default function AffiliateLinkImportClient({
                               {row.rawValue}
                             </span>
                           )}
-                          <p className="mt-1 text-[11px] text-slate-400">
+                          <p className="mt-1 text-xs text-slate-400">
                             {row.hostname ?? "Domain tidak terbaca"}
                           </p>
                         </td>
@@ -638,7 +638,7 @@ export default function AffiliateLinkImportClient({
                         alt={item.name}
                       />
                       <div className="border-t border-slate-200 p-3">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                           Produk {index + 1}
                         </p>
                         <p className="mt-1 text-xs font-black text-slate-700">
@@ -654,7 +654,7 @@ export default function AffiliateLinkImportClient({
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black ${PRODUCT_STATUS_STYLES[item.status]}`}
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${PRODUCT_STATUS_STYLES[item.status]}`}
                           >
                             {PRODUCT_STATUS_LABELS[item.status]}
                           </span>
@@ -782,12 +782,12 @@ export default function AffiliateLinkImportClient({
                         </div>
                       )}
 
-                      <div className="mt-4 space-y-1 border-t border-slate-100 pt-4 text-[11px] text-slate-400">
+                      <div className="mt-4 space-y-1 border-t border-slate-100 pt-4 text-xs text-slate-400">
                         <a
                           href={item.affiliateUrl}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="block break-all font-semibold hover:text-orange-600"
+                          className="block break-all font-semibold hover:text-orange-800"
                         >
                           Affiliate: {item.affiliateUrl}
                         </a>
@@ -796,7 +796,7 @@ export default function AffiliateLinkImportClient({
                             href={item.resolvedUrl}
                             target="_blank"
                             rel="noreferrer noopener"
-                            className="block break-all font-semibold hover:text-orange-600"
+                            className="block break-all font-semibold hover:text-orange-800"
                           >
                             Produk: {item.resolvedUrl}
                           </a>

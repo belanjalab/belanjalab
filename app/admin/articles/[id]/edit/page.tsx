@@ -384,14 +384,14 @@ export default async function EditArticlePage({
             <Link
               href={`/articles/${article.slug}`}
               target="_blank"
-              className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+              className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
             >
               Preview Artikel
             </Link>
 
             <button
               type="submit"
-              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+              className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
             >
               Simpan Perubahan
             </button>
