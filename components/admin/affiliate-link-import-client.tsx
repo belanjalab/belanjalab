@@ -1,24 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { parseAffiliateLinks } from "@/lib/affiliate-import/parser";
 import {
+  AFFILIATE_SCAN_CLIENT_BATCH_SIZE,
   MAX_AFFILIATE_LINKS,
   type AffiliateLinkParseResult,
+  type AffiliateProductPreview,
+  type AffiliateProductScanErrorResponse,
+  type AffiliateProductScanResponse,
   type ParsedAffiliateLink,
 } from "@/lib/affiliate-import/types";
 
-const STATUS_STYLES: Record<ParsedAffiliateLink["status"], string> = {
+const LINK_STATUS_STYLES: Record<ParsedAffiliateLink["status"], string> = {
   valid: "border-green-200 bg-green-50 text-green-700",
   duplicate: "border-amber-200 bg-amber-50 text-amber-700",
   invalid: "border-red-200 bg-red-50 text-red-700",
 };
 
-const STATUS_LABELS: Record<ParsedAffiliateLink["status"], string> = {
+const LINK_STATUS_LABELS: Record<ParsedAffiliateLink["status"], string> = {
   valid: "Valid",
   duplicate: "Duplikat",
   invalid: "Tidak valid",
+};
+
+const PRODUCT_STATUS_STYLES: Record<AffiliateProductPreview["status"], string> = {
+  success: "border-green-200 bg-green-50 text-green-700",
+  partial: "border-amber-200 bg-amber-50 text-amber-700",
+  failed: "border-red-200 bg-red-50 text-red-700",
+};
+
+const PRODUCT_STATUS_LABELS: Record<AffiliateProductPreview["status"], string> = {
+  success: "Lengkap",
+  partial: "Perlu dilengkapi",
+  failed: "Gagal",
 };
 
 function getLinkKindLabel(row: ParsedAffiliateLink) {
@@ -33,23 +49,126 @@ function getLinkKindLabel(row: ParsedAffiliateLink) {
   return "—";
 }
 
+function formatRupiah(value: number | null) {
+  if (value === null) {
+    return "Belum tersedia";
+  }
+
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function chunkLinks(links: string[]) {
+  const chunks: string[][] = [];
+
+  for (let index = 0; index < links.length; index += AFFILIATE_SCAN_CLIENT_BATCH_SIZE) {
+    chunks.push(links.slice(index, index + AFFILIATE_SCAN_CLIENT_BATCH_SIZE));
+  }
+
+  return chunks;
+}
+
+function isProductReady(item: AffiliateProductPreview) {
+  return Boolean(
+    item.name.trim() &&
+      item.imageUrl.trim() &&
+      item.price !== null &&
+      item.price > 0,
+  );
+}
+
+function ProductImagePreview({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div className="flex h-44 items-center justify-center bg-slate-100 px-4 text-center text-xs font-semibold text-slate-400">
+        Gambar belum tersedia
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt || "Preview produk Shopee"}
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+      className="h-44 w-full bg-white object-contain p-3"
+    />
+  );
+}
+
+async function requestProductScan(links: string[]) {
+  const response = await fetch("/api/admin/affiliate/scan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "same-origin",
+    cache: "no-store",
+    body: JSON.stringify({ links }),
+  });
+
+  const payload = (await response.json()) as
+    | AffiliateProductScanResponse
+    | AffiliateProductScanErrorResponse;
+
+  if (!response.ok || !("items" in payload)) {
+    throw new Error(
+      "error" in payload
+        ? payload.error
+        : "Gagal mengambil data produk dari server.",
+    );
+  }
+
+  return payload;
+}
+
 export default function AffiliateLinkImportClient() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AffiliateLinkParseResult | null>(null);
   const [formError, setFormError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
+  const [scanItems, setScanItems] = useState<AffiliateProductPreview[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState("");
+  const [scanProgress, setScanProgress] = useState({ completed: 0, total: 0 });
+  const [retryingIds, setRetryingIds] = useState<string[]>([]);
+
+  const scanSummary = useMemo(() => {
+    return {
+      total: scanItems.length,
+      success: scanItems.filter((item) => item.status === "success").length,
+      partial: scanItems.filter((item) => item.status === "partial").length,
+      failed: scanItems.filter((item) => item.status === "failed").length,
+      ready: scanItems.filter(isProductReady).length,
+    };
+  }, [scanItems]);
+
+  function clearScanState() {
+    setScanItems([]);
+    setScanError("");
+    setScanProgress({ completed: 0, total: 0 });
+    setRetryingIds([]);
+  }
 
   function handleInputChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     setInput(event.target.value);
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    clearScanState();
   }
 
   function handleValidate() {
     if (!input.trim()) {
       setResult(null);
       setFormError("Masukkan minimal satu link Shopee.");
+      clearScanState();
       return;
     }
 
@@ -58,6 +177,7 @@ export default function AffiliateLinkImportClient() {
     setResult(nextResult);
     setFormError("");
     setCopyMessage("");
+    clearScanState();
   }
 
   function handleReset() {
@@ -65,6 +185,7 @@ export default function AffiliateLinkImportClient() {
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    clearScanState();
   }
 
   async function handleCopyValidLinks() {
@@ -80,6 +201,105 @@ export default function AffiliateLinkImportClient() {
         "Browser tidak mengizinkan penyalinan otomatis. Salin link dari tabel secara manual.",
       );
     }
+  }
+
+  async function handleScanProducts() {
+    if (!result || result.validLinks.length === 0 || isScanning) {
+      return;
+    }
+
+    const batches = chunkLinks(result.validLinks);
+    setIsScanning(true);
+    setScanItems([]);
+    setScanError("");
+    setScanProgress({ completed: 0, total: result.validLinks.length });
+
+    try {
+      let completedCount = 0;
+
+      for (const batch of batches) {
+        const response = await requestProductScan(batch);
+        completedCount += response.items.length;
+
+        setScanItems((currentItems) => [
+          ...currentItems,
+          ...response.items,
+        ]);
+        setScanProgress({
+          completed: completedCount,
+          total: result.validLinks.length,
+        });
+      }
+    } catch (error) {
+      setScanError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil data produk Shopee.",
+      );
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  async function handleRetryItem(item: AffiliateProductPreview) {
+    if (retryingIds.includes(item.id)) {
+      return;
+    }
+
+    setRetryingIds((currentIds) => [...currentIds, item.id]);
+    setScanError("");
+
+    try {
+      const response = await requestProductScan([item.affiliateUrl]);
+      const replacement = response.items[0];
+
+      if (!replacement) {
+        throw new Error("Server tidak mengembalikan hasil scan.");
+      }
+
+      setScanItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id ? replacement : currentItem,
+        ),
+      );
+    } catch (error) {
+      setScanError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengulang pengambilan data.",
+      );
+    } finally {
+      setRetryingIds((currentIds) =>
+        currentIds.filter((id) => id !== item.id),
+      );
+    }
+  }
+
+  function updateTextField(
+    id: string,
+    field: "name" | "description" | "imageUrl",
+    value: string,
+  ) {
+    setScanItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item,
+      ),
+    );
+  }
+
+  function updatePriceField(
+    id: string,
+    field: "price" | "priceMax",
+    value: string,
+  ) {
+    const digitsOnly = value.replace(/\D/g, "");
+    const numericValue = digitsOnly ? Number(digitsOnly) : null;
+
+    setScanItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === id ? { ...item, [field]: numericValue } : item,
+      ),
+    );
   }
 
   return (
@@ -269,9 +489,9 @@ export default function AffiliateLinkImportClient() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-4">
                           <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 font-black ${STATUS_STYLES[row.status]}`}
+                            className={`inline-flex rounded-full border px-2.5 py-1 font-black ${LINK_STATUS_STYLES[row.status]}`}
                           >
-                            {STATUS_LABELS[row.status]}
+                            {LINK_STATUS_LABELS[row.status]}
                           </span>
                         </td>
                         <td className="min-w-64 px-4 py-4 leading-5 text-slate-600">
@@ -286,16 +506,301 @@ export default function AffiliateLinkImportClient() {
           </div>
 
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <p className="text-sm font-black text-blue-900">
-              Tahap validasi selesai
-            </p>
-            <p className="mt-1 text-xs leading-5 text-blue-800">
-              {result.summary.readyCount > 0
-                ? `${result.summary.readyCount} link unik siap diteruskan ke tahap pengambilan nama, gambar, dan harga produk.`
-                : "Belum ada link valid yang bisa diteruskan ke tahap pengambilan data produk."}
-            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-blue-900">
+                  Ambil metadata produk
+                </p>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-blue-800">
+                  Sistem akan membuka link di server, mengikuti redirect Shopee,
+                  lalu membaca nama, gambar, harga, dan deskripsi yang tersedia.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleScanProducts}
+                disabled={result.summary.readyCount === 0 || isScanning}
+                className="shrink-0 rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isScanning
+                  ? `Mengambil ${scanProgress.completed}/${scanProgress.total}`
+                  : `Ambil Data ${result.summary.readyCount} Produk`}
+              </button>
+            </div>
+
+            {isScanning && scanProgress.total > 0 && (
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-blue-100">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-all"
+                  style={{
+                    width: `${Math.round(
+                      (scanProgress.completed / scanProgress.total) * 100,
+                    )}%`,
+                  }}
+                />
+              </div>
+            )}
           </div>
         </>
+      )}
+
+      {scanError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+          {scanError}
+        </div>
+      )}
+
+      {scanItems.length > 0 && (
+        <div className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <p className="text-xs text-slate-500">Sudah dipindai</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">
+                {scanSummary.total}
+              </p>
+            </div>
+            <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
+              <p className="text-xs text-green-700">Lengkap otomatis</p>
+              <p className="mt-1 text-2xl font-black text-green-700">
+                {scanSummary.success}
+              </p>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <p className="text-xs text-amber-700">Sebagian</p>
+              <p className="mt-1 text-2xl font-black text-amber-700">
+                {scanSummary.partial}
+              </p>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4">
+              <p className="text-xs text-red-700">Gagal</p>
+              <p className="mt-1 text-2xl font-black text-red-700">
+                {scanSummary.failed}
+              </p>
+            </div>
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4">
+              <p className="text-xs text-blue-700">Siap disimpan</p>
+              <p className="mt-1 text-2xl font-black text-blue-700">
+                {scanSummary.ready}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-black text-slate-900">
+              Hasil Pengambilan Data
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Periksa dan koreksi data sebelum nanti disimpan sebagai draft
+              produk. Harga marketplace dapat berubah sewaktu-waktu.
+            </p>
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-2">
+            {scanItems.map((item, index) => {
+              const retrying = retryingIds.includes(item.id);
+
+              return (
+                <article
+                  key={item.id}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                >
+                  <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
+                    <div className="border-b border-slate-200 bg-slate-50 md:border-b-0 md:border-r">
+                      <ProductImagePreview
+                        key={item.imageUrl}
+                        src={item.imageUrl}
+                        alt={item.name}
+                      />
+                      <div className="border-t border-slate-200 p-3">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                          Produk {index + 1}
+                        </p>
+                        <p className="mt-1 text-xs font-black text-slate-700">
+                          {formatRupiah(item.price)}
+                          {item.priceMax !== null
+                            ? ` – ${formatRupiah(item.priceMax)}`
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black ${PRODUCT_STATUS_STYLES[item.status]}`}
+                          >
+                            {PRODUCT_STATUS_LABELS[item.status]}
+                          </span>
+                          <p className="mt-2 text-xs leading-5 text-slate-500">
+                            {item.message}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRetryItem(item)}
+                          disabled={retrying || isScanning}
+                          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {retrying ? "Mengulang..." : "Coba Ulang"}
+                        </button>
+                      </div>
+
+                      <div className="mt-5 space-y-4">
+                        <label className="block">
+                          <span className="text-xs font-black text-slate-700">
+                            Nama produk
+                          </span>
+                          <input
+                            value={item.name}
+                            onChange={(
+                              event: React.ChangeEvent<HTMLInputElement>,
+                            ) =>
+                              updateTextField(item.id, "name", event.target.value)
+                            }
+                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="text-xs font-black text-slate-700">
+                            URL gambar
+                          </span>
+                          <input
+                            value={item.imageUrl}
+                            onChange={(
+                              event: React.ChangeEvent<HTMLInputElement>,
+                            ) =>
+                              updateTextField(
+                                item.id,
+                                "imageUrl",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="https://..."
+                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                          />
+                        </label>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="block">
+                            <span className="text-xs font-black text-slate-700">
+                              Harga terendah
+                            </span>
+                            <input
+                              inputMode="numeric"
+                              value={item.price ?? ""}
+                              onChange={(
+                                event: React.ChangeEvent<HTMLInputElement>,
+                              ) =>
+                                updatePriceField(
+                                  item.id,
+                                  "price",
+                                  event.target.value,
+                                )
+                              }
+                              placeholder="0"
+                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-black text-slate-700">
+                              Harga tertinggi
+                            </span>
+                            <input
+                              inputMode="numeric"
+                              value={item.priceMax ?? ""}
+                              onChange={(
+                                event: React.ChangeEvent<HTMLInputElement>,
+                              ) =>
+                                updatePriceField(
+                                  item.id,
+                                  "priceMax",
+                                  event.target.value,
+                                )
+                              }
+                              placeholder="Opsional"
+                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            />
+                          </label>
+                        </div>
+
+                        <label className="block">
+                          <span className="text-xs font-black text-slate-700">
+                            Deskripsi dari marketplace
+                          </span>
+                          <textarea
+                            value={item.description}
+                            onChange={(
+                              event: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) =>
+                              updateTextField(
+                                item.id,
+                                "description",
+                                event.target.value,
+                              )
+                            }
+                            rows={3}
+                            className="mt-1 block w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-xs leading-5 text-slate-700 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                          />
+                        </label>
+                      </div>
+
+                      {item.warnings.length > 0 && (
+                        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
+                          {item.warnings.map((warning) => (
+                            <p key={warning}>{warning}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-4 space-y-1 border-t border-slate-100 pt-4 text-[11px] text-slate-400">
+                        <a
+                          href={item.affiliateUrl}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="block break-all font-semibold hover:text-orange-600"
+                        >
+                          Affiliate: {item.affiliateUrl}
+                        </a>
+                        {item.resolvedUrl && (
+                          <a
+                            href={item.resolvedUrl}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="block break-all font-semibold hover:text-orange-600"
+                          >
+                            Produk: {item.resolvedUrl}
+                          </a>
+                        )}
+                        {(item.shopId || item.itemId) && (
+                          <p>
+                            Shop ID: {item.shopId ?? "—"} · Item ID:{" "}
+                            {item.itemId ?? "—"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-black text-slate-900">
+              Tahap pengambilan data selesai
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {scanSummary.ready} dari {scanSummary.total} produk sudah memiliki
+              nama, gambar, dan harga. Tahap berikutnya adalah memilih kategori
+              dan brand lalu menyimpan semuanya sebagai draft ke database.
+            </p>
+          </div>
+        </div>
       )}
     </section>
   );

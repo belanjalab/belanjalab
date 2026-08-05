@@ -47,8 +47,9 @@ export default async function AffiliateImportPage() {
               Import Link Affiliate
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Paste banyak link Shopee, hapus duplikat, dan periksa formatnya
-              sebelum data produk diambil.
+              Paste link Shopee Affiliate, validasi otomatis, lalu ambil nama,
+              gambar, harga, dan deskripsi produk untuk diperiksa sebelum
+              disimpan.
             </p>
           </div>
 
