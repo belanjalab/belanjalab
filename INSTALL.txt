@@ -1,8 +1,32 @@
-BELANJALAB UI/UX STAGE 1
+BELANJALAB UI/UX STAGE 2 - BRAND POLISH
 
-1. Ganti file app/page.tsx dengan file app/page.tsx dari paket ini.
-2. Ganti file app/globals.css dengan file app/globals.css dari paket ini.
-3. Jalankan npm run typecheck lalu npm run build di project lokal.
+Cara pasang:
+1. Ekstrak ZIP ini di root project BelanjaLab.
+2. Izinkan overwrite untuk file yang sudah ada.
+3. Pastikan file baru components/home/home-icons.tsx ikut tersalin.
+4. Jalankan:
+   npm run typecheck
+   npm run build
+
+File yang berubah:
+- app/page.tsx
+- app/globals.css
+- app/layout.tsx
+- lib/categories.ts
+
+File baru:
+- components/home/home-icons.tsx
+
+Perubahan utama:
+- Plus Jakarta Sans melalui next/font (tanpa dependency npm tambahan).
+- Hero dan visual hierarchy homepage diperkuat.
+- Search input ganda di desktop dihapus; header memakai tombol menuju pencarian.
+- Emoji dan panah Unicode diganti SVG konsisten.
+- Ikon kategori sekarang menggunakan key semantik dan SVG.
+- Value strip menggunakan ikon berbeda untuk setiap manfaat.
+- Kartu hero menampilkan kategori, BelanjaLab Score, harga, dan CTA.
+- Kategori mobile dirapikan menjadi grid tiga kolom.
+- Styling card, section heading, compare, dan artikel dibuat lebih konsisten.
 
 Commit message:
-fix(ui): improve homepage responsive accessibility
+refactor(home): strengthen visual identity and hero hierarchy

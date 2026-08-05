@@ -5,27 +5,40 @@ type CategoryRow = {
   name: string;
 };
 
+export type CategoryIconKey =
+  | "gadget"
+  | "elektronik"
+  | "rumah"
+  | "gaming"
+  | "beauty"
+  | "fashion"
+  | "otomotif"
+  | "olahraga"
+  | "kesehatan"
+  | "dapur"
+  | "default";
+
 export type HomepageCategory = {
   id: string;
   name: string;
-  icon: string;
+  icon: CategoryIconKey;
 };
 
-const categoryIcons: Record<string, string> = {
-  gadget: "📱",
-  elektronik: "💻",
-  rumah: "🏠",
-  gaming: "🎮",
-  beauty: "🧴",
-  fashion: "👕",
-  otomotif: "🚗",
-  olahraga: "🏃",
-  kesehatan: "🩺",
-  dapur: "🍳",
+const categoryIcons: Record<string, CategoryIconKey> = {
+  gadget: "gadget",
+  elektronik: "elektronik",
+  rumah: "rumah",
+  gaming: "gaming",
+  beauty: "beauty",
+  fashion: "fashion",
+  otomotif: "otomotif",
+  olahraga: "olahraga",
+  kesehatan: "kesehatan",
+  dapur: "dapur",
 };
 
-function getCategoryIcon(name: string) {
-  return categoryIcons[name.trim().toLowerCase()] ?? "🛍️";
+function getCategoryIcon(name: string): CategoryIconKey {
+  return categoryIcons[name.trim().toLowerCase()] ?? "default";
 }
 
 export async function getHomepageCategories(): Promise<HomepageCategory[]> {
