@@ -4,6 +4,7 @@ import {
   extractShopeeProductIds,
   parseAffiliateProductMetadata,
 } from "@/lib/affiliate-import/metadata";
+import { fetchShopeeProductApiMetadata } from "@/lib/affiliate-import/shopee-product-api";
 import type {
   AffiliateProductFetchErrorCode,
   AffiliateProductPreview,
@@ -419,8 +420,39 @@ export async function scanAffiliateProduct(
       normalizedAffiliateUrl,
       controller.signal,
     );
-    const metadata = parseAffiliateProductMetadata(html, finalUrl.toString());
-    const ids = extractShopeeProductIds(finalUrl.toString());
+    const htmlMetadata = parseAffiliateProductMetadata(
+      html,
+      finalUrl.toString(),
+    );
+    const idsFromResolvedUrl = extractShopeeProductIds(finalUrl.toString());
+    const idsFromCanonicalUrl = htmlMetadata.canonicalUrl
+      ? extractShopeeProductIds(htmlMetadata.canonicalUrl)
+      : { shopId: null, itemId: null };
+    const ids = {
+      shopId: idsFromResolvedUrl.shopId ?? idsFromCanonicalUrl.shopId,
+      itemId: idsFromResolvedUrl.itemId ?? idsFromCanonicalUrl.itemId,
+    };
+    const needsApiFallback = !hasCompleteMetadata(htmlMetadata);
+    const apiMetadata =
+      needsApiFallback && ids.shopId && ids.itemId
+        ? await fetchShopeeProductApiMetadata({
+            shopId: ids.shopId,
+            itemId: ids.itemId,
+            refererUrl: `https://shopee.co.id/product/${ids.shopId}/${ids.itemId}`,
+            signal: controller.signal,
+          })
+        : null;
+    const metadata = {
+      name: htmlMetadata.name || apiMetadata?.name || "",
+      description:
+        htmlMetadata.description || apiMetadata?.description || "",
+      imageUrl: htmlMetadata.imageUrl || apiMetadata?.imageUrl || "",
+      price: htmlMetadata.price ?? apiMetadata?.price ?? null,
+      priceMax: htmlMetadata.priceMax ?? apiMetadata?.priceMax ?? null,
+      currency: htmlMetadata.currency || apiMetadata?.currency || null,
+      canonicalUrl:
+        htmlMetadata.canonicalUrl || apiMetadata?.canonicalUrl || null,
+    };
     const fallbackName = deriveProductNameFromUrl(finalUrl.toString());
     const name = metadata.name || fallbackName;
     const priceMax =
@@ -439,6 +471,12 @@ export async function scanAffiliateProduct(
       ? "success"
       : "partial";
     const warnings: string[] = [];
+
+    if (apiMetadata) {
+      warnings.push(
+        "Metadata yang tidak tersedia di halaman dilengkapi dari data produk Shopee.",
+      );
+    }
 
     if (priceMax !== null) {
       warnings.push(

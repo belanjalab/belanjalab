@@ -558,6 +558,21 @@ export function extractShopeeProductIds(value: string) {
     };
   }
 
+  // Short link Shopee terbaru dapat berakhir pada format:
+  // /nama-toko/{shopId}/{itemId}__mobile__=1&...
+  // Query affiliate kadang ditempel ke segmen item, jadi cukup ambil
+  // dua kelompok angka pertama setelah nama toko.
+  const sharedProductPathMatch = decodedPathname.match(
+    /\/[^/?#]+\/(\d{5,})\/(\d{5,})(?:[^0-9]|$)/i,
+  );
+
+  if (sharedProductPathMatch) {
+    return {
+      shopId: sharedProductPathMatch[1] ?? null,
+      itemId: sharedProductPathMatch[2] ?? null,
+    };
+  }
+
   return {
     shopId:
       parsedUrl.searchParams.get("shopid") ??
