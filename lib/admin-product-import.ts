@@ -67,6 +67,38 @@ function slugify(value: string) {
     .slice(0, 120);
 }
 
+function appendSlugSuffix(baseSlug: string, suffix: number) {
+  const suffixText = `-${suffix}`;
+  const maxBaseLength = Math.max(1, 120 - suffixText.length);
+  const trimmedBase = baseSlug.slice(0, maxBaseLength).replace(/-+$/g, "");
+
+  return `${trimmedBase || "product"}${suffixText}`;
+}
+
+function createUniqueCsvSlugs(rows: ProductCsvImportRow[]) {
+  const usedSlugs = new Set<string>();
+
+  return rows.map((row) => {
+    const name = row.name?.trim() || "Tanpa nama";
+    const baseSlug = slugify(row.slug?.trim() || name);
+
+    if (!baseSlug) {
+      return "";
+    }
+
+    let candidate = baseSlug;
+    let suffix = 2;
+
+    while (usedSlugs.has(candidate)) {
+      candidate = appendSlugSuffix(baseSlug, suffix);
+      suffix += 1;
+    }
+
+    usedSlugs.add(candidate);
+    return candidate;
+  });
+}
+
 function parseScore(value: string | undefined) {
   if (!value?.trim()) {
     return 0;
@@ -217,7 +249,6 @@ async function validateProductsCsvWithClient(
   const marketplaces = new Set(
     (marketplaceRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
   );
-  const csvSlugs = new Set<string>();
   const csvAffiliateUrls = new Set<string>();
 
   rows.forEach((row, index) => {
@@ -244,14 +275,6 @@ async function validateProductsCsvWithClient(
 
     if (!slug) {
       issues.push({ rowNumber, field: "slug", message: "slug tidak valid." });
-    } else if (csvSlugs.has(slug)) {
-      issues.push({
-        rowNumber,
-        field: "slug",
-        message: `Slug "${slug}" duplikat di dalam CSV.`,
-      });
-    } else {
-      csvSlugs.add(slug);
     }
 
     if (!category || !categories.has(category)) {
@@ -449,12 +472,13 @@ export async function importProductsFromCsv(
     };
   }
 
-  const payloads = rows.map((row) => {
+  const uniqueSlugs = createUniqueCsvSlugs(rows);
+  const payloads = rows.map((row, index) => {
     const name = row.name?.trim() || "Tanpa nama";
 
     return {
       name,
-      slug: slugify(row.slug?.trim() || name),
+      slug: uniqueSlugs[index],
       category: row.category?.trim() || "",
       brand: row.brand?.trim() || "",
       short_description: row.short_description?.trim() || "",
