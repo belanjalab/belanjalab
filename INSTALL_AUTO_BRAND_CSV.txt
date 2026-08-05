@@ -1,0 +1,22 @@
+BELANJALAB - AUTO CREATE BRAND SAAT IMPORT CSV
+
+1. Salin file berikut ke project dan replace file lama:
+   - lib/admin-product-import.ts
+   - components/admin/product-csv-import-client.tsx
+
+2. Tambahkan file migration baru:
+   - supabase/migrations/202608050002_auto_create_brand_csv_import.sql
+
+3. Buka Supabase Dashboard > SQL Editor.
+   Jalankan seluruh isi file migration tersebut satu kali.
+
+4. Deploy ulang project.
+
+HASIL:
+- Kolom brand tetap wajib diisi di CSV.
+- Jika nama merek sudah ada, produk memakai merek tersebut.
+- Jika nama merek belum ada, merek baru dan slug-nya dibuat otomatis.
+- Kategori dan marketplace yang tidak ditemukan tetap dianggap error.
+
+COMMIT MESSAGE:
+fix(csv-import): auto-create missing brands

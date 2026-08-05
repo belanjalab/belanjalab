@@ -190,15 +190,13 @@ async function validateProductsCsvWithClient(
   const issues: ProductCsvValidationIssue[] = [];
   const [
     { data: categoryRows, error: categoryError },
-    { data: brandRows, error: brandError },
     { data: marketplaceRows, error: marketplaceError },
   ] = await Promise.all([
     supabase.from("categories").select("name"),
-    supabase.from("brands").select("name"),
     supabase.from("marketplaces").select("name"),
   ]);
 
-  const setupError = categoryError ?? brandError ?? marketplaceError;
+  const setupError = categoryError ?? marketplaceError;
 
   if (setupError) {
     return {
@@ -215,9 +213,6 @@ async function validateProductsCsvWithClient(
 
   const categories = new Set(
     (categoryRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
-  );
-  const brands = new Set(
-    (brandRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
   );
   const marketplaces = new Set(
     (marketplaceRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
@@ -267,11 +262,11 @@ async function validateProductsCsvWithClient(
       });
     }
 
-    if (!brand || !brands.has(brand)) {
+    if (!brand) {
       issues.push({
         rowNumber,
         field: "brand",
-        message: `Brand "${row.brand ?? ""}" tidak ditemukan.`,
+        message: "brand wajib diisi.",
       });
     }
 

@@ -420,6 +420,7 @@ export default function ProductCsvImportClient() {
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-slate-500">
             Gunakan CSV UTF-8 dengan header sesuai template BelanjaLab.
+            Merek yang belum tersedia akan dibuat otomatis saat import.
           </p>
 
           <button
@@ -511,7 +512,7 @@ export default function ProductCsvImportClient() {
 
           {isValidating && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
-              Memeriksa kategori, brand, marketplace, slug, dan affiliate URL…
+              Memeriksa kategori, marketplace, slug, dan affiliate URL…
             </div>
           )}
 
