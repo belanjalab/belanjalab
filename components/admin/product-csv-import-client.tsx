@@ -403,7 +403,12 @@ export default function ProductCsvImportClient() {
   const importedSuccessCount = importResults.filter(
     (result) => result.status === "success",
   ).length;
-  const importedErrorCount = importResults.length - importedSuccessCount;
+  const importedSkippedCount = importResults.filter(
+    (result) => result.status === "skipped",
+  ).length;
+  const importedErrorCount = importResults.filter(
+    (result) => result.status === "error",
+  ).length;
 
   return (
     <section className="mt-8 space-y-6">
@@ -590,7 +595,7 @@ export default function ProductCsvImportClient() {
                     Hasil Import
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    {importedSuccessCount} berhasil · {importedErrorCount} gagal
+                    {importedSuccessCount} berhasil · {importedSkippedCount} dilewati · {importedErrorCount} gagal
                   </p>
                 </div>
 
@@ -609,7 +614,9 @@ export default function ProductCsvImportClient() {
                     className={`rounded-xl border px-4 py-3 text-xs ${
                       result.status === "success"
                         ? "border-green-200 bg-green-50 text-green-700"
-                        : "border-red-200 bg-red-50 text-red-700"
+                        : result.status === "skipped"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-red-200 bg-red-50 text-red-700"
                     }`}
                   >
                     <p className="font-black">

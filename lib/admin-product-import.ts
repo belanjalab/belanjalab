@@ -35,7 +35,7 @@ export type ProductCsvValidationResult = {
 export type ProductCsvImportResult = {
   rowNumber: number;
   name: string;
-  status: "success" | "error";
+  status: "success" | "skipped" | "error";
   message: string;
 };
 
@@ -192,25 +192,13 @@ async function validateProductsCsvWithClient(
     { data: categoryRows, error: categoryError },
     { data: brandRows, error: brandError },
     { data: marketplaceRows, error: marketplaceError },
-    { data: existingProducts, error: productError },
-    { data: existingPrices, error: priceError },
   ] = await Promise.all([
     supabase.from("categories").select("name"),
     supabase.from("brands").select("name"),
     supabase.from("marketplaces").select("name"),
-    supabase.from("products").select("slug"),
-    supabase
-      .from("product_prices")
-      .select("affiliate_url")
-      .not("affiliate_url", "is", null),
   ]);
 
-  const setupError =
-    categoryError ??
-    brandError ??
-    marketplaceError ??
-    productError ??
-    priceError;
+  const setupError = categoryError ?? brandError ?? marketplaceError;
 
   if (setupError) {
     return {
@@ -233,17 +221,6 @@ async function validateProductsCsvWithClient(
   );
   const marketplaces = new Set(
     (marketplaceRows ?? []).map((item: { name: string }) => normalizeLookup(item.name)),
-  );
-  const existingSlugs = new Set(
-    (existingProducts ?? []).map((item: { slug: string }) => item.slug),
-  );
-  const existingAffiliateUrls = new Set(
-    (existingPrices ?? [])
-      .map((item: { affiliate_url: string | null }) => item.affiliate_url?.trim())
-      .filter(
-        (value: string | undefined): value is string =>
-          Boolean(value && value !== "#"),
-      ),
   );
   const csvSlugs = new Set<string>();
   const csvAffiliateUrls = new Set<string>();
@@ -272,12 +249,6 @@ async function validateProductsCsvWithClient(
 
     if (!slug) {
       issues.push({ rowNumber, field: "slug", message: "slug tidak valid." });
-    } else if (existingSlugs.has(slug)) {
-      issues.push({
-        rowNumber,
-        field: "slug",
-        message: `Slug "${slug}" sudah digunakan di database.`,
-      });
     } else if (csvSlugs.has(slug)) {
       issues.push({
         rowNumber,
@@ -370,13 +341,7 @@ async function validateProductsCsvWithClient(
       });
     }
 
-    if (affiliateUrl && existingAffiliateUrls.has(affiliateUrl)) {
-      issues.push({
-        rowNumber,
-        field: "affiliate_url",
-        message: "affiliate_url sudah digunakan di database.",
-      });
-    } else if (affiliateUrl && csvAffiliateUrls.has(affiliateUrl)) {
+    if (affiliateUrl && csvAffiliateUrls.has(affiliateUrl)) {
       issues.push({
         rowNumber,
         field: "affiliate_url",
@@ -424,6 +389,7 @@ export async function importProductsFromCsv(
   ok: boolean;
   results: ProductCsvImportResult[];
   successCount: number;
+  skippedCount: number;
   errorCount: number;
   runId?: string;
 }> {
@@ -441,6 +407,7 @@ export async function importProductsFromCsv(
       ok: false,
       results,
       successCount: 0,
+      skippedCount: 0,
       errorCount: results.length,
     };
   }
@@ -459,6 +426,7 @@ export async function importProductsFromCsv(
         },
       ],
       successCount: 0,
+      skippedCount: 0,
       errorCount: 1,
     };
   }
@@ -481,46 +449,17 @@ export async function importProductsFromCsv(
       ok: false,
       results: validationResults,
       successCount: 0,
+      skippedCount: 0,
       errorCount: validationResults.length,
     };
   }
 
-  const { data: runId, error: runError } = await supabase.rpc(
-    "start_product_csv_import",
-    {
-      p_total_rows: rows.length,
-      p_file_name: fileName?.trim() || null,
-    },
-  );
-
-  if (runError) {
-    return {
-      ok: false,
-      results: [
-        {
-          rowNumber: 0,
-          name: "Persiapan import",
-          status: "error",
-          message:
-            "Import log gagal dibuat. Pastikan migration atomic CSV import sudah dijalankan: " +
-            runError.message,
-        },
-      ],
-      successCount: 0,
-      errorCount: 1,
-    };
-  }
-
-  const results: ProductCsvImportResult[] = [];
-
-  for (let index = 0; index < rows.length; index += 1) {
-    const row = rows[index];
-    const rowNumber = index + 2;
+  const payloads = rows.map((row) => {
     const name = row.name?.trim() || "Tanpa nama";
-    const slug = slugify(row.slug?.trim() || name);
-    const payload = {
+
+    return {
       name,
-      slug,
+      slug: slugify(row.slug?.trim() || name),
       category: row.category?.trim() || "",
       brand: row.brand?.trim() || "",
       short_description: row.short_description?.trim() || "",
@@ -541,58 +480,89 @@ export async function importProductsFromCsv(
       price: parsePriceInput(row.price),
       affiliate_url: row.affiliate_url?.trim() || "",
     };
+  });
 
-    const { error } = await supabase.rpc(
-      "import_product_from_csv_atomic",
-      { p_data: payload },
-    );
-
-    if (error) {
-      results.push({
-        rowNumber,
-        name,
-        status: "error",
-        message: error.message,
-      });
-      continue;
-    }
-
-    results.push({
-      rowNumber,
-      name,
-      status: "success",
-      message: `Produk berhasil diimport sebagai ${payload.status}.`,
-    });
-  }
-
-  const successCount = results.filter(
-    (result) => result.status === "success",
-  ).length;
-  const importErrorCount = results.length - successCount;
-  const { error: finishError } = await supabase.rpc(
-    "finish_product_csv_import",
+  const { data, error } = await supabase.rpc(
+    "import_products_from_csv_bulk_atomic",
     {
-      p_run_id: runId,
-      p_success_count: successCount,
-      p_error_count: importErrorCount,
-      p_results: results,
+      p_rows: payloads,
+      p_file_name: fileName?.trim() || null,
     },
   );
 
-  if (finishError) {
-    results.push({
-      rowNumber: 0,
-      name: "Import log",
-      status: "error",
-      message: `Produk selesai diproses, tetapi log import gagal diperbarui: ${finishError.message}`,
-    });
+  if (error) {
+    return {
+      ok: false,
+      results: [
+        {
+          rowNumber: 0,
+          name: "Proses import",
+          status: "error",
+          message:
+            "Bulk import gagal. Jalankan migration bulk CSV import terbaru di Supabase: " +
+            error.message,
+        },
+      ],
+      successCount: 0,
+      skippedCount: 0,
+      errorCount: 1,
+    };
   }
 
+  const response =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : {};
+
+  const results: ProductCsvImportResult[] = Array.isArray(response.results)
+    ? response.results.flatMap((item) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) {
+          return [];
+        }
+
+        const result = item as Record<string, unknown>;
+        const status: ProductCsvImportResult["status"] =
+          result.status === "success"
+            ? "success"
+            : result.status === "skipped"
+              ? "skipped"
+              : "error";
+
+        return [
+          {
+            rowNumber:
+              typeof result.rowNumber === "number" ? result.rowNumber : 0,
+            name:
+              typeof result.name === "string" ? result.name : "Tanpa nama",
+            status,
+            message:
+              typeof result.message === "string"
+                ? result.message
+                : "Hasil import tidak diketahui.",
+          },
+        ];
+      })
+    : [];
+
+  const successCount =
+    typeof response.successCount === "number"
+      ? response.successCount
+      : results.filter((result) => result.status === "success").length;
+  const skippedCount =
+    typeof response.skippedCount === "number"
+      ? response.skippedCount
+      : results.filter((result) => result.status === "skipped").length;
+  const errorCount =
+    typeof response.errorCount === "number"
+      ? response.errorCount
+      : results.filter((result) => result.status === "error").length;
+
   return {
-    ok: importErrorCount === 0 && !finishError,
+    ok: response.ok === true && errorCount === 0,
     results,
     successCount,
-    errorCount: importErrorCount + (finishError ? 1 : 0),
-    runId: typeof runId === "string" ? runId : undefined,
+    skippedCount,
+    errorCount,
+    runId: typeof response.runId === "string" ? response.runId : undefined,
   };
 }
