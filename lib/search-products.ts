@@ -31,6 +31,11 @@ type SearchProductRow = {
   product_prices?: PriceRelation[] | null;
 };
 
+type SearchMatchRow = {
+  id: string;
+  name: string;
+};
+
 export type SearchProduct = {
   id: string;
   name: string;
@@ -44,12 +49,36 @@ export type SearchProduct = {
   formattedPrice: string;
 };
 
+export type SearchProductsResult = {
+  products: SearchProduct[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+type SearchProductsOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
+export const DEFAULT_SEARCH_PAGE_SIZE = 24;
+const MAX_SEARCH_MATCHES = 1000;
+
 function normalizeSearchQuery(value: string) {
   return value
     .trim()
     .replace(/[,%()]/g, " ")
     .replace(/\s+/g, " ")
     .slice(0, 80);
+}
+
+function normalizePositiveInteger(value: number | undefined, fallback: number) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(1, Math.floor(value ?? fallback));
 }
 
 function getSingleRelation<T>(
@@ -137,55 +166,63 @@ const productSelect = `
   )
 `;
 
+function createEmptyResult(
+  page: number,
+  pageSize: number,
+): SearchProductsResult {
+  return {
+    products: [],
+    total: 0,
+    page,
+    pageSize,
+    totalPages: 0,
+  };
+}
+
 export async function searchProducts(
   rawQuery: string,
-): Promise<SearchProduct[]> {
+  options: SearchProductsOptions = {},
+): Promise<SearchProductsResult> {
   const query = normalizeSearchQuery(rawQuery);
+  const requestedPage = normalizePositiveInteger(options.page, 1);
+  const pageSize = Math.min(
+    normalizePositiveInteger(options.pageSize, DEFAULT_SEARCH_PAGE_SIZE),
+    48,
+  );
 
   if (query.length < 2) {
-    return [];
+    return createEmptyResult(requestedPage, pageSize);
   }
 
   const supabase = getSupabaseClient();
-
-
   const searchPattern = `%${query}%`;
 
-  const [productResult, categoryResult, brandResult] =
-    await Promise.all([
-      supabase
-        .from("products")
-        .select(productSelect)
-        .eq("status", "published")
-        .or(
-          `name.ilike.${searchPattern},short_description.ilike.${searchPattern},description.ilike.${searchPattern}`,
-        )
-        .limit(24),
+  // Ambil kandidat ID terlebih dahulu. Dengan begitu jumlah hasil tetap akurat,
+  // sementara detail lengkap hanya dimuat untuk halaman yang sedang dibuka.
+  const [productResult, categoryResult, brandResult] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name")
+      .eq("status", "published")
+      .or(
+        `name.ilike.${searchPattern},short_description.ilike.${searchPattern},description.ilike.${searchPattern}`,
+      )
+      .limit(MAX_SEARCH_MATCHES),
 
-      supabase
-        .from("products")
-        .select(`
-          ${productSelect.replace(
-            "categories (",
-            "categories!inner (",
-          )}
-        `)
-        .eq("status", "published")
-        .ilike("categories.name", searchPattern)
-        .limit(24),
+    supabase
+      .from("products")
+      .select("id, name, categories!inner(name)")
+      .eq("status", "published")
+      .ilike("categories.name", searchPattern)
+      .limit(MAX_SEARCH_MATCHES),
 
-      supabase
-        .from("products")
-        .select(`
-          ${productSelect.replace(
-            "brands (",
-            "brands!inner (",
-          )}
-        `)
-        .eq("status", "published")
-        .ilike("brands.name", searchPattern)
-        .limit(24),
-    ]);
+    supabase
+      .from("products")
+      .select("id, name, brands!inner(name)")
+      .eq("status", "published")
+      .ilike("brands.name", searchPattern)
+      .limit(MAX_SEARCH_MATCHES),
+  ]);
 
   const errors = [
     productResult.error,
@@ -199,18 +236,75 @@ export async function searchProducts(
     }
   }
 
-  const mergedRows = new Map<string, SearchProductRow>();
+  const matchedProducts = new Map<string, SearchMatchRow>();
 
   for (const row of [
     ...(productResult.data ?? []),
     ...(categoryResult.data ?? []),
     ...(brandResult.data ?? []),
-  ] as unknown as SearchProductRow[]) {
-    mergedRows.set(row.id, row);
+  ] as unknown as SearchMatchRow[]) {
+    matchedProducts.set(row.id, {
+      id: row.id,
+      name: row.name,
+    });
   }
 
-  return Array.from(mergedRows.values())
-    .map(mapSearchProduct)
-    .sort((a, b) => a.name.localeCompare(b.name, "id-ID"))
-    .slice(0, 24);
+  const sortedMatches = Array.from(matchedProducts.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "id-ID"),
+  );
+
+  const total = sortedMatches.length;
+  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 0;
+  const page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+  const offset = (page - 1) * pageSize;
+  const pageMatches = sortedMatches.slice(offset, offset + pageSize);
+
+  if (pageMatches.length === 0) {
+    return {
+      products: [],
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  const pageIds = pageMatches.map((item) => item.id);
+  const { data: productRows, error: productRowsError } = await supabase
+    .from("products")
+    .select(productSelect)
+    .in("id", pageIds);
+
+  if (productRowsError) {
+    console.error(
+      "Gagal mengambil detail hasil pencarian:",
+      productRowsError.message,
+    );
+
+    return {
+      products: [],
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  const detailById = new Map<string, SearchProduct>();
+
+  for (const row of (productRows ?? []) as unknown as SearchProductRow[]) {
+    detailById.set(row.id, mapSearchProduct(row));
+  }
+
+  const products = pageMatches
+    .map((item) => detailById.get(item.id))
+    .filter((item): item is SearchProduct => Boolean(item));
+
+  return {
+    products,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
 }

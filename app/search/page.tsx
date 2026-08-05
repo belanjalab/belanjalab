@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { searchProducts } from "@/lib/search-products";
+import {
+  DEFAULT_SEARCH_PAGE_SIZE,
+  searchProducts,
+  type SearchProductsResult,
+} from "@/lib/search-products";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Cari Produk",
-  description:
-    "Cari produk, merek, dan kategori di BelanjaLab.",
+  description: "Cari produk, merek, dan kategori di BelanjaLab.",
   alternates: { canonical: "/search" },
   robots: { index: false, follow: true },
 };
@@ -15,16 +18,64 @@ export const metadata: Metadata = {
 type SearchPageProps = {
   searchParams: Promise<{
     q?: string | string[];
+    page?: string | string[];
   }>;
+};
+
+function getFirstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parsePage(value: string | undefined) {
+  const page = Number.parseInt(value ?? "1", 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+function buildSearchPageUrl(query: string, page: number) {
+  const params = new URLSearchParams({ q: query });
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  return `/search?${params.toString()}`;
+}
+
+function getVisiblePages(currentPage: number, totalPages: number) {
+  const pages = new Set<number>([1, totalPages]);
+
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page >= 1 && page <= totalPages) {
+      pages.add(page);
+    }
+  }
+
+  return Array.from(pages).sort((a, b) => a - b);
+}
+
+const emptySearchResult: SearchProductsResult = {
+  products: [],
+  total: 0,
+  page: 1,
+  pageSize: DEFAULT_SEARCH_PAGE_SIZE,
+  totalPages: 0,
 };
 
 export default async function SearchPage({
   searchParams,
 }: SearchPageProps) {
   const params = await searchParams;
-  const rawQuery = Array.isArray(params.q) ? params.q[0] : params.q;
+  const rawQuery = getFirstParam(params.q);
   const query = rawQuery?.trim() ?? "";
-  const products = query.length >= 2 ? await searchProducts(query) : [];
+  const requestedPage = parsePage(getFirstParam(params.page));
+  const result =
+    query.length >= 2
+      ? await searchProducts(query, { page: requestedPage })
+      : emptySearchResult;
+  const { products, total, page, pageSize, totalPages } = result;
+  const firstItem = total > 0 ? (page - 1) * pageSize + 1 : 0;
+  const lastItem = total > 0 ? Math.min(page * pageSize, total) : 0;
+  const visiblePages = getVisiblePages(page, totalPages);
 
   return (
     <main className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
@@ -48,9 +99,7 @@ export default async function SearchPage({
             </label>
 
             <div className="flex w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 focus-within:border-orange-400 focus-within:bg-white">
-              <span className="flex items-center px-3 text-slate-400">
-                ⌕
-              </span>
+              <span className="flex items-center px-3 text-slate-400">⌕</span>
 
               <input
                 id="search"
@@ -87,7 +136,8 @@ export default async function SearchPage({
               </h1>
 
               <p className="mt-2 text-sm text-slate-500">
-                {products.length} produk ditemukan
+                {total} produk ditemukan
+                {total > 0 ? ` · Menampilkan ${firstItem}–${lastItem}` : ""}
               </p>
             </>
           ) : (
@@ -98,7 +148,7 @@ export default async function SearchPage({
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                 Ketik minimal dua karakter untuk mencari produk berdasarkan
-                nama atau deskripsi.
+                nama, merek, kategori, atau deskripsi.
               </p>
             </>
           )}
@@ -157,7 +207,66 @@ export default async function SearchPage({
             </div>
           )}
 
-          {query.length >= 2 && products.length === 0 && (
+          {query.length >= 2 && totalPages > 1 && (
+            <nav
+              aria-label="Navigasi hasil pencarian"
+              className="mt-10 flex flex-wrap items-center justify-center gap-2"
+            >
+              {page > 1 ? (
+                <Link
+                  href={buildSearchPageUrl(query, page - 1)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold hover:border-orange-300 hover:text-orange-600"
+                >
+                  Sebelumnya
+                </Link>
+              ) : (
+                <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-bold text-slate-400">
+                  Sebelumnya
+                </span>
+              )}
+
+              {visiblePages.map((pageNumber, index) => {
+                const previousPage = visiblePages[index - 1];
+                const showEllipsis =
+                  previousPage !== undefined && pageNumber - previousPage > 1;
+
+                return (
+                  <span key={pageNumber} className="flex items-center gap-2">
+                    {showEllipsis && (
+                      <span className="px-1 text-sm text-slate-400">…</span>
+                    )}
+
+                    <Link
+                      href={buildSearchPageUrl(query, pageNumber)}
+                      aria-current={pageNumber === page ? "page" : undefined}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-xl px-3 text-sm font-black ${
+                        pageNumber === page
+                          ? "bg-orange-500 text-white"
+                          : "border border-slate-200 bg-white hover:border-orange-300 hover:text-orange-600"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Link>
+                  </span>
+                );
+              })}
+
+              {page < totalPages ? (
+                <Link
+                  href={buildSearchPageUrl(query, page + 1)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold hover:border-orange-300 hover:text-orange-600"
+                >
+                  Berikutnya
+                </Link>
+              ) : (
+                <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-bold text-slate-400">
+                  Berikutnya
+                </span>
+              )}
+            </nav>
+          )}
+
+          {query.length >= 2 && total === 0 && (
             <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <div className="text-4xl">⌕</div>
 
@@ -183,8 +292,8 @@ export default async function SearchPage({
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
                 ["Mouse gaming", "Cari berdasarkan jenis produk"],
-                ["Logitech", "Cari berdasarkan merek"],
-                ["Wireless", "Cari berdasarkan kebutuhan"],
+                ["Samsung", "Cari berdasarkan merek"],
+                ["Gadget", "Cari berdasarkan kategori"],
               ].map(([keyword, description]) => (
                 <Link
                   key={keyword}
