@@ -1,19 +1,32 @@
-BELANJALAB - AUTO UNIQUE SLUG CSV IMPORT
+BELANJALAB - SHOPEE-INSPIRED DESIGN REFINEMENT
 
-Ganti file berikut di project:
-1. lib/admin-product-import.ts
-2. components/admin/product-csv-import-client.tsx
+Arah desain:
+- Familiar dan padat seperti platform commerce Indonesia.
+- Tidak menyalin Shopee secara identik.
+- Ciri khas BelanjaLab tetap pada Score, alasan unggulan, freshness harga, dan compare.
+- Tipografi dibuat lebih ringan dan netral.
 
-Perubahan:
-- Slug duplikat dalam satu CSV tidak lagi dianggap error.
-- Slug pertama tetap dipakai.
-- Duplikat berikutnya otomatis diberi akhiran -2, -3, dan seterusnya.
-- Maksimal panjang slug tetap 120 karakter.
-- Tidak memerlukan migration Supabase baru.
+Cara pasang:
+1. Backup atau commit project saat ini.
+2. Ekstrak isi ZIP ini di root project BelanjaLab.
+3. Izinkan delapan file lama ditimpa.
+4. Jalankan:
 
-Contoh:
-han-river-teko-listrik-hrdsh01-2-5l
-han-river-teko-listrik-hrdsh01-2-5l-2
+   npm install
+   npm run typecheck
+   npm run build
+
+Perubahan utama:
+- Plus Jakarta Sans diganti Inter.
+- Bobot visual dinormalisasi ke 400/500/600/700.
+- Header oranye dengan search dominan pada desktop dan mobile.
+- Kategori tetap paling atas, lebih ringkas dan mudah dipindai.
+- Hero lebih kecil, ringan, dan tidak terlalu editorial.
+- Product card lebih padat seperti commerce card, tetapi tetap berisi BelanjaLab Score.
+- Search result menjadi sampai lima kolom pada desktop besar.
+- Radius, shadow, dan gradient dikurangi.
+
+Database/migration: tidak ada.
 
 Commit message:
-fix(csv-import): auto-uniquify duplicate slugs
+refactor(ui): adopt lighter commerce-inspired visual system

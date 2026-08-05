@@ -4,26 +4,29 @@
 
 :root {
   color-scheme: light;
-  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", Inter, ui-sans-serif,
-    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
-    sans-serif;
-  --brand-700: #c2410c;
-  --brand-800: #9a3412;
-  --ink-950: #020617;
-  --surface-subtle: #f8fafc;
-  --line: #e2e8f0;
+  --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif;
+  --brand-500: #f45a2a;
+  --brand-600: #ee4d2d;
+  --brand-700: #d94322;
+  --brand-800: #b9381d;
+  --ink-950: #111827;
+  --surface-page: #f6f6f6;
+  --surface-subtle: #fafafa;
+  --line: #e5e7eb;
 }
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 6rem;
+  scroll-padding-top: 8rem;
 }
 
 body {
   margin: 0;
-  background: #ffffff;
-  color: #111827;
+  background: var(--surface-page);
+  color: #1f2937;
   font-family: var(--font-sans);
+  font-weight: 400;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -57,9 +60,8 @@ a {
 
 .hero-surface {
   background:
-    radial-gradient(circle at 88% 8%, rgba(251, 146, 60, 0.18), transparent 30%),
-    radial-gradient(circle at 8% 92%, rgba(15, 23, 42, 0.055), transparent 25%),
-    linear-gradient(135deg, #fff8f1 0%, #ffffff 50%, #f8fafc 100%);
+    linear-gradient(105deg, rgba(255, 237, 213, 0.92) 0%, rgba(255, 247, 237, 0.82) 44%, #ffffff 78%),
+    #ffffff;
 }
 
 .hero-surface::before {
@@ -67,49 +69,39 @@ a {
   inset: 0;
   content: "";
   pointer-events: none;
-  opacity: 0.2;
-  background-image: radial-gradient(rgba(194, 65, 12, 0.2) 0.7px, transparent 0.7px);
-  background-size: 20px 20px;
-  -webkit-mask-image: linear-gradient(to bottom right, transparent 12%, black 54%, transparent 94%);
-  mask-image: linear-gradient(to bottom right, transparent 12%, black 54%, transparent 94%);
+  background: linear-gradient(90deg, var(--brand-600) 0 5px, transparent 5px);
 }
 
 .hero-product-card {
-  box-shadow:
-    0 34px 80px -46px rgba(15, 23, 42, 0.48),
-    0 18px 32px -26px rgba(194, 65, 12, 0.22);
+  box-shadow: 0 12px 30px -24px rgba(17, 24, 39, 0.45);
 }
 
 .compare-surface,
 .quick-compare-surface,
 .methodology-surface {
-  background:
-    radial-gradient(circle at 96% 0%, rgba(251, 146, 60, 0.1), transparent 27%),
-    linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
 }
 
 .decision-card {
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.48) 0%, #ffffff 34%);
+  background: #ffffff;
 }
 
 .mobile-bottom-nav {
-  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
 }
 
 :where(a, button, summary, input, textarea, select):focus-visible {
-  outline: 3px solid var(--brand-700);
+  outline: 3px solid var(--brand-600);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: #ffedd5;
+  background: #ffddd2;
   color: #7c2d12;
 }
 
 .page-intro-surface {
-  background:
-    radial-gradient(circle at 94% 0%, rgba(251, 146, 60, 0.11), transparent 31%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
 }
 
 .category-rail {
@@ -127,7 +119,7 @@ a {
 }
 
 .public-card {
-  box-shadow: 0 18px 44px -36px rgba(15, 23, 42, 0.34);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
 }
 
 .mobile-drawer-enter {
@@ -135,7 +127,7 @@ a {
 }
 
 .article-content {
-  color: #334155;
+  color: #4b5563;
 }
 
 .article-content > * + * {
@@ -144,9 +136,9 @@ a {
 
 .article-content h2,
 .article-content h3 {
-  color: #0f172a;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  color: #111827;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .article-content h2 {
@@ -164,7 +156,7 @@ a {
 .article-content p,
 .article-content li {
   font-size: 1rem;
-  line-height: 1.9;
+  line-height: 1.85;
 }
 
 .article-content ul,
@@ -182,15 +174,15 @@ a {
 
 .article-content a {
   color: var(--brand-700);
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .admin-scope {
   min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f6f6f6;
+  color: #111827;
 }
 
 .admin-scope :where(input, select, textarea, button) {
@@ -202,9 +194,42 @@ a {
 }
 
 .admin-scope :where(input, select, textarea):focus-visible {
-  border-color: var(--brand-700) !important;
-  outline: 3px solid #ffedd5 !important;
+  border-color: var(--brand-600) !important;
+  outline: 3px solid #ffddd2 !important;
   outline-offset: 1px;
+}
+
+/*
+ * Visual weight normalization.
+ * The markup keeps existing Tailwind classes, while the rendered hierarchy
+ * uses a calmer commerce-style weight range: 400 / 500 / 600 / 700.
+ */
+.font-black,
+.font-extrabold {
+  font-weight: 700 !important;
+}
+
+.font-bold,
+.font-semibold {
+  font-weight: 600 !important;
+}
+
+.font-medium {
+  font-weight: 500 !important;
+}
+
+/* Tighter, more familiar commerce surfaces. */
+.rounded-3xl,
+.rounded-\[2rem\] {
+  border-radius: 1rem !important;
+}
+
+.rounded-2xl {
+  border-radius: 0.75rem !important;
+}
+
+.rounded-xl {
+  border-radius: 0.625rem !important;
 }
 
 @keyframes mobile-drawer-in {
@@ -220,6 +245,10 @@ a {
 }
 
 @media (max-width: 767px) {
+  html {
+    scroll-padding-top: 7rem;
+  }
+
   .brand-text-balance {
     text-wrap: pretty;
   }

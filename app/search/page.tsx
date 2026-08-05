@@ -91,7 +91,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <>
       <SiteHeader active="search" />
 
-      <main id="konten-utama" className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
+      <main id="konten-utama" className="min-h-screen bg-[#f6f6f6] pb-20 text-slate-900 md:pb-0">
         <PageIntro
           eyebrow="Pencarian produk"
           title={
@@ -138,7 +138,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <section className="px-4 pb-12 md:px-5 md:pb-16">
           <div className="mx-auto max-w-7xl">
             {query.length >= 2 && products.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:gap-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 xl:gap-4">
                 {products.map((product) => (
                   <article
                     key={product.id}
@@ -175,7 +175,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         <div className="mt-4 flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-slate-500">Harga mulai</p>
-                            <p className="mt-1 truncate text-sm font-extrabold text-slate-950 sm:text-base">
+                            <p className="mt-1 truncate text-sm font-semibold text-[#ee4d2d] sm:text-base">
                               {product.formattedPrice}
                             </p>
                           </div>

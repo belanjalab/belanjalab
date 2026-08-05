@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 import { SITE_URL } from "@/lib/site-config";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-plus-jakarta",
+  variable: "--font-inter",
 });
 
 const siteDescription =
@@ -65,7 +65,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={plusJakartaSans.variable}>{children}</body>
+      <body className={inter.variable}>{children}</body>
     </html>
   );
 }

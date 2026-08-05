@@ -20,21 +20,54 @@ type SiteHeaderProps = {
   active?: PublicSection;
 };
 
+const utilityNavigation = [
+  { label: "Metodologi skor", href: "/#metodologi" },
+  { label: "Artikel", href: "/articles" },
+  { label: "Tentang BelanjaLab", href: "/#tentang" },
+];
+
 const desktopNavigation = [
   { label: "Kategori", href: "/#kategori", key: "home" as const },
-  { label: "Perbandingan", href: "/compare", key: "compare" as const },
-  { label: "Metodologi", href: "/#metodologi", key: "home" as const },
+  { label: "Bandingkan", href: "/compare", key: "compare" as const },
   { label: "Artikel", href: "/articles", key: "articles" as const },
 ];
 
 const drawerNavigation = [
   { label: "Beranda", href: "/", icon: HomeIcon },
   { label: "Jelajahi kategori", href: "/#kategori", icon: CategoryIcon },
+  { label: "Cari produk", href: "/search", icon: SearchIcon },
   { label: "Perbandingan", href: "/compare", icon: CompareIcon },
   { label: "Metodologi skor", href: "/#metodologi", icon: ScoreIcon },
   { label: "Artikel", href: "/articles", icon: ArticleIcon },
   { label: "Tentang BelanjaLab", href: "/#tentang", icon: InfoIcon },
 ];
+
+function BrandMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5 md:h-10 md:w-10">
+        <img
+          src="/images/logo-belanjalab.png"
+          alt=""
+          aria-hidden="true"
+          width={40}
+          height={40}
+          className="h-8 w-8 rounded-full object-cover md:h-9 md:w-9"
+        />
+      </span>
+      <span
+        className={`tracking-[-0.035em] text-white ${
+          compact ? "text-lg" : "text-lg md:text-xl"
+        }`}
+      >
+        <span className="font-semibold">Belanja</span>
+        <span className="ml-1 rounded-md bg-white px-1.5 py-0.5 text-sm font-semibold text-orange-700 md:text-base">
+          Lab
+        </span>
+      </span>
+    </>
+  );
+}
 
 export default function SiteHeader({ active }: SiteHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,7 +86,6 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     closeButtonRef.current?.focus();
 
     function handleMenuKeydown(event: KeyboardEvent) {
@@ -95,13 +127,26 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
     <>
       <a
         href="#konten-utama"
-        className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-lg transition-transform focus:translate-y-0"
+        className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0"
       >
         Lewati ke konten utama
       </a>
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center px-3 sm:px-4 md:px-5">
+      <header className="sticky top-0 z-50 bg-[#ee4d2d] text-white shadow-[0_2px_12px_rgba(120,45,20,0.18)]">
+        <div className="hidden border-b border-white/15 lg:block">
+          <div className="mx-auto flex min-h-8 max-w-7xl items-center justify-between px-5 text-xs text-orange-50">
+            <p>Belanja lebih yakin dengan skor, perbandingan, dan harga yang transparan.</p>
+            <nav aria-label="Navigasi informasi" className="flex items-center gap-5">
+              {utilityNavigation.map((item) => (
+                <Link key={item.label} href={item.href} className="hover:text-white">
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 sm:px-4 md:gap-4 md:px-5 lg:min-h-[72px]">
           <button
             ref={menuButtonRef}
             type="button"
@@ -109,7 +154,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             aria-label="Buka menu utama"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
-            className="mr-1 flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 lg:hidden"
           >
             <MenuIcon />
           </button>
@@ -117,25 +162,39 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
           <Link
             href="/"
             aria-label="BelanjaLab, kembali ke beranda"
-            className="flex min-h-11 items-center gap-2 rounded-xl"
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg"
           >
-            <img
-              src="/images/logo-belanjalab.png"
-              alt=""
-              aria-hidden="true"
-              width={40}
-              height={40}
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
-            <span className="text-base font-extrabold tracking-[-0.035em] text-slate-950 md:text-xl">
-              Belanja<span className="text-orange-700">Lab</span>
-            </span>
+            <BrandMark />
           </Link>
 
-          <nav
-            aria-label="Navigasi utama"
-            className="ml-7 hidden items-center gap-1 text-sm font-semibold text-slate-600 lg:flex xl:ml-10"
+          <form
+            action="/search"
+            method="get"
+            role="search"
+            className="ml-3 hidden h-11 min-w-0 flex-1 items-center rounded-lg bg-white p-1 shadow-sm ring-1 ring-black/5 focus-within:ring-2 focus-within:ring-orange-200 md:flex lg:ml-6"
           >
+            <label htmlFor="header-search" className="sr-only">
+              Cari produk, merek, atau kategori
+            </label>
+            <SearchIcon className="ml-3 h-[18px] w-[18px] shrink-0 text-slate-400" />
+            <input
+              id="header-search"
+              type="search"
+              name="q"
+              minLength={2}
+              maxLength={80}
+              placeholder="Cari produk, merek, atau kategori..."
+              className="min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Cari
+            </button>
+          </form>
+
+          <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-1 lg:flex">
             {desktopNavigation.map((item) => {
               const isActive = active === item.key && item.key !== "home";
 
@@ -144,10 +203,10 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                   key={item.label}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center rounded-xl px-3 transition-colors ${
+                  className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-orange-50 text-orange-800"
-                      : "hover:bg-slate-100 hover:text-slate-950"
+                      ? "bg-white text-orange-700"
+                      : "text-white hover:bg-white/10"
                   }`}
                 >
                   {item.label}
@@ -160,26 +219,40 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             href="/search"
             aria-label="Buka pencarian produk"
             aria-current={active === "search" ? "page" : undefined}
-            className={`ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl transition-colors md:hidden ${
-              active === "search"
-                ? "bg-orange-50 text-orange-800"
-                : "text-slate-700 hover:bg-slate-100"
-            }`}
+            className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 md:hidden"
           >
             <SearchIcon />
           </Link>
+        </div>
 
-          <Link
-            href="/search"
-            className={`ml-auto hidden min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold shadow-sm transition md:inline-flex ${
-              active === "search"
-                ? "bg-orange-700 text-white hover:bg-orange-800"
-                : "bg-slate-950 text-white hover:bg-slate-800"
-            }`}
+        <div className="px-3 pb-3 md:hidden">
+          <form
+            action="/search"
+            method="get"
+            role="search"
+            className="mx-auto flex h-10 max-w-7xl items-center rounded-lg bg-white p-1 shadow-sm"
           >
-            <SearchIcon className="h-[18px] w-[18px]" />
-            Cari produk
-          </Link>
+            <label htmlFor="mobile-header-search" className="sr-only">
+              Cari produk, merek, atau kategori
+            </label>
+            <SearchIcon className="ml-2.5 h-[17px] w-[17px] shrink-0 text-slate-400" />
+            <input
+              id="mobile-header-search"
+              type="search"
+              name="q"
+              minLength={2}
+              maxLength={80}
+              placeholder="Cari produk atau merek..."
+              className="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            />
+            <button
+              type="submit"
+              aria-label="Cari"
+              className="flex h-8 w-10 items-center justify-center rounded-md bg-slate-900 text-white"
+            >
+              <SearchIcon className="h-4 w-4" />
+            </button>
+          </form>
         </div>
       </header>
 
@@ -199,23 +272,13 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             aria-label="Menu utama"
             className="mobile-drawer-enter relative flex h-full w-[min(86vw,22rem)] flex-col border-r border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/20"
           >
-            <div className="flex min-h-12 items-center justify-between gap-3">
+            <div className="-mx-4 -mt-4 flex min-h-16 items-center justify-between gap-3 bg-[#ee4d2d] px-4">
               <Link
                 href="/"
                 onClick={() => closeMenu()}
-                className="flex min-h-11 items-center gap-2 rounded-xl"
+                className="flex min-h-11 items-center gap-2 rounded-lg"
               >
-                <img
-                  src="/images/logo-belanjalab.png"
-                  alt=""
-                  aria-hidden="true"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 rounded-full object-cover"
-                />
-                <span className="text-lg font-extrabold tracking-[-0.035em] text-slate-950">
-                  Belanja<span className="text-orange-700">Lab</span>
-                </span>
+                <BrandMark compact />
               </Link>
 
               <button
@@ -223,13 +286,13 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                 type="button"
                 onClick={() => closeMenu(true)}
                 aria-label="Tutup menu utama"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
               >
                 <CloseIcon className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="mt-6 px-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+            <p className="mt-6 px-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               Navigasi
             </p>
             <nav aria-label="Menu utama mobile" className="mt-2 space-y-1">
@@ -238,9 +301,9 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                   key={label}
                   href={href}
                   onClick={() => closeMenu()}
-                  className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                  className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   {label}
@@ -248,19 +311,19 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               ))}
             </nav>
 
-            <div className="mt-auto rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
-                Mulai dari pencarian
+            <div className="mt-auto rounded-xl border border-orange-100 bg-orange-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-orange-800">
+                BelanjaLab Score
               </p>
               <p className="mt-1 text-sm leading-6 text-slate-700">
-                Temukan produk, cek skor, lalu bandingkan pilihan sebelum membeli.
+                Bukan sekadar daftar produk. Lihat alasan penilaian dan perbandingan sebelum memilih.
               </p>
               <Link
-                href="/search"
+                href="/compare"
                 onClick={() => closeMenu()}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-bold text-white hover:bg-orange-800"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ee4d2d] px-4 text-sm font-semibold text-white hover:bg-[#d94322]"
               >
-                <SearchIcon className="h-[18px] w-[18px]" /> Cari produk
+                <CompareIcon className="h-[18px] w-[18px]" /> Bandingkan produk
               </Link>
             </div>
           </aside>

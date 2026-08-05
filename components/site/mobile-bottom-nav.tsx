@@ -33,7 +33,7 @@ export default function MobileBottomNav({ active }: MobileBottomNavProps) {
   return (
     <nav
       aria-label="Navigasi utama mobile"
-      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 grid grid-cols-4 border-t border-slate-200 bg-white/95 px-2 pt-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden"
+      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 grid grid-cols-4 border-t border-slate-200 bg-white px-2 pt-1 shadow-[0_-3px_12px_rgba(15,23,42,0.06)] md:hidden"
     >
       {navigation.map(({ label, href, key, icon: Icon }) => {
         const isActive = active === key;
@@ -43,19 +43,19 @@ export default function MobileBottomNav({ active }: MobileBottomNavProps) {
             key={label}
             href={href}
             aria-current={isActive ? "page" : undefined}
-            className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-semibold transition-colors ${
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium transition-colors ${
               isActive
-                ? "text-orange-700"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                ? "text-[#ee4d2d]"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             }`}
           >
-            {isActive && (
-              <span
-                aria-hidden="true"
-                className="absolute top-0 h-0.5 w-8 rounded-full bg-orange-700"
-              />
-            )}
-            <Icon className="h-5 w-5" />
+            <span
+              className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
+                isActive ? "bg-orange-50" : "bg-transparent"
+              }`}
+            >
+              <Icon className="h-[19px] w-[19px]" />
+            </span>
             <span>{label}</span>
           </Link>
         );

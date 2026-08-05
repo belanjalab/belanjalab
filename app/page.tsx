@@ -20,7 +20,6 @@ import {
   CompareIcon,
   RefreshIcon,
   ScoreIcon,
-  SearchIcon,
   ShieldCheckIcon,
   SparklesIcon,
   StoreIcon,
@@ -117,44 +116,44 @@ export default async function Home() {
     <>
       <SiteHeader active="home" />
 
-      <main id="konten-utama" className="min-h-screen bg-white text-slate-900">
+      <main id="konten-utama" className="min-h-screen bg-[#f6f6f6] text-slate-900">
         <section
           id="kategori"
-          className="scroll-mt-24 px-4 pt-4 md:px-5 md:pt-6"
+          className="scroll-mt-32 border-b border-slate-200 bg-white px-4 py-4 md:px-5 md:py-5"
         >
           <div className="mx-auto max-w-7xl">
-            <div className="mb-4 flex items-end justify-between gap-4">
+            <div className="mb-3 flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                   Jelajahi kategori
                 </p>
-                <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
+                <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-slate-950 sm:text-xl">
                   Mulai dari kebutuhanmu
                 </h2>
               </div>
               <a
                 href="/search"
-                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
               >
                 Cari lainnya <ArrowRightIcon />
               </a>
             </div>
 
             {categories.length > 0 ? (
-              <div className="category-rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-4 md:px-0">
+              <div className="category-rail -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-5 md:gap-3 md:px-0">
                 {categories.map((category) => (
                   <a
                     key={category.id}
                     href={`/search?q=${encodeURIComponent(category.name)}`}
-                    className="group public-card flex min-h-24 w-24 shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md sm:w-28 md:min-h-28 md:w-auto md:p-4"
+                    className="group flex min-h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white p-2 text-center transition hover:border-orange-200 hover:bg-orange-50/40 sm:w-24 md:min-h-24 md:w-auto md:p-3"
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-orange-50 group-hover:text-orange-700 sm:h-11 sm:w-11"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-700 transition-colors group-hover:bg-white group-hover:shadow-sm sm:h-11 sm:w-11"
                     >
                       <CategoryGlyph icon={category.icon} />
                     </span>
-                    <span className="mt-2.5 text-xs font-bold leading-5 text-slate-800 sm:text-sm">
+                    <span className="mt-2 text-xs font-medium leading-4 text-slate-700 sm:text-sm">
                       {category.name}
                     </span>
                   </a>
@@ -173,31 +172,31 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="px-4 pb-6 pt-5 sm:pb-8 sm:pt-6 md:px-5 md:pb-10 md:pt-7">
-          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-3xl border border-orange-100 px-5 py-7 sm:px-7 sm:py-9 md:grid md:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] md:gap-10 md:rounded-[2rem] md:px-10 md:py-12 lg:gap-14 lg:px-14 lg:py-16">
+        <section className="px-4 pb-5 pt-4 sm:pb-7 sm:pt-5 md:px-5 md:pb-8 md:pt-6">
+          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-orange-100 px-5 py-7 sm:px-7 sm:py-8 md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] md:gap-8 md:px-8 md:py-9 lg:gap-10 lg:px-10 lg:py-11">
             <div className="relative z-10 flex min-w-0 flex-col justify-center">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-orange-800 shadow-sm backdrop-blur">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-2 text-xs font-semibold tracking-[0.06em] text-orange-800">
                 <SparklesIcon className="h-4 w-4" />
                 Shopping Decision Platform
               </div>
 
-              <h1 className="brand-text-balance mt-5 max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-[-0.045em] text-slate-950 sm:text-5xl md:text-5xl lg:text-[4rem] lg:leading-[1.02]">
+              <h1 className="brand-text-balance mt-4 max-w-3xl text-3xl font-bold leading-[1.12] tracking-[-0.035em] text-slate-950 sm:text-4xl md:text-4xl lg:text-5xl lg:leading-[1.08]">
                 {hero?.title ?? "Bandingkan lebih cepat. Pilih tanpa ragu."}
               </h1>
 
-              <p className="mt-5 max-w-2xl text-base leading-6 text-slate-600 sm:text-base md:text-lg md:leading-8">
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base md:leading-7">
                 {hero?.subtitle ??
                   "Analisis transparan, perbandingan yang mudah dipahami, dan rekomendasi untuk membantu kamu membeli produk yang benar-benar sesuai."}
               </p>
 
               <ol
                 aria-label="Cara menggunakan BelanjaLab"
-                className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-slate-700 sm:text-sm"
+                className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-700 sm:text-sm"
               >
                 {["Cari produk", "Bandingkan pilihan", "Putuskan dengan yakin"].map(
                   (step, index) => (
                     <li key={step} className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-950 text-xs font-extrabold text-white">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ee4d2d] text-xs font-semibold text-white">
                         {index + 1}
                       </span>
                       {step}
@@ -206,38 +205,21 @@ export default async function Home() {
                 )}
               </ol>
 
-              <form
-                action="/search"
-                method="get"
-                role="search"
-                className="mt-6 flex items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-[0_14px_40px_-24px_rgba(15,23,42,0.55)] transition focus-within:border-orange-700 focus-within:ring-4 focus-within:ring-orange-100 md:mt-8 md:max-w-xl"
-              >
-                <label htmlFor="hero-search" className="sr-only">
-                  Cari produk, kategori, atau merek
-                </label>
-                <span
-                  aria-hidden="true"
-                  className="ml-2 hidden text-slate-500 sm:inline-flex"
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href={hero?.primary_button_url ?? "/search"}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#ee4d2d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#d94322]"
                 >
-                  <SearchIcon className="h-5 w-5" />
-                </span>
-                <input
-                  id="hero-search"
-                  type="search"
-                  name="q"
-                  required
-                  autoComplete="off"
-                  placeholder="Cari produk atau merek..."
-                  className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none sm:text-base"
-                />
-                <button
-                  type="submit"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-extrabold text-white transition-colors hover:bg-orange-800 active:bg-orange-900 sm:px-5"
+                  {hero?.primary_button_text ?? "Cari produk"} <ArrowRightIcon />
+                </a>
+                <a
+                  href={hero?.secondary_button_url ?? "/compare"}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-orange-300 hover:text-orange-700"
                 >
-                  <span>Cari</span>
-                  <ArrowRightIcon className="h-[18px] w-[18px]" />
-                </button>
-              </form>
+                  <CompareIcon className="h-[18px] w-[18px]" />
+                  {hero?.secondary_button_text ?? "Bandingkan"}
+                </a>
+              </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-600">
                 <span className="mr-1 font-medium">Pencarian populer:</span>
@@ -245,36 +227,13 @@ export default async function Home() {
                   <a
                     key={item}
                     href={`/search?q=${encodeURIComponent(item)}`}
-                    className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white/80 px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
+                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
                   >
                     {item}
                   </a>
                 ))}
               </div>
 
-              {(hero?.primary_button_text || hero?.secondary_button_text) && (
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {hero?.primary_button_text && hero?.primary_button_url && (
-                    <a
-                      href={hero.primary_button_url}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition-colors hover:bg-orange-800 active:bg-orange-900"
-                    >
-                      {hero.primary_button_text}
-                      <ArrowRightIcon />
-                    </a>
-                  )}
-
-                  {hero?.secondary_button_text &&
-                    hero?.secondary_button_url && (
-                      <a
-                        href={hero.secondary_button_url}
-                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        {hero.secondary_button_text}
-                      </a>
-                    )}
-                </div>
-              )}
             </div>
 
             <div className="relative z-10 mt-8 flex items-center justify-center md:mt-0">
@@ -283,7 +242,7 @@ export default async function Home() {
                 className="absolute inset-6 rounded-full bg-orange-300/30 blur-3xl"
               />
 
-              <article className="hero-product-card relative z-10 w-full max-w-md rounded-3xl border border-white/80 bg-white/95 p-4 backdrop-blur sm:p-5 lg:p-6">
+              <article className="hero-product-card relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 sm:max-w-md sm:p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">
@@ -306,7 +265,7 @@ export default async function Home() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex h-48 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-100 sm:h-56 lg:h-64">
+                <div className="mt-4 flex h-44 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-100 sm:h-52 lg:h-56">
                   <img
                     src={heroProductImage}
                     alt={heroProductName}
@@ -316,7 +275,7 @@ export default async function Home() {
                   />
                 </div>
 
-                <h2 className="brand-text-balance mt-5 text-lg font-extrabold leading-6 tracking-[-0.025em] text-slate-950 sm:text-xl sm:leading-7">
+                <h2 className="brand-text-balance mt-4 text-base font-semibold leading-6 text-slate-950 sm:text-lg">
                   {heroProductName}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -352,7 +311,7 @@ export default async function Home() {
                     <p className="text-xs font-semibold text-slate-500">
                       {heroPriceLabel}
                     </p>
-                    <p className="mt-1 text-base font-extrabold text-slate-950">
+                    <p className="mt-1 text-base font-semibold text-[#ee4d2d]">
                       {heroProductPrice}
                     </p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
@@ -366,7 +325,7 @@ export default async function Home() {
                   {heroProductSlug && (
                     <a
                       href={`/product/${heroProductSlug}`}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-extrabold text-white transition-colors hover:bg-slate-800"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#ee4d2d] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#d94322]"
                     >
                       Lihat analisis
                       <ArrowRightIcon />
@@ -457,7 +416,7 @@ export default async function Home() {
             </div>
 
             {products.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                 {products.map((product) => (
                   <DecisionProductCard key={product.id} product={product} />
                 ))}
