@@ -90,10 +90,10 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
   ];
 
   return (
-    <div className="quick-compare-surface overflow-hidden rounded-[1.75rem] border border-slate-200 p-5 sm:p-7 lg:p-10">
+    <div className="quick-compare-surface overflow-hidden rounded-3xl border border-slate-200 p-5 sm:p-7 lg:p-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
             Bandingkan cepat
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl lg:text-3xl">
@@ -129,13 +129,14 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
                   src={product.imageUrl}
                   alt={product.name}
                   loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-contain p-3 sm:p-5"
                 />
               </div>
               <p className="mt-3 text-xs font-semibold text-slate-500">
                 {product.brand ?? product.category}
               </p>
-              <h3 className="mt-1 line-clamp-2 text-[13px] font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base sm:leading-6">
+              <h3 className="mt-1 line-clamp-2 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base sm:leading-6">
                 {product.name}
               </h3>
             </article>
@@ -157,7 +158,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
               key={label}
               className="border-b border-slate-200 p-4 last:border-b-0 sm:p-5"
             >
-              <p className="flex items-center justify-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500 sm:text-sm sm:normal-case sm:tracking-normal">
+              <p className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-slate-500 sm:text-sm sm:normal-case sm:tracking-normal">
                 <Icon className="h-4 w-4" />
                 {label}
               </p>
@@ -198,7 +199,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-emerald-800">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
             Ringkasan skor
           </p>
           <p className="mt-1.5 text-sm font-bold leading-6 text-emerald-950">
@@ -211,7 +212,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
         </div>
 
         <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
-          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-orange-800">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
             Ringkasan harga
           </p>
           <p className="mt-1.5 text-sm font-bold leading-6 text-orange-950">

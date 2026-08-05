@@ -79,7 +79,7 @@ function getDiscountPercentage(offer: MarketplaceOffer) {
 export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
   if (offers.length === 0) {
     return (
-      <section className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+      <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-500 ring-1 ring-slate-200">
           <StoreIcon className="h-7 w-7" />
         </span>
@@ -102,7 +102,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
     <section>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
             Perbandingan harga
           </p>
           <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -115,7 +115,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
 
         {bestOffer ? (
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
+            <p className="text-xs font-bold uppercase tracking-[0.1em] text-emerald-800">
               Penawaran terbaik
             </p>
             <p className="mt-1 text-lg font-extrabold text-emerald-900">
@@ -127,7 +127,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
           </div>
         ) : (
           <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-red-800">
+            <p className="text-xs font-bold uppercase tracking-[0.1em] text-red-800">
               Ketersediaan
             </p>
             <p className="mt-1 text-sm font-extrabold text-red-800">
@@ -150,7 +150,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
           return (
             <article
               key={offer.id}
-              className={`public-card rounded-[1.5rem] border bg-white p-4 sm:p-5 ${
+              className={`public-card rounded-2xl border bg-white p-4 sm:p-5 ${
                 isBestOffer
                   ? "border-emerald-300 ring-1 ring-emerald-100"
                   : "border-slate-200"
@@ -239,7 +239,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
                     >
                       {!offer.isAvailable || offer.stockStatus === "out_of_stock"
                         ? "Stok tidak tersedia"
-                        : "Link belum tersedia"}
+                        : "Tautan belum tersedia"}
                     </button>
                   )}
                 </div>

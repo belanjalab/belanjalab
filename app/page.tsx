@@ -88,8 +88,8 @@ export default async function Home() {
 
   const trustItems = [
     {
-      title: "Review Jujur",
-      description: "Riset, bukan sekadar promosi",
+      title: "Analisis transparan",
+      description: "Alasan penilaian dapat ditelusuri",
       icon: ShieldCheckIcon,
       href: "#metodologi",
     },
@@ -120,12 +120,12 @@ export default async function Home() {
       <main id="konten-utama" className="min-h-screen bg-white text-slate-900">
         <section
           id="kategori"
-          className="scroll-mt-24 px-4 pt-5 md:px-5 md:pt-7"
+          className="scroll-mt-24 px-4 pt-4 md:px-5 md:pt-6"
         >
           <div className="mx-auto max-w-7xl">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                   Jelajahi kategori
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -136,7 +136,7 @@ export default async function Home() {
                 href="/search"
                 className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
               >
-                Lihat semua <ArrowRightIcon />
+                Cari lainnya <ArrowRightIcon />
               </a>
             </div>
 
@@ -146,15 +146,15 @@ export default async function Home() {
                   <a
                     key={category.id}
                     href={`/search?q=${encodeURIComponent(category.name)}`}
-                    className="group public-card flex min-h-28 w-28 shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md sm:w-32 md:min-h-32 md:w-auto md:p-4"
+                    className="group public-card flex min-h-24 w-24 shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md sm:w-28 md:min-h-28 md:w-auto md:p-4"
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-orange-50 group-hover:text-orange-700 sm:h-12 sm:w-12"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-orange-50 group-hover:text-orange-700 sm:h-11 sm:w-11"
                     >
                       <CategoryGlyph icon={category.icon} />
                     </span>
-                    <span className="mt-3 text-xs font-extrabold leading-5 text-slate-800 sm:text-sm">
+                    <span className="mt-2.5 text-xs font-bold leading-5 text-slate-800 sm:text-sm">
                       {category.name}
                     </span>
                   </a>
@@ -174,9 +174,9 @@ export default async function Home() {
         </section>
 
         <section className="px-4 pb-6 pt-5 sm:pb-8 sm:pt-6 md:px-5 md:pb-10 md:pt-7">
-          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-[1.75rem] border border-orange-100 px-5 py-7 sm:px-7 sm:py-9 md:grid md:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] md:gap-10 md:rounded-[2rem] md:px-10 md:py-12 lg:gap-14 lg:px-14 lg:py-16">
+          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-3xl border border-orange-100 px-5 py-7 sm:px-7 sm:py-9 md:grid md:grid-cols-[minmax(0,1.08fr)_minmax(300px,0.92fr)] md:gap-10 md:rounded-[2rem] md:px-10 md:py-12 lg:gap-14 lg:px-14 lg:py-16">
             <div className="relative z-10 flex min-w-0 flex-col justify-center">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-orange-800 shadow-sm backdrop-blur">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-orange-800 shadow-sm backdrop-blur">
                 <SparklesIcon className="h-4 w-4" />
                 Shopping Decision Platform
               </div>
@@ -185,9 +185,9 @@ export default async function Home() {
                 {hero?.title ?? "Bandingkan lebih cepat. Pilih tanpa ragu."}
               </h1>
 
-              <p className="mt-5 max-w-2xl text-[15px] leading-6 text-slate-600 sm:text-base md:text-lg md:leading-8">
+              <p className="mt-5 max-w-2xl text-base leading-6 text-slate-600 sm:text-base md:text-lg md:leading-8">
                 {hero?.subtitle ??
-                  "Review jujur, perbandingan yang mudah dipahami, dan rekomendasi untuk membantu kamu membeli produk yang benar-benar sesuai."}
+                  "Analisis transparan, perbandingan yang mudah dipahami, dan rekomendasi untuk membantu kamu membeli produk yang benar-benar sesuai."}
               </p>
 
               <ol
@@ -283,10 +283,10 @@ export default async function Home() {
                 className="absolute inset-6 rounded-full bg-orange-300/30 blur-3xl"
               />
 
-              <article className="hero-product-card relative z-10 w-full max-w-md rounded-[1.75rem] border border-white/80 bg-white/95 p-4 backdrop-blur sm:p-5 lg:p-6">
+              <article className="hero-product-card relative z-10 w-full max-w-md rounded-3xl border border-white/80 bg-white/95 p-4 backdrop-blur sm:p-5 lg:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-orange-700">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">
                       Produk Pilihan
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
@@ -310,6 +310,8 @@ export default async function Home() {
                   <img
                     src={heroProductImage}
                     alt={heroProductName}
+                    fetchPriority="high"
+                    decoding="async"
                     className="h-full w-full object-contain p-5 sm:p-6"
                   />
                 </div>
@@ -325,7 +327,7 @@ export default async function Home() {
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
                   <div className="rounded-xl border border-orange-100 bg-orange-50/70 p-3">
-                    <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-orange-800">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-orange-800">
                       Kekuatan utama
                     </p>
                     <p className="mt-1 text-xs font-extrabold leading-5 text-slate-950 sm:text-sm">
@@ -335,7 +337,7 @@ export default async function Home() {
                     </p>
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500">
+                    <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                       <RefreshIcon className="h-3.5 w-3.5" />
                       Status harga
                     </p>
@@ -376,8 +378,8 @@ export default async function Home() {
           </div>
         </section>
 
-        <section aria-label="Keunggulan BelanjaLab" className="px-4 md:px-5">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:gap-3 md:grid-cols-4 md:p-4">
+        <section aria-label="Keunggulan BelanjaLab" className="px-4 pb-8 md:px-5 md:pb-12">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-3 sm:gap-3 md:grid-cols-4 md:p-4">
             {trustItems.map(({ title, description, icon: Icon, href }) => (
               <a
                 key={title}
@@ -388,7 +390,7 @@ export default async function Home() {
                   <Icon className="h-[18px] w-[18px]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-[13px] font-extrabold leading-5 text-slate-900 sm:text-sm">
+                  <h3 className="text-sm font-extrabold leading-5 text-slate-900 sm:text-sm">
                     {title}
                   </h3>
                   <p className="mt-0.5 text-xs leading-5 text-slate-600">
@@ -408,8 +410,8 @@ export default async function Home() {
             {quickComparisonProducts ? (
               <QuickComparison products={quickComparisonProducts} />
             ) : (
-              <div className="quick-compare-surface rounded-[1.75rem] border border-slate-200 p-6 sm:p-8">
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+              <div className="quick-compare-surface rounded-3xl border border-slate-200 p-6 sm:p-8">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                   Bandingkan cepat
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -436,7 +438,7 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
               <div className="max-w-2xl">
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                   Pilihan terkurasi
                 </p>
                 <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
@@ -450,7 +452,7 @@ export default async function Home() {
                 href="/search"
                 className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
               >
-                Lihat semua <ArrowRightIcon />
+                Cari produk <ArrowRightIcon />
               </a>
             </div>
 
@@ -489,7 +491,7 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                   Panduan praktis
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -517,6 +519,8 @@ export default async function Home() {
                         <img
                           src={article.imageUrl}
                           alt={article.title}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         />
                       ) : (
@@ -530,15 +534,15 @@ export default async function Home() {
                     </div>
 
                     <div className="min-w-0 p-4 md:p-5">
-                      <p className="text-xs font-extrabold uppercase tracking-wide text-orange-700">
+                      <p className="text-xs font-bold uppercase tracking-wide text-orange-700">
                         Artikel
                       </p>
-                      <h3 className="mt-1.5 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-[15px] md:mt-2 md:text-base md:leading-6">
+                      <h3 className="mt-1.5 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base md:mt-2 md:text-base md:leading-6">
                         {article.title}
                       </h3>
 
                       {article.excerpt && (
-                        <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-slate-600 md:text-sm">
+                        <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600 md:text-sm">
                           {article.excerpt}
                         </p>
                       )}

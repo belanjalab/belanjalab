@@ -514,7 +514,7 @@ export default async function AdminPage({
 
             <Link
               href="/"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
             >
               Lihat Website
             </Link>
@@ -522,7 +522,7 @@ export default async function AdminPage({
             <form action={logout}>
               <button
                 type="submit"
-                className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-3 text-xs font-bold text-white hover:bg-slate-800"
               >
                 Keluar
               </button>
@@ -935,14 +935,14 @@ export default async function AdminPage({
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/products/${product.id}/preview`}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                       >
                         Preview
                       </Link>
 
                       <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className="rounded-lg bg-slate-950 px-3 py-2 text-center text-xs font-bold text-white hover:bg-slate-800"
+                        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-3 text-center text-xs font-bold text-white hover:bg-slate-800"
                       >
                         Edit
                       </Link>
@@ -1008,14 +1008,14 @@ export default async function AdminPage({
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/products/${product.id}/preview`}
-                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600"
                         >
                           Preview
                         </Link>
 
                         <Link
                           href={`/admin/products/${product.id}/edit`}
-                          className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-3 text-xs font-bold text-white"
                         >
                           Edit
                         </Link>
@@ -1058,29 +1058,29 @@ export default async function AdminPage({
                 {currentPage > 1 ? (
                   <Link
                     href={buildAdminUrl(currentPage - 1)}
-                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                   >
                     ← Sebelumnya
                   </Link>
                 ) : (
-                  <span className="cursor-not-allowed rounded-lg border border-slate-100 px-4 py-2 text-xs font-bold text-slate-300">
+                  <span className="inline-flex min-h-11 items-center justify-center cursor-not-allowed rounded-lg border border-slate-100 px-4 text-xs font-bold text-slate-300">
                     ← Sebelumnya
                   </span>
                 )}
 
-                <span className="rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white">
+                <span className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-xs font-bold text-white">
                   {currentPage} / {totalPages}
                 </span>
 
                 {currentPage < totalPages ? (
                   <Link
                     href={buildAdminUrl(currentPage + 1)}
-                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
                   >
                     Berikutnya →
                   </Link>
                 ) : (
-                  <span className="cursor-not-allowed rounded-lg border border-slate-100 px-4 py-2 text-xs font-bold text-slate-300">
+                  <span className="inline-flex min-h-11 items-center justify-center cursor-not-allowed rounded-lg border border-slate-100 px-4 text-xs font-bold text-slate-300">
                     Berikutnya →
                   </span>
                 )}

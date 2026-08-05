@@ -298,7 +298,7 @@ export default async function EditProductPage({
 
           <Link
             href="/admin"
-            className="ml-auto rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center justify-center ml-auto rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
           >
             Kembali
           </Link>

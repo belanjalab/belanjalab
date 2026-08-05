@@ -39,6 +39,8 @@ export default function SiteFooter({ footer }: SiteFooterProps) {
               src="/images/logo-belanjalab.png"
               alt=""
               aria-hidden="true"
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full object-cover"
             />
             <span className="text-xl font-extrabold tracking-[-0.035em]">
@@ -112,8 +114,13 @@ export default function SiteFooter({ footer }: SiteFooterProps) {
         </div>
       </div>
 
-      <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs leading-5 text-slate-400">
-        © {new Date().getFullYear()} BelanjaLab. All rights reserved.
+      <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6">
+        <p className="max-w-4xl text-xs leading-5 text-slate-400">
+          Harga, stok, dan promo dapat berubah sewaktu-waktu. Sebagian tautan marketplace merupakan tautan afiliasi; komisi yang diterima tidak mengubah harga untuk pengguna maupun penilaian produk.
+        </p>
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          © {new Date().getFullYear()} BelanjaLab. Hak cipta dilindungi.
+        </p>
       </div>
     </footer>
   );

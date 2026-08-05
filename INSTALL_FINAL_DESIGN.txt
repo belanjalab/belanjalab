@@ -1,0 +1,26 @@
+BELANJALAB — FINAL DESIGN PACKAGE
+
+Cara memasang replacement package:
+1. Backup atau commit project saat ini.
+2. Ekstrak ZIP di root project BelanjaLab.
+3. Izinkan seluruh file lama ditimpa.
+4. Pastikan dua aset PNG di folder public/images ikut terganti.
+5. Jalankan:
+
+   npm install
+   npm run typecheck
+   npm run build
+
+6. Jalankan project dan cek route berikut dengan data Supabase nyata:
+   /
+   /search
+   /compare
+   /product/<slug>
+   /articles
+   /articles/<slug>
+   /admin
+
+Tidak ada migration database yang diperlukan.
+
+Commit message:
+refactor(ui): finalize BelanjaLab product experience

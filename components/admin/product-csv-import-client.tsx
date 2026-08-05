@@ -426,7 +426,7 @@ export default function ProductCsvImportClient() {
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="w-fit rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
+            className="inline-flex min-h-11 items-center justify-center w-fit rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-bold text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
           >
             Download Template CSV
           </button>

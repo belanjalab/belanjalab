@@ -23,13 +23,13 @@ const scoreScale = [
 
 export default function ScoreMethodology() {
   return (
-    <div className="methodology-surface overflow-hidden rounded-[1.75rem] border border-slate-200 p-5 sm:p-7 lg:p-10">
+    <div className="methodology-surface overflow-hidden rounded-3xl border border-slate-200 p-5 sm:p-7 lg:p-10">
       <div className="grid gap-7 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12">
         <div>
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/15">
             <ShieldCheckIcon className="h-5 w-5" />
           </div>
-          <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
             Cara kami menyajikan data
           </p>
           <h2 className="brand-text-balance mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
@@ -50,7 +50,7 @@ export default function ScoreMethodology() {
                 <ScoreIcon className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-emerald-800">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
                   BelanjaLab Score
                 </p>
                 <h3 className="mt-0.5 text-base font-extrabold text-slate-950">
@@ -94,7 +94,7 @@ export default function ScoreMethodology() {
                 <RefreshIcon className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-orange-800">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
                   Transparansi harga
                 </p>
                 <h3 className="mt-0.5 text-base font-extrabold text-slate-950">

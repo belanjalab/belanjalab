@@ -161,7 +161,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <article className="px-4 pb-14 pt-8 md:px-5 md:pb-20 md:pt-12">
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.12em] text-orange-800">
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
                 <ArticleIcon className="h-4 w-4" /> Panduan Belanja
               </span>
               <h1 className="brand-text-balance mt-5 text-3xl font-extrabold leading-[1.1] tracking-[-0.04em] text-slate-950 sm:text-4xl md:text-5xl">
@@ -183,11 +183,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </div>
 
             {article.cover_image && (
-              <div className="public-card mt-8 overflow-hidden rounded-[1.75rem] bg-slate-100 ring-1 ring-slate-200">
+              <div className="public-card mt-8 aspect-[16/9] overflow-hidden rounded-3xl bg-slate-100 ring-1 ring-slate-200">
                 <img
                   src={article.cover_image}
                   alt={article.title}
-                  className="max-h-[560px] w-full object-cover"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-full w-full object-cover"
                 />
               </div>
             )}

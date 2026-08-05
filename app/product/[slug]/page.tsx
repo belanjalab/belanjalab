@@ -204,10 +204,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         <section className="px-4 py-8 md:px-5 md:py-14">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14">
-            <div className="public-card flex aspect-square items-center justify-center overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 p-7 sm:p-10 md:rounded-[2rem] md:p-14">
+            <div className="public-card flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-10 md:rounded-[2rem] md:p-14">
               <img
                 src={product.image_url ?? PRODUCT_PLACEHOLDER_PATH}
                 alt={product.name}
+                fetchPriority="high"
+                decoding="async"
                 className="h-full w-full object-contain"
               />
             </div>
@@ -234,7 +236,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                     Harga mulai
                   </p>
                   <p className="mt-2 text-lg font-extrabold text-slate-950 sm:text-xl">
@@ -247,7 +249,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
 
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                  <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-emerald-800">
+                  <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-emerald-800">
                     <ScoreIcon className="h-3.5 w-3.5" /> BelanjaLab Score
                   </p>
                   <div className="mt-2 flex items-end gap-1.5">
@@ -280,7 +282,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   href={`/compare?products=${encodeURIComponent(product.slug)}`}
                   className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
                 >
-                  <CompareIcon className="h-5 w-5" /> Tambah ke compare
+                  <CompareIcon className="h-5 w-5" /> Bandingkan produk
                 </Link>
               </div>
             </div>
@@ -290,13 +292,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                 Tentang produk
               </p>
               <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
                 Ringkasan BelanjaLab
               </h2>
-              <div className="public-card mt-5 rounded-[1.5rem] border border-slate-200 bg-white p-5 sm:p-7">
+              <div className="public-card mt-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
                 <p className="text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
                   {product.description ??
                     product.short_description ??
@@ -306,13 +308,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                 Penilaian
               </p>
               <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
                 Rincian skor
               </h2>
-              <div className="public-card mt-5 space-y-5 rounded-[1.5rem] border border-slate-200 bg-white p-5 sm:p-7">
+              <div className="public-card mt-5 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
                 {scoreItems.map(([label, value]) => (
                   <div key={label}>
                     <div className="flex items-center justify-between gap-4">
@@ -343,7 +345,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="bg-slate-950 px-4 py-10 text-white md:px-5 md:py-12">
           <div className="mx-auto flex max-w-7xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-400">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-400">
                 Belanja lebih yakin
               </p>
               <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl">

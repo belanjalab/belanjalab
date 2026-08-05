@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArticleIcon,
   CategoryIcon,
+  CloseIcon,
   CompareIcon,
+  HomeIcon,
   InfoIcon,
   MenuIcon,
   ScoreIcon,
@@ -23,14 +28,69 @@ const desktopNavigation = [
 ];
 
 const drawerNavigation = [
-  { label: "Kategori", href: "/#kategori", icon: CategoryIcon },
+  { label: "Beranda", href: "/", icon: HomeIcon },
+  { label: "Jelajahi kategori", href: "/#kategori", icon: CategoryIcon },
   { label: "Perbandingan", href: "/compare", icon: CompareIcon },
-  { label: "Metodologi", href: "/#metodologi", icon: ScoreIcon },
+  { label: "Metodologi skor", href: "/#metodologi", icon: ScoreIcon },
   { label: "Artikel", href: "/articles", icon: ArticleIcon },
-  { label: "Tentang Kami", href: "/#tentang", icon: InfoIcon },
+  { label: "Tentang BelanjaLab", href: "/#tentang", icon: InfoIcon },
 ];
 
 export default function SiteHeader({ active }: SiteHeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeMenu = useCallback((returnFocus = false) => {
+    setIsMenuOpen(false);
+    if (returnFocus) {
+      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    closeButtonRef.current?.focus();
+
+    function handleMenuKeydown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMenu(true);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const drawer = document.getElementById("mobile-navigation");
+      const focusableElements = drawer?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+
+    window.addEventListener("keydown", handleMenuKeydown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleMenuKeydown);
+    };
+  }, [closeMenu, isMenuOpen]);
+
   return (
     <>
       <a
@@ -41,31 +101,18 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
       </a>
 
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto flex max-w-7xl items-center px-3 py-2 sm:px-4 md:px-5 md:py-2.5">
-          <details className="group relative mr-1 lg:hidden">
-            <summary className="mobile-menu-summary flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100">
-              <MenuIcon />
-              <span className="sr-only">Buka menu utama</span>
-            </summary>
-
-            <nav
-              aria-label="Menu utama"
-              className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-950/10"
-            >
-              {drawerNavigation.map(({ label, href, icon: Icon }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                    <Icon className="h-[18px] w-[18px]" />
-                  </span>
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </details>
+        <div className="mx-auto flex min-h-16 max-w-7xl items-center px-3 sm:px-4 md:px-5">
+          <button
+            ref={menuButtonRef}
+            type="button"
+            onClick={() => setIsMenuOpen(true)}
+            aria-label="Buka menu utama"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+            className="mr-1 flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
+          >
+            <MenuIcon />
+          </button>
 
           <Link
             href="/"
@@ -76,6 +123,8 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               src="/images/logo-belanjalab.png"
               alt=""
               aria-hidden="true"
+              width={40}
+              height={40}
               className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
             />
             <span className="text-base font-extrabold tracking-[-0.035em] text-slate-950 md:text-xl">
@@ -133,6 +182,90 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
           </Link>
         </div>
       </header>
+
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[70] lg:hidden">
+          <button
+            type="button"
+            aria-label="Tutup menu utama"
+            onClick={() => closeMenu(true)}
+            className="absolute inset-0 h-full w-full bg-slate-950/45 backdrop-blur-[2px]"
+          />
+
+          <aside
+            id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu utama"
+            className="mobile-drawer-enter relative flex h-full w-[min(86vw,22rem)] flex-col border-r border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/20"
+          >
+            <div className="flex min-h-12 items-center justify-between gap-3">
+              <Link
+                href="/"
+                onClick={() => closeMenu()}
+                className="flex min-h-11 items-center gap-2 rounded-xl"
+              >
+                <img
+                  src="/images/logo-belanjalab.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+                <span className="text-lg font-extrabold tracking-[-0.035em] text-slate-950">
+                  Belanja<span className="text-orange-700">Lab</span>
+                </span>
+              </Link>
+
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => closeMenu(true)}
+                aria-label="Tutup menu utama"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+              >
+                <CloseIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="mt-6 px-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+              Navigasi
+            </p>
+            <nav aria-label="Menu utama mobile" className="mt-2 space-y-1">
+              {drawerNavigation.map(({ label, href, icon: Icon }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={() => closeMenu()}
+                  className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                    <Icon className="h-[18px] w-[18px]" />
+                  </span>
+                  {label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-auto rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
+                Mulai dari pencarian
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-700">
+                Temukan produk, cek skor, lalu bandingkan pilihan sebelum membeli.
+              </p>
+              <Link
+                href="/search"
+                onClick={() => closeMenu()}
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-bold text-white hover:bg-orange-800"
+              >
+                <SearchIcon className="h-[18px] w-[18px]" /> Cari produk
+              </Link>
+            </div>
+          </aside>
+        </div>
+      )}
     </>
   );
 }

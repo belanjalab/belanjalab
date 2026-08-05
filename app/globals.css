@@ -7,6 +7,11 @@
   --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", Inter, ui-sans-serif,
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
     sans-serif;
+  --brand-700: #c2410c;
+  --brand-800: #9a3412;
+  --ink-950: #020617;
+  --surface-subtle: #f8fafc;
+  --line: #e2e8f0;
 }
 
 html {
@@ -41,15 +46,20 @@ select {
   font: inherit;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .brand-text-balance {
   text-wrap: balance;
 }
 
 .hero-surface {
   background:
-    radial-gradient(circle at 88% 8%, rgba(251, 146, 60, 0.2), transparent 28%),
-    radial-gradient(circle at 8% 92%, rgba(15, 23, 42, 0.07), transparent 24%),
-    linear-gradient(135deg, #fff7ed 0%, #ffffff 48%, #f8fafc 100%);
+    radial-gradient(circle at 88% 8%, rgba(251, 146, 60, 0.18), transparent 30%),
+    radial-gradient(circle at 8% 92%, rgba(15, 23, 42, 0.055), transparent 25%),
+    linear-gradient(135deg, #fff8f1 0%, #ffffff 50%, #f8fafc 100%);
 }
 
 .hero-surface::before {
@@ -57,54 +67,37 @@ select {
   inset: 0;
   content: "";
   pointer-events: none;
-  opacity: 0.28;
-  background-image: radial-gradient(rgba(194, 65, 12, 0.22) 0.75px, transparent 0.75px);
-  background-size: 18px 18px;
-  -webkit-mask-image: linear-gradient(to bottom right, transparent 10%, black 55%, transparent 95%);
-  mask-image: linear-gradient(to bottom right, transparent 10%, black 55%, transparent 95%);
+  opacity: 0.2;
+  background-image: radial-gradient(rgba(194, 65, 12, 0.2) 0.7px, transparent 0.7px);
+  background-size: 20px 20px;
+  -webkit-mask-image: linear-gradient(to bottom right, transparent 12%, black 54%, transparent 94%);
+  mask-image: linear-gradient(to bottom right, transparent 12%, black 54%, transparent 94%);
 }
 
 .hero-product-card {
   box-shadow:
-    0 34px 80px -42px rgba(15, 23, 42, 0.55),
-    0 18px 32px -24px rgba(194, 65, 12, 0.28);
+    0 34px 80px -46px rgba(15, 23, 42, 0.48),
+    0 18px 32px -26px rgba(194, 65, 12, 0.22);
 }
 
-.compare-surface {
-  background:
-    radial-gradient(circle at 96% 0%, rgba(251, 146, 60, 0.12), transparent 26%),
-    linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.decision-card {
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.5) 0%, #ffffff 38%);
-}
-
-.quick-compare-surface {
-  background:
-    radial-gradient(circle at 96% 0%, rgba(251, 146, 60, 0.14), transparent 24%),
-    radial-gradient(circle at 4% 96%, rgba(16, 185, 129, 0.08), transparent 24%),
-    linear-gradient(145deg, #f8fafc 0%, #ffffff 58%, #fff7ed 100%);
-}
-
+.compare-surface,
+.quick-compare-surface,
 .methodology-surface {
   background:
-    radial-gradient(circle at 6% 0%, rgba(15, 23, 42, 0.07), transparent 26%),
-    radial-gradient(circle at 100% 100%, rgba(251, 146, 60, 0.12), transparent 28%),
+    radial-gradient(circle at 96% 0%, rgba(251, 146, 60, 0.1), transparent 27%),
     linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.mobile-menu-summary::-webkit-details-marker {
-  display: none;
+.decision-card {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.48) 0%, #ffffff 34%);
 }
 
 .mobile-bottom-nav {
   padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
 }
 
-:where(a, button, summary):focus-visible {
-  outline: 3px solid #c2410c;
+:where(a, button, summary, input, textarea, select):focus-visible {
+  outline: 3px solid var(--brand-700);
   outline-offset: 3px;
 }
 
@@ -113,37 +106,20 @@ select {
   color: #7c2d12;
 }
 
-@media (max-width: 767px) {
-  .brand-text-balance {
-    text-wrap: pretty;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 .page-intro-surface {
   background:
-    radial-gradient(circle at 94% 4%, rgba(251, 146, 60, 0.16), transparent 30%),
-    radial-gradient(circle at 4% 100%, rgba(15, 23, 42, 0.06), transparent 24%),
-    linear-gradient(145deg, #ffffff 0%, #f8fafc 62%, #fff7ed 100%);
+    radial-gradient(circle at 94% 0%, rgba(251, 146, 60, 0.11), transparent 31%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .category-rail {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.category-rail > * {
+  scroll-snap-align: start;
 }
 
 .category-rail::-webkit-scrollbar {
@@ -151,7 +127,11 @@ select {
 }
 
 .public-card {
-  box-shadow: 0 18px 45px -34px rgba(15, 23, 42, 0.38);
+  box-shadow: 0 18px 44px -36px rgba(15, 23, 42, 0.34);
+}
+
+.mobile-drawer-enter {
+  animation: mobile-drawer-in 180ms ease-out both;
 }
 
 .article-content {
@@ -201,7 +181,7 @@ select {
 }
 
 .article-content a {
-  color: #c2410c;
+  color: var(--brand-700);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -213,10 +193,49 @@ select {
   color: #0f172a;
 }
 
-.admin-scope :where(input, select, textarea) {
+.admin-scope :where(input, select, textarea, button) {
   min-height: 2.75rem;
 }
 
 .admin-scope :where(button, a) {
   -webkit-tap-highlight-color: transparent;
+}
+
+.admin-scope :where(input, select, textarea):focus-visible {
+  border-color: var(--brand-700) !important;
+  outline: 3px solid #ffedd5 !important;
+  outline-offset: 1px;
+}
+
+@keyframes mobile-drawer-in {
+  from {
+    opacity: 0.75;
+    transform: translateX(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .brand-text-balance {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

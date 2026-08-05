@@ -104,7 +104,7 @@ export default function CompareClient({
               {selectedProducts.map((product) => (
                 <article
                   key={product.id}
-                  className="public-card relative w-[72vw] max-w-xs shrink-0 rounded-[1.5rem] border border-slate-200 bg-white p-4 md:w-auto md:max-w-none md:p-5"
+                  className="public-card relative w-[72vw] max-w-xs shrink-0 rounded-2xl border border-slate-200 bg-white p-4 md:w-auto md:max-w-none md:p-5"
                 >
                   <button
                     type="button"
@@ -119,6 +119,7 @@ export default function CompareClient({
                     <img
                       src={product.imageUrl}
                       alt={product.name}
+                      decoding="async"
                       className="h-full w-full object-contain"
                     />
                   </div>
@@ -157,7 +158,7 @@ export default function CompareClient({
               ))}
             </div>
           ) : (
-            <div className="public-card rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="public-card rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
                 <CompareIcon className="h-7 w-7" />
               </span>
@@ -184,7 +185,7 @@ export default function CompareClient({
           </button>
 
           {isPickerOpen && (
-            <section aria-label="Pilih produk" className="public-card mt-4 rounded-[1.75rem] border border-slate-200 bg-white p-4 sm:p-6">
+            <section aria-label="Pilih produk" className="public-card mt-4 rounded-3xl border border-slate-200 bg-white p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-extrabold tracking-[-0.02em] text-slate-950">
@@ -235,6 +236,8 @@ export default function CompareClient({
                           src={product.imageUrl}
                           alt=""
                           aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-contain"
                         />
                       </span>
@@ -262,7 +265,7 @@ export default function CompareClient({
 
       <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
         <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
             Detail perbandingan
           </p>
           <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -270,11 +273,11 @@ export default function CompareClient({
           </h2>
 
           {selectedProducts.length > 0 ? (
-            <div className="mt-6 overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+            <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-950 text-white">
-                    <th scope="col" className="w-44 px-4 py-4 font-extrabold">Aspek</th>
+                    <th scope="col" className="sticky left-0 z-20 w-44 bg-slate-950 px-4 py-4 font-extrabold">Aspek</th>
                     {selectedProducts.map((product) => (
                       <th key={product.id} scope="col" className="min-w-44 px-4 py-4 font-extrabold">
                         {product.name}
@@ -284,20 +287,20 @@ export default function CompareClient({
                 </thead>
                 <tbody>
                   <tr className="border-b border-slate-100">
-                    <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Harga</th>
+                    <th scope="row" className="sticky left-0 z-10 bg-slate-50 px-4 py-4 font-bold text-slate-700">Harga</th>
                     {selectedProducts.map((product) => (
                       <td key={product.id} className="px-4 py-4 font-extrabold text-slate-950">{product.formattedPrice}</td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-100">
-                    <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">BelanjaLab Score</th>
+                    <th scope="row" className="sticky left-0 z-10 bg-slate-50 px-4 py-4 font-bold text-slate-700">BelanjaLab Score</th>
                     {selectedProducts.map((product) => (
                       <td key={product.id} className="px-4 py-4 font-extrabold text-emerald-800">{product.score.toFixed(1)}/10</td>
                     ))}
                   </tr>
                   {specificationRows.map((row) => (
                     <tr key={row.key} className="border-b border-slate-100 last:border-b-0">
-                      <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">{row.label}</th>
+                      <th scope="row" className="sticky left-0 z-10 bg-slate-50 px-4 py-4 font-bold text-slate-700">{row.label}</th>
                       {selectedProducts.map((product) => (
                         <td key={product.id} className="px-4 py-4 font-semibold text-slate-700">
                           {product.specifications[row.key] ?? "—"}
@@ -316,10 +319,10 @@ export default function CompareClient({
         </div>
       </section>
 
-      {topScoredProduct && (
+      {selectedProducts.length >= 2 && topScoredProduct && (
         <section className="px-4 py-10 md:px-5 md:py-14">
-          <div className="quick-compare-surface mx-auto max-w-7xl rounded-[1.75rem] border border-slate-200 p-6 sm:p-8">
-            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+          <div className="quick-compare-surface mx-auto max-w-7xl rounded-3xl border border-slate-200 p-6 sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
               Ringkasan sementara
             </p>
             <div className="mt-2 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">

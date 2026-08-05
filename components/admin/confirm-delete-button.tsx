@@ -21,7 +21,7 @@ export default function ConfirmDeleteButton({
           event.preventDefault();
         }
       }}
-      className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
+      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-red-200 px-3 text-xs font-bold text-red-600 hover:bg-red-50"
     >
       {label}
     </button>

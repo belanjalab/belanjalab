@@ -144,47 +144,51 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     key={product.id}
                     className="public-card group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg"
                   >
-                    <Link href={`/product/${product.slug}`} className="block">
+                    <Link
+                      href={`/product/${product.slug}`}
+                      aria-label={`Lihat analisis ${product.name}`}
+                      className="block h-full"
+                    >
                       <div className="flex aspect-square items-center justify-center bg-slate-50 p-4 ring-1 ring-inset ring-slate-100 sm:p-6">
                         <img
                           src={product.imageUrl}
                           alt={product.name}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                         />
                       </div>
-                    </Link>
 
-                    <div className="p-3.5 sm:p-4">
-                      <p className="text-xs font-semibold leading-5 text-slate-500">
-                        {product.brand} · {product.category}
-                      </p>
+                      <div className="p-3.5 sm:p-4">
+                        <p className="text-xs font-semibold leading-5 text-slate-500">
+                          {product.brand} · {product.category}
+                        </p>
 
-                      <Link href={`/product/${product.slug}`}>
-                        <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-extrabold leading-5 tracking-[-0.015em] text-slate-950 transition-colors hover:text-orange-800 sm:min-h-12 sm:text-base sm:leading-6">
+                        <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-extrabold leading-5 tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-orange-800 sm:min-h-12 sm:text-base sm:leading-6">
                           {product.name}
                         </h2>
-                      </Link>
 
-                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm">
-                        {product.shortDescription}
-                      </p>
+                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm">
+                          {product.shortDescription}
+                        </p>
 
-                      <div className="mt-4 flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-slate-500">Harga mulai</p>
-                          <p className="mt-1 truncate text-sm font-extrabold text-slate-950 sm:text-base">
-                            {product.formattedPrice}
-                          </p>
+                        <div className="mt-4 flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-500">Harga mulai</p>
+                            <p className="mt-1 truncate text-sm font-extrabold text-slate-950 sm:text-base">
+                              {product.formattedPrice}
+                            </p>
+                          </div>
+
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100">
+                            <ScoreIcon className="h-3.5 w-3.5" />
+                            {product.score !== null
+                              ? product.score.toFixed(1)
+                              : "—"}
+                          </span>
                         </div>
-
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100">
-                          <ScoreIcon className="h-3.5 w-3.5" />
-                          {product.score !== null
-                            ? product.score.toFixed(1)
-                            : "—"}
-                        </span>
                       </div>
-                    </div>
+                    </Link>
                   </article>
                 ))}
               </div>
@@ -249,7 +253,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             )}
 
             {query.length >= 2 && total === 0 && (
-              <div className="public-card rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
+              <div className="public-card rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
                 <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
                   <SearchIcon className="h-7 w-7" />
                 </span>
@@ -271,7 +275,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             {query.length < 2 && (
               <div>
                 <div className="mb-5">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-orange-700">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
                     Coba pencarian ini
                   </p>
                   <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">

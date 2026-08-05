@@ -17,11 +17,11 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
           <li key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-2">
             {index > 0 && <span aria-hidden="true" className="text-slate-300">/</span>}
             {item.href ? (
-              <Link href={item.href} className="shrink-0 rounded-md py-1 hover:text-orange-800">
+              <Link href={item.href} className="inline-flex min-h-9 shrink-0 items-center rounded-md hover:text-orange-800">
                 {item.label}
               </Link>
             ) : (
-              <span className="truncate py-1 font-bold text-slate-700" aria-current="page">
+              <span className="inline-flex min-h-9 items-center truncate font-bold text-slate-700" aria-current="page">
                 {item.label}
               </span>
             )}

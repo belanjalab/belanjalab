@@ -342,7 +342,7 @@ export default async function ProductPricesPage({
 
           <Link
             href={`/admin/products/${product.id}/edit`}
-            className="ml-auto rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center justify-center ml-auto rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
           >
             Kembali ke Edit
           </Link>
@@ -540,7 +540,7 @@ export default async function ProductPricesPage({
                           <div className="flex gap-2">
                             <button
                               type="submit"
-                              className="rounded-lg bg-orange-700 px-4 py-2 text-xs font-bold text-white hover:bg-orange-800"
+                              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-orange-700 px-4 text-xs font-bold text-white hover:bg-orange-800"
                             >
                               Simpan
                             </button>

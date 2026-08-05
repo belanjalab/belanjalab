@@ -25,7 +25,7 @@ export default function DecisionProductCard({
       : Math.min(100, Math.max(0, product.scoreValue * 10));
 
   return (
-    <article className="decision-card group flex min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-950/5">
+    <article className="decision-card group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-950/5">
       <div className="relative p-3 pb-0 sm:p-4 sm:pb-0">
         <div className="absolute left-5 top-5 z-10 flex max-w-[calc(100%_-_2.5rem)] flex-wrap gap-2 sm:left-6 sm:top-6">
           <span className="rounded-full border border-white/80 bg-white/95 px-2.5 py-1 text-xs font-extrabold text-slate-700 shadow-sm backdrop-blur">
@@ -47,6 +47,7 @@ export default function DecisionProductCard({
             src={product.imageUrl}
             alt={product.name}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain p-6 transition-transform duration-300 group-hover:scale-[1.035] sm:p-7"
           />
         </a>
@@ -65,7 +66,7 @@ export default function DecisionProductCard({
               <SparklesIcon className="h-[18px] w-[18px]" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-orange-800">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
                 {product.topStrength ? "Kekuatan utama" : "Ringkasan analisis"}
               </p>
               <p className="mt-1 text-sm font-extrabold leading-5 text-slate-950">
@@ -74,7 +75,7 @@ export default function DecisionProductCard({
                   : "Rincian penilaian sedang disiapkan"}
               </p>
               {product.shortDescription && (
-                <p className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-slate-600">
+                <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-600">
                   {product.shortDescription}
                 </p>
               )}
