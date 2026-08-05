@@ -37,6 +37,10 @@ const PRODUCT_STATUS_LABELS: Record<AffiliateProductPreview["status"], string> =
   failed: "Gagal",
 };
 
+type AffiliateLinkImportClientProps = {
+  openApiConfigured: boolean;
+};
+
 function getLinkKindLabel(row: ParsedAffiliateLink) {
   if (row.kind === "affiliate-shortlink") {
     return "Short link affiliate";
@@ -128,7 +132,9 @@ async function requestProductScan(links: string[]) {
   return payload;
 }
 
-export default function AffiliateLinkImportClient() {
+export default function AffiliateLinkImportClient({
+  openApiConfigured,
+}: AffiliateLinkImportClientProps) {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AffiliateLinkParseResult | null>(null);
   const [formError, setFormError] = useState("");
@@ -304,6 +310,25 @@ export default function AffiliateLinkImportClient() {
 
   return (
     <section className="mt-8 space-y-6">
+      <div
+        className={`rounded-2xl border px-5 py-4 text-sm leading-6 ${
+          openApiConfigured
+            ? "border-green-200 bg-green-50 text-green-800"
+            : "border-amber-200 bg-amber-50 text-amber-900"
+        }`}
+      >
+        <p className="font-black">
+          {openApiConfigured
+            ? "Shopee Affiliate Open API aktif"
+            : "Shopee Affiliate Open API belum aktif"}
+        </p>
+        <p className="mt-1 text-xs leading-5">
+          {openApiConfigured
+            ? "Nama, gambar, dan harga akan diprioritaskan dari API resmi Shopee Affiliate."
+            : "Tanpa Open API, pengambilan dari halaman publik Shopee hanya best effort dan dapat dibatasi. Tambahkan SHOPEE_AFFILIATE_APP_ID dan SHOPEE_AFFILIATE_APP_SECRET pada runtime variables Cloudflare."}
+        </p>
+      </div>
+
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

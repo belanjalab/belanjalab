@@ -4,16 +4,17 @@ import {
   extractShopeeProductIds,
   parseAffiliateProductMetadata,
 } from "@/lib/affiliate-import/metadata";
+import { fetchShopeeAffiliateOpenApiMetadata } from "@/lib/affiliate-import/shopee-affiliate-open-api";
 import { fetchShopeeProductApiMetadata } from "@/lib/affiliate-import/shopee-product-api";
 import type {
   AffiliateProductFetchErrorCode,
   AffiliateProductPreview,
 } from "@/lib/affiliate-import/types";
 
-const REQUEST_TIMEOUT_MS = 15_000;
+const REQUEST_TIMEOUT_MS = 25_000;
 const MAX_REDIRECTS = 6;
 const MAX_HTML_BYTES = 2_500_000;
-const SCAN_CONCURRENCY = 3;
+const SCAN_CONCURRENCY = 2;
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
 
@@ -368,43 +369,104 @@ function createFailurePreview(
   };
 }
 
-async function fetchProductPage(inputUrl: string, signal: AbortSignal) {
-  const firstFetch = await fetchWithSafeRedirects(inputUrl, signal);
-  ensureHtmlResponse(firstFetch.response);
+type ProductPageFetchResult = {
+  html: string;
+  finalUrl: URL;
+  warning: string | null;
+};
 
-  const firstHtml = await readResponseText(firstFetch.response);
+function combineWarnings(...warnings: Array<string | null | undefined>) {
+  const uniqueWarnings = warnings.filter(
+    (warning, index, values): warning is string =>
+      Boolean(warning) && values.indexOf(warning) === index,
+  );
+
+  return uniqueWarnings.length > 0 ? uniqueWarnings.join(" ") : null;
+}
+
+async function readHtmlSafely(response: Response) {
+  try {
+    ensureHtmlResponse(response);
+
+    return {
+      html: await readResponseText(response),
+      warning: null,
+    };
+  } catch (error) {
+    await response.body?.cancel().catch(() => undefined);
+
+    if (error instanceof AffiliateFetchError) {
+      return {
+        html: "",
+        warning: error.message,
+      };
+    }
+
+    throw error;
+  }
+}
+
+async function fetchProductPage(
+  inputUrl: string,
+  signal: AbortSignal,
+): Promise<ProductPageFetchResult> {
+  const firstFetch = await fetchWithSafeRedirects(inputUrl, signal);
+  const firstPage = await readHtmlSafely(firstFetch.response);
   const firstMetadata = parseAffiliateProductMetadata(
-    firstHtml,
+    firstPage.html,
     firstFetch.finalUrl.toString(),
   );
   const firstIds = extractShopeeProductIds(firstFetch.finalUrl.toString());
-  const productDestination = getProductDestination(
-    firstHtml,
+  const discoveredProductDestination = getProductDestination(
+    firstPage.html,
     firstFetch.finalUrl,
     firstMetadata.canonicalUrl,
   );
+  const canonicalProductDestination =
+    firstIds.shopId && firstIds.itemId
+      ? `https://shopee.co.id/product/${firstIds.shopId}/${firstIds.itemId}`
+      : "";
+  const productDestination =
+    discoveredProductDestination || canonicalProductDestination;
 
   if (
     productDestination &&
     productDestination !== firstFetch.finalUrl.toString() &&
     (!firstIds.shopId || !firstIds.itemId || !hasCompleteMetadata(firstMetadata))
   ) {
-    const secondFetch = await fetchWithSafeRedirects(productDestination, signal);
-    ensureHtmlResponse(secondFetch.response);
+    try {
+      const secondFetch = await fetchWithSafeRedirects(productDestination, signal);
+      const secondPage = await readHtmlSafely(secondFetch.response);
 
-    const secondHtml = await readResponseText(secondFetch.response);
+      return {
+        html: secondPage.html || firstPage.html,
+        finalUrl: secondFetch.finalUrl,
+        warning: combineWarnings(firstPage.warning, secondPage.warning),
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw error;
+      }
 
-    return {
-      html: secondHtml,
-      finalUrl: secondFetch.finalUrl,
-    };
+      const secondWarning =
+        error instanceof Error
+          ? `Halaman produk kedua tidak dapat dibaca: ${error.message}`
+          : "Halaman produk kedua tidak dapat dibaca.";
+
+      return {
+        html: firstPage.html,
+        finalUrl: normalizeShopeeUrl(productDestination),
+        warning: combineWarnings(firstPage.warning, secondWarning),
+      };
+    }
   }
 
   return {
-    html: firstHtml,
+    html: firstPage.html,
     finalUrl: productDestination
       ? normalizeShopeeUrl(productDestination)
       : firstFetch.finalUrl,
+    warning: firstPage.warning,
   };
 }
 
@@ -416,7 +478,7 @@ export async function scanAffiliateProduct(
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const { html, finalUrl } = await fetchProductPage(
+    const { html, finalUrl, warning: pageWarning } = await fetchProductPage(
       normalizedAffiliateUrl,
       controller.signal,
     );
@@ -428,13 +490,39 @@ export async function scanAffiliateProduct(
     const idsFromCanonicalUrl = htmlMetadata.canonicalUrl
       ? extractShopeeProductIds(htmlMetadata.canonicalUrl)
       : { shopId: null, itemId: null };
+    const idsFromAffiliateUrl = extractShopeeProductIds(normalizedAffiliateUrl);
     const ids = {
-      shopId: idsFromResolvedUrl.shopId ?? idsFromCanonicalUrl.shopId,
-      itemId: idsFromResolvedUrl.itemId ?? idsFromCanonicalUrl.itemId,
+      shopId:
+        idsFromResolvedUrl.shopId ??
+        idsFromCanonicalUrl.shopId ??
+        idsFromAffiliateUrl.shopId,
+      itemId:
+        idsFromResolvedUrl.itemId ??
+        idsFromCanonicalUrl.itemId ??
+        idsFromAffiliateUrl.itemId,
     };
-    const needsApiFallback = !hasCompleteMetadata(htmlMetadata);
+    const openApiResult =
+      ids.shopId && ids.itemId
+        ? await fetchShopeeAffiliateOpenApiMetadata({
+            shopId: ids.shopId,
+            itemId: ids.itemId,
+            signal: controller.signal,
+          })
+        : {
+            configured: false,
+            metadata: null,
+            warning: "Shop ID dan item ID Shopee tidak ditemukan dari link.",
+          };
+    const officialMetadata = openApiResult.metadata;
+    const metadataBeforeInternalApi = {
+      name: officialMetadata?.name || htmlMetadata.name || "",
+      imageUrl: officialMetadata?.imageUrl || htmlMetadata.imageUrl || "",
+      price: officialMetadata?.price ?? htmlMetadata.price ?? null,
+    };
+    const needsInternalApiFallback =
+      !hasCompleteMetadata(metadataBeforeInternalApi);
     const apiMetadata =
-      needsApiFallback && ids.shopId && ids.itemId
+      needsInternalApiFallback && ids.shopId && ids.itemId
         ? await fetchShopeeProductApiMetadata({
             shopId: ids.shopId,
             itemId: ids.itemId,
@@ -443,17 +531,39 @@ export async function scanAffiliateProduct(
           })
         : null;
     const metadata = {
-      name: htmlMetadata.name || apiMetadata?.name || "",
+      name:
+        officialMetadata?.name || apiMetadata?.name || htmlMetadata.name || "",
       description:
-        htmlMetadata.description || apiMetadata?.description || "",
-      imageUrl: htmlMetadata.imageUrl || apiMetadata?.imageUrl || "",
-      price: htmlMetadata.price ?? apiMetadata?.price ?? null,
-      priceMax: htmlMetadata.priceMax ?? apiMetadata?.priceMax ?? null,
-      currency: htmlMetadata.currency || apiMetadata?.currency || null,
+        apiMetadata?.description || htmlMetadata.description || "",
+      imageUrl:
+        officialMetadata?.imageUrl ||
+        apiMetadata?.imageUrl ||
+        htmlMetadata.imageUrl ||
+        "",
+      price:
+        officialMetadata?.price ??
+        apiMetadata?.price ??
+        htmlMetadata.price ??
+        null,
+      priceMax:
+        officialMetadata?.priceMax ??
+        apiMetadata?.priceMax ??
+        htmlMetadata.priceMax ??
+        null,
+      currency:
+        officialMetadata?.currency ||
+        apiMetadata?.currency ||
+        htmlMetadata.currency ||
+        null,
       canonicalUrl:
-        htmlMetadata.canonicalUrl || apiMetadata?.canonicalUrl || null,
+        officialMetadata?.canonicalUrl ||
+        apiMetadata?.canonicalUrl ||
+        htmlMetadata.canonicalUrl ||
+        null,
     };
-    const fallbackName = deriveProductNameFromUrl(finalUrl.toString());
+    const fallbackName = deriveProductNameFromUrl(
+      metadata.canonicalUrl || finalUrl.toString(),
+    );
     const name = metadata.name || fallbackName;
     const priceMax =
       metadata.priceMax !== null &&
@@ -472,10 +582,24 @@ export async function scanAffiliateProduct(
       : "partial";
     const warnings: string[] = [];
 
+    if (officialMetadata) {
+      warnings.push(
+        "Nama, gambar, dan harga diprioritaskan dari Shopee Affiliate Open API.",
+      );
+    }
+
     if (apiMetadata) {
       warnings.push(
-        "Metadata yang tidak tersedia di halaman dilengkapi dari data produk Shopee.",
+        "Metadata yang belum tersedia dilengkapi dari endpoint produk Shopee.",
       );
+    }
+
+    if (!officialMetadata && openApiResult.warning) {
+      warnings.push(openApiResult.warning);
+    }
+
+    if (pageWarning && missingFields.length > 0) {
+      warnings.push(`Halaman publik Shopee tidak dapat dibaca penuh: ${pageWarning}`);
     }
 
     if (priceMax !== null) {
@@ -490,18 +614,22 @@ export async function scanAffiliateProduct(
       );
     }
 
+    const uniqueWarnings = warnings.filter(
+      (warning, index, values) => values.indexOf(warning) === index,
+    );
+
     return {
       id: normalizedAffiliateUrl,
       marketplace: "shopee",
       affiliateUrl: normalizedAffiliateUrl,
-      resolvedUrl: finalUrl.toString(),
+      resolvedUrl: normalizedMetadata.canonicalUrl || finalUrl.toString(),
       status,
       errorCode: missingFields.length > 0 ? "metadata-not-found" : null,
       message:
         status === "success"
           ? "Nama, gambar, dan harga berhasil diambil."
           : `Data berhasil diambil sebagian. Lengkapi ${missingFields.join(", ")}.`,
-      warnings,
+      warnings: uniqueWarnings,
       name: normalizedMetadata.name,
       description: normalizedMetadata.description,
       imageUrl: normalizedMetadata.imageUrl,

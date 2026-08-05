@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AffiliateLinkImportClient from "@/components/admin/affiliate-link-import-client";
+import { isShopeeAffiliateOpenApiConfigured } from "@/lib/affiliate-import/shopee-affiliate-open-api";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ async function requireAdmin() {
 
 export default async function AffiliateImportPage() {
   await requireAdmin();
+  const openApiConfigured = isShopeeAffiliateOpenApiConfigured();
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -69,7 +71,7 @@ export default async function AffiliateImportPage() {
           </div>
         </div>
 
-        <AffiliateLinkImportClient />
+        <AffiliateLinkImportClient openApiConfigured={openApiConfigured} />
       </div>
     </main>
   );

@@ -168,6 +168,32 @@ function cleanupProductName(value: string) {
     .trim();
 }
 
+function isLikelyProductName(value: string) {
+  const normalized = value.toLowerCase().trim();
+
+  if (!normalized || normalized.length < 3 || normalized.length > 500) {
+    return false;
+  }
+
+  if (/^\d+$/.test(normalized)) {
+    return false;
+  }
+
+  const blockedTitles = [
+    "shopee",
+    "shopee indonesia",
+    "login",
+    "masuk",
+    "download aplikasi shopee",
+  ];
+
+  if (blockedTitles.includes(normalized)) {
+    return false;
+  }
+
+  return !normalized.includes("shopee-mobilemall-live");
+}
+
 function parsePriceNumber(value: unknown) {
   if (typeof value === "number") {
     return Number.isFinite(value) && value > 0 ? Math.round(value) : null;
@@ -381,6 +407,32 @@ function extractJsonLdProduct(html: string) {
   };
 }
 
+function isLikelyProductImageUrl(value: string) {
+  if (!value) {
+    return false;
+  }
+
+  let parsed: URL;
+
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+
+  const pathname = parsed.pathname.toLowerCase();
+
+  if (/\.(?:css|js|mjs|map|json|woff2?|ttf|eot)(?:$|\?)/i.test(pathname)) {
+    return false;
+  }
+
+  if (parsed.hostname.toLowerCase().endsWith("susercontent.com")) {
+    return pathname.includes("/file/") || !pathname.includes("/assets/");
+  }
+
+  return /\.(?:avif|gif|jpe?g|png|webp)(?:$|\?)/i.test(pathname);
+}
+
 function extractFallbackImage(html: string) {
   const decodedHtml = decodeEscapedHtml(html);
   const candidates = Array.from(
@@ -390,11 +442,9 @@ function extractFallbackImage(html: string) {
   )
     .map((match) => decodeHtmlEntities(match[0] ?? ""))
     .map((value) => value.replace(/[),.;]+$/, ""))
-    .filter(Boolean);
+    .filter(isLikelyProductImageUrl);
 
-  return (
-    candidates.find((url) => /\/file\//i.test(url)) ?? candidates[0] ?? ""
-  );
+  return candidates.find((url) => /\/file\//i.test(url)) ?? candidates[0] ?? "";
 }
 
 function extractFallbackPrice(html: string) {
@@ -452,12 +502,13 @@ export function parseAffiliateProductMetadata(
   const jsonLdProduct = extractJsonLdProduct(html);
   const fallbackPrice = extractFallbackPrice(html);
 
-  const name = cleanupProductName(
+  const rawName = cleanupProductName(
     jsonLdProduct?.name ||
       getFirstMetaValue(metaValues, ["og:title", "twitter:title"]) ||
       extractHeading(html) ||
       extractDocumentTitle(html),
   );
+  const name = isLikelyProductName(rawName) ? rawName : "";
 
   const description = normalizeWhitespace(
     jsonLdProduct?.description ||
@@ -514,10 +565,14 @@ export function parseAffiliateProductMetadata(
     pageUrl,
   );
 
+  const absoluteImageUrl = normalizeAbsoluteUrl(rawImageUrl, pageUrl);
+
   return {
     name,
     description,
-    imageUrl: normalizeAbsoluteUrl(rawImageUrl, pageUrl),
+    imageUrl: isLikelyProductImageUrl(absoluteImageUrl)
+      ? absoluteImageUrl
+      : "",
     price,
     priceMax,
     currency,
@@ -595,14 +650,21 @@ export function deriveProductNameFromUrl(value: string) {
   try {
     const parsedUrl = new URL(value);
     const decodedPathname = safeDecodeURIComponent(parsedUrl.pathname);
-    const lastSegment = decodedPathname.split("/").filter(Boolean).at(-1) ?? "";
-    const slug = lastSegment
-      .replace(/-i\.\d+\.\d+.*$/i, "")
+    const itemSlugMatch = decodedPathname.match(
+      /\/([^/]+)-i\.\d+\.\d+(?:\b|\/|$)/i,
+    );
+    const rawSlug = itemSlugMatch?.[1] ?? "";
+
+    if (!rawSlug) {
+      return "";
+    }
+
+    const slug = rawSlug
       .replace(/[_-]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
 
-    if (!slug) {
+    if (!isLikelyProductName(slug)) {
       return "";
     }
 

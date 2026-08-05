@@ -31,7 +31,7 @@ const API_HEADERS = {
   "X-Api-Source": "pc",
   "X-Requested-With": "XMLHttpRequest",
   "X-Shopee-Language": "id",
-  "Af-Ac-Enc-Dat": "null",
+  Origin: "https://shopee.co.id",
 } as const;
 
 function asRecord(value: unknown): UnknownRecord | null {
@@ -149,6 +149,40 @@ function findProductRecord(
 
 function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function isLikelyProductName(value: string) {
+  const normalized = normalizeWhitespace(value);
+
+  return Boolean(
+    normalized.length >= 3 &&
+      normalized.length <= 500 &&
+      !/^\d+$/.test(normalized) &&
+      !/^shopee(?: indonesia)?$/i.test(normalized),
+  );
+}
+
+function isLikelyProductImageUrl(value: string) {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const pathname = parsed.pathname.toLowerCase();
+
+    if (/\.(?:css|js|mjs|map|json|woff2?|ttf|otf|eot)(?:$|\?)/i.test(pathname)) {
+      return false;
+    }
+
+    return (
+      /\.(?:avif|gif|jpe?g|png|webp)(?:$|\?)/i.test(pathname) ||
+      parsed.hostname.toLowerCase().endsWith("susercontent.com") ||
+      parsed.hostname.toLowerCase().includes("img.shopee")
+    );
+  } catch {
+    return false;
+  }
 }
 
 function parseDisplayPrice(value: string) {
@@ -319,13 +353,15 @@ function parseApiPayload(
     return null;
   }
 
-  const name = normalizeWhitespace(
+  const rawName = normalizeWhitespace(
     getString(product, ["title", "name", "item_name", "itemName"]),
   );
+  const name = isLikelyProductName(rawName) ? rawName : "";
   const description = normalizeWhitespace(
     getString(product, ["description", "description_text", "desc"]),
   );
-  const imageUrl = extractImage(product);
+  const rawImageUrl = extractImage(product);
+  const imageUrl = isLikelyProductImageUrl(rawImageUrl) ? rawImageUrl : "";
   const currentPrices = collectPriceValues(product, CURRENT_PRICE_KEYS)
     .filter((price) => Number.isFinite(price) && price > 0)
     .sort((a, b) => a - b);
