@@ -115,10 +115,7 @@ export default function SiteFooter({ footer }: SiteFooterProps) {
       </div>
 
       <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6">
-        <p className="max-w-4xl text-xs leading-5 text-slate-400">
-          Harga, stok, dan promo dapat berubah sewaktu-waktu. Sebagian tautan marketplace merupakan tautan afiliasi; komisi yang diterima tidak mengubah harga untuk pengguna maupun penilaian produk.
-        </p>
-        <p className="mt-4 text-xs leading-5 text-slate-500">
+        <p className="text-xs leading-5 text-slate-500">
           © {new Date().getFullYear()} BelanjaLab. Hak cipta dilindungi.
         </p>
       </div>
