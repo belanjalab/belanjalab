@@ -1,0 +1,15 @@
+SEO update files:
+- app/layout.tsx
+- app/sitemap.ts
+- app/manifest.ts
+- lib/seo.ts
+- GOOGLE_SEO_SETUP.md
+- SEO_CHANGED_FILES.txt
+
+Existing SEO files reviewed and retained:
+- app/robots.ts
+- app/product/[slug]/page.tsx
+- app/articles/[slug]/page.tsx
+- app/articles/page.tsx
+- app/search/page.tsx
+- app/compare/page.tsx

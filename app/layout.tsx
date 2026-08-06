@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import {
+  getOrganizationStructuredData,
+  getWebsiteStructuredData,
+  serializeStructuredData,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+} from "@/lib/seo";
 import { SITE_URL } from "@/lib/site-config";
 
 const inter = Inter({
@@ -10,17 +17,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const siteDescription =
-  "Platform rekomendasi, ulasan, dan perbandingan produk untuk membantu kamu belanja lebih cerdas.";
+const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "BelanjaLab",
-    template: "%s | BelanjaLab",
+    default: `${SITE_NAME} — Bandingkan Produk dan Harga`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: siteDescription,
-  applicationName: "BelanjaLab",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: [
     "BelanjaLab",
     "rekomendasi produk",
@@ -29,21 +35,33 @@ export const metadata: Metadata = {
     "harga produk",
     "belanja cerdas",
   ],
-  authors: [{ name: "BelanjaLab", url: SITE_URL }],
-  creator: "BelanjaLab",
-  publisher: "BelanjaLab",
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "id_ID",
     url: "/",
-    siteName: "BelanjaLab",
-    title: "BelanjaLab",
-    description: siteDescription,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — Bandingkan Produk dan Harga`,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} — Shopping Decision Platform`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BelanjaLab",
-    description: siteDescription,
+    title: `${SITE_NAME} — Bandingkan Produk dan Harga`,
+    description: SITE_DESCRIPTION,
+    images: ["/opengraph-image.png"],
   },
   robots: {
     index: true,
@@ -56,6 +74,12 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  verification: googleVerification
+    ? {
+        google: googleVerification,
+      }
+    : undefined,
+  category: "shopping",
 };
 
 export default function RootLayout({
@@ -63,9 +87,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = [
+    getOrganizationStructuredData(),
+    getWebsiteStructuredData(),
+  ];
+
   return (
     <html lang="id">
-      <body className={inter.variable}>{children}</body>
+      <body className={inter.variable}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeStructuredData(structuredData),
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
