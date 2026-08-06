@@ -10,6 +10,7 @@ import {
   type AffiliateProductScanResponse,
 } from "@/lib/affiliate-import/types";
 
+const REQUEST_GAP_MS = 350;
 
 const BLOCKED_IMAGE_MARKERS = [
   "/assets/",
@@ -73,6 +74,12 @@ function downloadImageCsv(items: AffiliateProductPreview[]) {
   anchor.click();
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
 }
 
 async function requestImageScan(link: string) {
@@ -157,7 +164,7 @@ export default function AffiliateLinkImportClient() {
 
     try {
       // Tetap satu link per request agar ringan untuk Cloudflare Worker.
-      for (const link of parsed.validLinks) {
+      for (const [index, link] of parsed.validLinks.entries()) {
         const item = await requestImageScan(link);
 
         results.push(item);
@@ -166,6 +173,12 @@ export default function AffiliateLinkImportClient() {
           completed: results.length,
           total: parsed.validLinks.length,
         });
+
+        // Jeda berjalan di browser, bukan di Worker. Ini menjaga layanan
+        // fallback tidak menerima terlalu banyak request dalam waktu singkat.
+        if (index < parsed.validLinks.length - 1) {
+          await wait(REQUEST_GAP_MS);
+        }
       }
 
       const foundCount = results.filter((item) =>

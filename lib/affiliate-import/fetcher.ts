@@ -3,15 +3,16 @@ import type {
   AffiliateProductPreview,
 } from "@/lib/affiliate-import/types";
 
-const REQUEST_TIMEOUT_MS = 8_000;
-const MAX_HTML_BYTES = 160_000;
-const MAX_REDIRECT_HOPS = 4;
+const REQUEST_TIMEOUT_MS = 28_000;
+const DIRECT_RESPONSE_LIMIT = 220_000;
+const EXTERNAL_RESPONSE_LIMIT = 520_000;
 
 const REQUEST_HEADERS = {
   Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "id-ID,id;q=0.9,en;q=0.7",
   "Cache-Control": "no-cache",
   Pragma: "no-cache",
+  Referer: "https://shopee.co.id/",
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 } as const;
@@ -28,17 +29,6 @@ const BLOCKED_IMAGE_MARKERS = [
   "shopee-mobilemall",
   "shopee_logo",
   "shopee-logo",
-];
-
-const PRODUCT_QUERY_KEYS = [
-  "origin_link",
-  "originLink",
-  "redirect",
-  "redirect_url",
-  "redirectUrl",
-  "target",
-  "target_url",
-  "url",
 ];
 
 function normalizeHostname(hostname: string) {
@@ -69,12 +59,16 @@ function normalizeShopeeUrl(value: string) {
     throw new Error("unsupported-url");
   }
 
+  if (url.username || url.password) {
+    throw new Error("unsupported-url");
+  }
+
   url.protocol = "https:";
   url.hash = "";
   return url.toString();
 }
 
-function decodeHtml(value: string) {
+function decodeTransportEscapes(value: string) {
   return value
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
@@ -88,171 +82,19 @@ function decodeHtml(value: string) {
     .trim();
 }
 
-function decodeRepeated(value: string) {
-  let decoded = decodeHtml(value);
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      const next = decodeURIComponent(decoded);
-
-      if (next === decoded) {
-        break;
-      }
-
-      decoded = next;
-    } catch {
-      break;
-    }
-  }
-
-  return decodeHtml(decoded).replace(/^["']|["']$/g, "").trim();
-}
-
 function readAttribute(tag: string, attributeName: string) {
   const pattern = new RegExp(
     `\\b${attributeName}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
     "i",
   );
   const match = tag.match(pattern);
-  return decodeHtml(match?.[1] ?? match?.[2] ?? match?.[3] ?? "");
-}
-
-function hasProductPath(url: URL) {
-  const pathname = decodeRepeated(url.pathname);
-
-  return (
-    /-i\.\d+\.\d+(?:\b|\/|$)/i.test(pathname) ||
-    /\/product\/\d+\/\d+(?:\b|\/|$)/i.test(pathname)
+  return decodeTransportEscapes(
+    match?.[1] ?? match?.[2] ?? match?.[3] ?? "",
   );
-}
-
-function productUrlFromDeepLink(value: string) {
-  const decoded = decodeRepeated(value);
-  const match = decoded.match(
-    /shopee:\/\/(?:product|item)\/(\d+)\/(\d+)/i,
-  );
-
-  if (!match) {
-    return "";
-  }
-
-  return `https://shopee.co.id/product/${match[1]}/${match[2]}`;
-}
-
-function extractProductUrlFromValue(
-  value: string,
-  baseUrl?: string,
-): string {
-  if (!value) {
-    return "";
-  }
-
-  const deepLink = productUrlFromDeepLink(value);
-
-  if (deepLink) {
-    return deepLink;
-  }
-
-  const decoded = decodeRepeated(value).replace(/[),.;]+$/, "");
-  let parsed: URL;
-
-  try {
-    parsed = new URL(decoded, baseUrl);
-  } catch {
-    return "";
-  }
-
-  if (!isAllowedShopeeHostname(parsed.hostname)) {
-    return "";
-  }
-
-  for (const key of PRODUCT_QUERY_KEYS) {
-    const nestedValue = parsed.searchParams.get(key);
-
-    if (!nestedValue || nestedValue === value) {
-      continue;
-    }
-
-    const nestedProductUrl = extractProductUrlFromValue(
-      nestedValue,
-      parsed.toString(),
-    );
-
-    if (nestedProductUrl) {
-      return nestedProductUrl;
-    }
-  }
-
-  if (!hasProductPath(parsed)) {
-    return "";
-  }
-
-  parsed.protocol = "https:";
-  parsed.hash = "";
-  return parsed.toString();
-}
-
-function extractProductUrlFromHtml(html: string, baseUrl: string) {
-  const decodedHtml = decodeHtml(html);
-  const candidates: string[] = [];
-
-  for (const match of decodedHtml.matchAll(
-    /(?:origin_link|originLink|redirect_url|redirectUrl|target_url|targetUrl)["']?\s*[:=]\s*["']([^"'<>\s]+)/gi,
-  )) {
-    if (match[1]) {
-      candidates.push(match[1]);
-    }
-  }
-
-  for (const match of decodedHtml.matchAll(
-    /https?(?::|%3A)(?:\/\/|%2F%2F)(?:[a-z0-9-]+\.)?shopee\.co\.id[^\s"'<>\\]+/gi,
-  )) {
-    if (match[0]) {
-      candidates.push(match[0]);
-    }
-  }
-
-  for (const match of decodedHtml.matchAll(
-    /shopee:\/\/(?:product|item)\/\d+\/\d+/gi,
-  )) {
-    if (match[0]) {
-      candidates.push(match[0]);
-    }
-  }
-
-  const canonicalPattern = /<(?:link|meta)\b[^>]*>/gi;
-  let canonicalMatch: RegExpExecArray | null;
-
-  while ((canonicalMatch = canonicalPattern.exec(decodedHtml)) !== null) {
-    const tag = canonicalMatch[0];
-    const rel = readAttribute(tag, "rel").toLowerCase();
-    const property = (
-      readAttribute(tag, "property") || readAttribute(tag, "name")
-    ).toLowerCase();
-
-    if (rel.includes("canonical")) {
-      candidates.push(readAttribute(tag, "href"));
-    }
-
-    if (property === "og:url" || property === "twitter:url") {
-      candidates.push(readAttribute(tag, "content"));
-    }
-  }
-
-  for (const candidate of candidates) {
-    const productUrl = extractProductUrlFromValue(candidate, baseUrl);
-
-    if (productUrl) {
-      return productUrl;
-    }
-  }
-
-  return "";
 }
 
 function isBlockedImageUrl(value: string) {
   const normalized = value.toLowerCase();
-
   return BLOCKED_IMAGE_MARKERS.some((marker) => normalized.includes(marker));
 }
 
@@ -262,7 +104,9 @@ function normalizeProductImageUrl(value: string, baseUrl: string) {
   }
 
   try {
-    const decoded = decodeRepeated(value);
+    const decoded = decodeTransportEscapes(value)
+      .replace(/^['"(<\[]+/, "")
+      .replace(/['")>\],.;]+$/, "");
     const url = new URL(
       decoded.startsWith("//") ? `https:${decoded}` : decoded,
       baseUrl,
@@ -284,17 +128,38 @@ function normalizeProductImageUrl(value: string, baseUrl: string) {
     }
 
     url.protocol = "https:";
+    url.hash = "";
     return url.toString();
   } catch {
     return "";
   }
 }
 
-function extractMetaImage(html: string, baseUrl: string) {
+function imageScore(value: string) {
+  const normalized = value.toLowerCase();
+  let score = 1;
+
+  if (normalized.includes("down-id.img.susercontent.com/file/")) score += 40;
+  if (/\/file\/id-/i.test(normalized)) score += 20;
+  if (normalized.includes("/file/")) score += 10;
+  if (normalized.includes("_tn")) score -= 3;
+
+  return score;
+}
+
+function pickBestImage(candidates: string[]) {
+  const uniqueCandidates = Array.from(new Set(candidates.filter(Boolean)));
+
+  uniqueCandidates.sort((left, right) => imageScore(right) - imageScore(left));
+  return uniqueCandidates[0] ?? "";
+}
+
+function extractMetaImages(text: string, baseUrl: string) {
+  const candidates: string[] = [];
   const metaPattern = /<meta\b[^>]*>/gi;
   let match: RegExpExecArray | null;
 
-  while ((match = metaPattern.exec(html)) !== null) {
+  while ((match = metaPattern.exec(text)) !== null) {
     const tag = match[0];
     const key = (readAttribute(tag, "property") || readAttribute(tag, "name"))
       .toLowerCase()
@@ -315,82 +180,342 @@ function extractMetaImage(html: string, baseUrl: string) {
     );
 
     if (imageUrl) {
-      return imageUrl;
+      candidates.push(imageUrl);
     }
   }
 
-  return "";
+  return candidates;
 }
 
-function extractFallbackImage(html: string, baseUrl: string) {
-  const normalized = decodeHtml(html);
-  const pattern = /https?:\/\/[^"'\s<>\\]+/gi;
-  const candidates: Array<{ url: string; score: number }> = [];
+function extractImageKeys(text: string) {
+  const candidates: string[] = [];
+  const keyPattern =
+    /(?:"|')?(?:image|image_url|imageUrl|cover|thumbnail)(?:"|')?\s*[:=]\s*(?:"|')([^"']{20,300})(?:"|')/gi;
   let match: RegExpExecArray | null;
   let checked = 0;
 
-  while ((match = pattern.exec(normalized)) !== null && checked < 180) {
+  while ((match = keyPattern.exec(text)) !== null && checked < 100) {
     checked += 1;
-    const imageUrl = normalizeProductImageUrl(match[0], baseUrl);
+    const rawValue = decodeTransportEscapes(match[1] ?? "").trim();
 
-    if (!imageUrl) {
+    if (!rawValue || /^https?:\/\//i.test(rawValue)) {
       continue;
     }
 
-    const lower = imageUrl.toLowerCase();
-    let score = 1;
+    const imageKey = rawValue.replace(/^\/+/, "");
 
-    if (lower.includes("down-id.img.susercontent.com/file/")) score += 20;
-    if (/\/file\/id-/i.test(lower)) score += 10;
-    if (lower.includes("_tn")) score -= 2;
-
-    candidates.push({ url: imageUrl, score });
+    if (
+      imageKey.length >= 20 &&
+      imageKey.length <= 220 &&
+      !/[\s<>]/.test(imageKey) &&
+      !isBlockedImageUrl(imageKey)
+    ) {
+      candidates.push(
+        `https://down-id.img.susercontent.com/file/${imageKey}`,
+      );
+    }
   }
 
-  candidates.sort((left, right) => right.score - left.score);
-  return candidates[0]?.url ?? "";
+  return candidates;
 }
 
-async function readLimitedHtml(response: Response) {
+function extractProductImage(text: string, baseUrl: string) {
+  if (!text) {
+    return "";
+  }
+
+  const decodedText = decodeTransportEscapes(text);
+  const candidates = extractMetaImages(decodedText, baseUrl);
+  const urlPattern = /https?:\/\/[^\s"'<>\\)\]]+/gi;
+  let match: RegExpExecArray | null;
+  let checked = 0;
+
+  while ((match = urlPattern.exec(decodedText)) !== null && checked < 280) {
+    checked += 1;
+    const imageUrl = normalizeProductImageUrl(match[0], baseUrl);
+
+    if (imageUrl) {
+      candidates.push(imageUrl);
+    }
+  }
+
+  for (const imageKeyUrl of extractImageKeys(decodedText)) {
+    const imageUrl = normalizeProductImageUrl(imageKeyUrl, baseUrl);
+
+    if (imageUrl) {
+      candidates.push(imageUrl);
+    }
+  }
+
+  return pickBestImage(candidates);
+}
+
+async function readLimitedText(response: Response, byteLimit: number) {
   if (!response.body) {
-    return (await response.text()).slice(0, MAX_HTML_BYTES);
+    return (await response.text()).slice(0, byteLimit);
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let html = "";
+  let output = "";
   let totalBytes = 0;
 
   try {
-    while (totalBytes < MAX_HTML_BYTES) {
+    while (totalBytes < byteLimit) {
       const { done, value } = await reader.read();
 
       if (done || !value) {
         break;
       }
 
-      const remaining = MAX_HTML_BYTES - totalBytes;
+      const remaining = byteLimit - totalBytes;
       const chunk =
         value.byteLength > remaining ? value.subarray(0, remaining) : value;
 
-      html += decoder.decode(chunk, { stream: true });
+      output += decoder.decode(chunk, { stream: true });
       totalBytes += chunk.byteLength;
 
-      if (/<\/head>/i.test(html) || chunk.byteLength < value.byteLength) {
+      if (chunk.byteLength < value.byteLength) {
         break;
       }
     }
   } finally {
-    html += decoder.decode();
+    output += decoder.decode();
 
     try {
       await reader.cancel();
     } catch {
-      // Stream sudah selesai.
+      // Stream telah selesai atau sudah ditutup.
     }
   }
 
-  return html;
+  return output;
+}
+
+type ImageLookupResult = {
+  imageUrl: string;
+  resolvedUrl: string | null;
+  source: "direct" | "microlink" | "jina" | null;
+  warning: string | null;
+};
+
+async function fetchDirectImage(
+  targetUrl: string,
+  signal: AbortSignal,
+): Promise<ImageLookupResult> {
+  try {
+    const response = await fetch(targetUrl, {
+      method: "GET",
+      headers: REQUEST_HEADERS,
+      redirect: "follow",
+      cache: "no-store",
+      signal,
+    });
+
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return {
+        imageUrl: "",
+        resolvedUrl: response.url || targetUrl,
+        source: null,
+        warning: `Shopee mengembalikan HTTP ${response.status}.`,
+      };
+    }
+
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+
+    if (contentType && !contentType.includes("text/html")) {
+      await response.body?.cancel().catch(() => undefined);
+      return {
+        imageUrl: "",
+        resolvedUrl: response.url || targetUrl,
+        source: null,
+        warning: "Respons Shopee bukan halaman HTML.",
+      };
+    }
+
+    const resolvedUrl = response.url || targetUrl;
+    const text = await readLimitedText(response, DIRECT_RESPONSE_LIMIT);
+    const imageUrl = extractProductImage(text, resolvedUrl);
+
+    return {
+      imageUrl,
+      resolvedUrl,
+      source: imageUrl ? "direct" : null,
+      warning: imageUrl ? null : "Metadata gambar tidak ada pada halaman langsung.",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    return {
+      imageUrl: "",
+      resolvedUrl: targetUrl,
+      source: null,
+      warning: "Halaman langsung Shopee tidak dapat dibaca.",
+    };
+  }
+}
+
+function readMicrolinkImage(payload: unknown, baseUrl: string) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return "";
+  }
+
+  const root = payload as Record<string, unknown>;
+
+  if (root.status !== "success") {
+    return "";
+  }
+
+  const data =
+    root.data && typeof root.data === "object" && !Array.isArray(root.data)
+      ? (root.data as Record<string, unknown>)
+      : null;
+
+  if (!data) {
+    return "";
+  }
+
+  const imageValue = data.image;
+  let rawImage = "";
+
+  if (typeof imageValue === "string") {
+    rawImage = imageValue;
+  } else if (
+    imageValue &&
+    typeof imageValue === "object" &&
+    !Array.isArray(imageValue)
+  ) {
+    const imageRecord = imageValue as Record<string, unknown>;
+    const candidate = imageRecord.url ?? imageRecord.src ?? imageRecord.href;
+    rawImage = typeof candidate === "string" ? candidate : "";
+  }
+
+  return normalizeProductImageUrl(rawImage, baseUrl);
+}
+
+async function fetchMicrolinkImage(
+  targetUrl: string,
+  signal: AbortSignal,
+): Promise<ImageLookupResult> {
+  const endpoint = new URL("https://api.microlink.io/");
+  endpoint.searchParams.set("url", targetUrl);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      redirect: "follow",
+      cache: "no-store",
+      signal,
+    });
+
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return {
+        imageUrl: "",
+        resolvedUrl: targetUrl,
+        source: null,
+        warning:
+          response.status === 429
+            ? "Fallback preview sedang dibatasi; mencoba browser reader."
+            : `Fallback preview mengembalikan HTTP ${response.status}.`,
+      };
+    }
+
+    const text = await readLimitedText(response, 180_000);
+    let payload: unknown;
+
+    try {
+      payload = JSON.parse(text) as unknown;
+    } catch {
+      return {
+        imageUrl: "",
+        resolvedUrl: targetUrl,
+        source: null,
+        warning: "Respons fallback preview tidak valid.",
+      };
+    }
+
+    const imageUrl = readMicrolinkImage(payload, targetUrl);
+
+    return {
+      imageUrl,
+      resolvedUrl: targetUrl,
+      source: imageUrl ? "microlink" : null,
+      warning: imageUrl ? null : "Fallback preview tidak menemukan gambar produk.",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    return {
+      imageUrl: "",
+      resolvedUrl: targetUrl,
+      source: null,
+      warning: "Fallback preview tidak dapat diakses.",
+    };
+  }
+}
+
+async function fetchJinaImage(
+  targetUrl: string,
+  signal: AbortSignal,
+): Promise<ImageLookupResult> {
+  const endpoint = `https://r.jina.ai/${targetUrl}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        Accept: "text/plain",
+        "X-Engine": "browser",
+        "X-No-Cache": "true",
+        "X-Timeout": "16",
+      },
+      // Cloudflare Workers hanya menerima follow atau manual.
+      redirect: "follow",
+      cache: "no-store",
+      signal,
+    });
+
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return {
+        imageUrl: "",
+        resolvedUrl: targetUrl,
+        source: null,
+        warning:
+          response.status === 429
+            ? "Browser reader sedang dibatasi. Coba ulang beberapa saat lagi."
+            : `Browser reader mengembalikan HTTP ${response.status}.`,
+      };
+    }
+
+    const text = await readLimitedText(response, EXTERNAL_RESPONSE_LIMIT);
+    const imageUrl = extractProductImage(text, targetUrl);
+
+    return {
+      imageUrl,
+      resolvedUrl: targetUrl,
+      source: imageUrl ? "jina" : null,
+      warning: imageUrl ? null : "Browser reader tidak menemukan gambar produk.",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    return {
+      imageUrl: "",
+      resolvedUrl: targetUrl,
+      source: null,
+      warning: "Browser reader tidak dapat mengakses halaman Shopee.",
+    };
+  }
 }
 
 function createPreview(
@@ -400,6 +525,7 @@ function createPreview(
     imageUrl?: string;
     errorCode?: AffiliateProductFetchErrorCode | null;
     message: string;
+    warnings?: string[];
   },
 ): AffiliateProductPreview {
   const imageUrl = options.imageUrl ?? "";
@@ -412,7 +538,7 @@ function createPreview(
     status: imageUrl ? "success" : "failed",
     errorCode: imageUrl ? null : (options.errorCode ?? "metadata-not-found"),
     message: options.message,
-    warnings: [],
+    warnings: options.warnings ?? [],
     name: "",
     description: "",
     imageUrl,
@@ -423,75 +549,6 @@ function createPreview(
     itemId: null,
     fetchedAt: new Date().toISOString(),
   };
-}
-
-async function resolveProductUrl(inputUrl: string, signal: AbortSignal) {
-  const directProductUrl = extractProductUrlFromValue(inputUrl);
-
-  if (directProductUrl) {
-    return directProductUrl;
-  }
-
-  let currentUrl = inputUrl;
-
-  for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop += 1) {
-    const response = await fetch(currentUrl, {
-      method: "GET",
-      headers: REQUEST_HEADERS,
-      redirect: "manual",
-      signal,
-    });
-
-    const responseProductUrl = extractProductUrlFromValue(response.url);
-
-    if (responseProductUrl) {
-      return responseProductUrl;
-    }
-
-    const location = response.headers.get("location");
-
-    if (location) {
-      const nextUrl = new URL(location, currentUrl).toString();
-      const productUrl = extractProductUrlFromValue(nextUrl, currentUrl);
-
-      if (productUrl) {
-        return productUrl;
-      }
-
-      let parsedNextUrl: URL;
-
-      try {
-        parsedNextUrl = new URL(nextUrl);
-      } catch {
-        return "";
-      }
-
-      if (!isAllowedShopeeHostname(parsedNextUrl.hostname)) {
-        return "";
-      }
-
-      currentUrl = parsedNextUrl.toString();
-      continue;
-    }
-
-    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
-
-    if (response.ok && (!contentType || contentType.includes("text/html"))) {
-      const html = await readLimitedHtml(response);
-      const productUrl = extractProductUrlFromHtml(
-        html,
-        response.url || currentUrl,
-      );
-
-      if (productUrl) {
-        return productUrl;
-      }
-    }
-
-    break;
-  }
-
-  return "";
 }
 
 async function scanImageLink(affiliateUrl: string) {
@@ -508,67 +565,73 @@ async function scanImageLink(affiliateUrl: string) {
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const warnings: string[] = [];
 
   try {
-    const productUrl = await resolveProductUrl(normalizedUrl, controller.signal);
+    const directResult = await fetchDirectImage(normalizedUrl, controller.signal);
 
-    if (!productUrl) {
+    if (directResult.imageUrl) {
       return createPreview(affiliateUrl, {
-        resolvedUrl: normalizedUrl,
-        errorCode: "redirect-failed",
-        message:
-          "URL produk asli tidak ditemukan dari link pendek Shopee. Ikon aplikasi tidak diekspor.",
+        resolvedUrl: directResult.resolvedUrl,
+        imageUrl: directResult.imageUrl,
+        message: "Link gambar produk berhasil diambil langsung dari Shopee.",
       });
     }
 
-    const response = await fetch(productUrl, {
-      method: "GET",
-      headers: REQUEST_HEADERS,
-      redirect: "follow",
-      signal: controller.signal,
-    });
+    if (directResult.warning) {
+      warnings.push(directResult.warning);
+    }
 
-    if (!response.ok) {
+    // Jalur ini mempertahankan metode yang sebelumnya berhasil membaca
+    // gambar dari link pendek, tetapi hanya mengambil satu field image_url.
+    const microlinkResult = await fetchMicrolinkImage(
+      normalizedUrl,
+      controller.signal,
+    );
+
+    if (microlinkResult.imageUrl) {
       return createPreview(affiliateUrl, {
-        resolvedUrl: productUrl,
-        errorCode: "http-error",
-        message: `Halaman produk Shopee mengembalikan HTTP ${response.status}.`,
+        resolvedUrl: microlinkResult.resolvedUrl,
+        imageUrl: microlinkResult.imageUrl,
+        message: "Link gambar produk berhasil diambil.",
       });
     }
 
-    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (microlinkResult.warning) {
+      warnings.push(microlinkResult.warning);
+    }
 
-    if (contentType && !contentType.includes("text/html")) {
+    const jinaResult = await fetchJinaImage(normalizedUrl, controller.signal);
+
+    if (jinaResult.imageUrl) {
       return createPreview(affiliateUrl, {
-        resolvedUrl: productUrl,
-        errorCode: "unsupported-content",
-        message: "Respons halaman produk Shopee bukan HTML.",
+        resolvedUrl: jinaResult.resolvedUrl,
+        imageUrl: jinaResult.imageUrl,
+        message: "Link gambar produk berhasil diambil melalui browser reader.",
       });
     }
 
-    const resolvedUrl =
-      extractProductUrlFromValue(response.url) || productUrl;
-    const html = await readLimitedHtml(response);
-    const imageUrl =
-      extractMetaImage(html, resolvedUrl) ||
-      extractFallbackImage(html, resolvedUrl);
+    if (jinaResult.warning) {
+      warnings.push(jinaResult.warning);
+    }
 
     return createPreview(affiliateUrl, {
-      resolvedUrl,
-      imageUrl,
-      errorCode: imageUrl ? null : "metadata-not-found",
-      message: imageUrl
-        ? "Link gambar produk berhasil diambil."
-        : "Gambar produk tidak ditemukan. Ikon dan logo Shopee otomatis diabaikan.",
+      resolvedUrl: normalizedUrl,
+      errorCode: "metadata-not-found",
+      message:
+        "Gambar produk belum ditemukan. Ikon aplikasi Shopee otomatis diabaikan.",
+      warnings: Array.from(new Set(warnings)),
     });
   } catch (error) {
-    const timedOut = error instanceof DOMException && error.name === "AbortError";
+    const timedOut = error instanceof Error && error.name === "AbortError";
 
     return createPreview(affiliateUrl, {
+      resolvedUrl: normalizedUrl,
       errorCode: timedOut ? "request-timeout" : "fetch-failed",
       message: timedOut
-        ? "Permintaan ke Shopee melewati batas waktu."
-        : "Halaman Shopee gagal dibaca.",
+        ? "Pengambilan gambar melewati batas waktu. Coba ulang link ini."
+        : "Link gambar Shopee gagal diproses.",
+      warnings: Array.from(new Set(warnings)),
     });
   } finally {
     clearTimeout(timeoutId);
