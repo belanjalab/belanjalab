@@ -308,7 +308,7 @@ export default async function TaxonomiesPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-700">Lab</span>
+                Belanja<span className="text-amber-700">Lab</span>
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Kategori & Merek
@@ -327,7 +327,7 @@ export default async function TaxonomiesPage({
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             CMS Admin
           </p>
 
@@ -374,18 +374,18 @@ export default async function TaxonomiesPage({
                   name="name"
                   required
                   placeholder="Nama kategori"
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                 />
 
                 <input
                   name="slug"
                   placeholder="Slug otomatis"
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                 />
 
                 <button
                   type="submit"
-                  className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
                 >
                   Tambah
                 </button>
@@ -408,7 +408,7 @@ export default async function TaxonomiesPage({
                         required
                         defaultValue={category.name}
                         aria-label={`Nama kategori ${category.name}`}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400"
                       />
 
                       <input
@@ -416,7 +416,7 @@ export default async function TaxonomiesPage({
                         required
                         defaultValue={category.slug}
                         aria-label={`Slug kategori ${category.name}`}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400"
                       />
 
                       <button
@@ -463,18 +463,18 @@ export default async function TaxonomiesPage({
                   name="name"
                   required
                   placeholder="Nama merek"
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                 />
 
                 <input
                   name="slug"
                   placeholder="Slug otomatis"
-                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                 />
 
                 <button
                   type="submit"
-                  className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
                 >
                   Tambah
                 </button>
@@ -497,7 +497,7 @@ export default async function TaxonomiesPage({
                         required
                         defaultValue={brand.name}
                         aria-label={`Nama merek ${brand.name}`}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400"
                       />
 
                       <input
@@ -505,7 +505,7 @@ export default async function TaxonomiesPage({
                         required
                         defaultValue={brand.slug}
                         aria-label={`Slug merek ${brand.name}`}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-orange-400"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400"
                       />
 
                       <button

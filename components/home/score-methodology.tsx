@@ -29,7 +29,7 @@ export default function ScoreMethodology() {
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/15">
             <ShieldCheckIcon className="h-5 w-5" />
           </div>
-          <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Cara kami menyajikan data
           </p>
           <h2 className="brand-text-balance mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
@@ -38,7 +38,7 @@ export default function ScoreMethodology() {
           <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
             BelanjaLab Score membantu menyaring pilihan. Harga dilengkapi sumber dan waktu pengecekan agar kamu tahu seberapa baru data yang sedang dilihat.
           </p>
-          <p className="mt-4 rounded-2xl border border-orange-100 bg-orange-50/70 p-4 text-sm font-semibold leading-6 text-orange-950">
+          <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm font-semibold leading-6 text-amber-950">
             Skor tinggi belum tentu paling cocok untuk semua orang. Gunakan skor sebagai titik awal, lalu baca detail analisis dan bandingkan sesuai kebutuhanmu.
           </p>
         </div>
@@ -90,11 +90,11 @@ export default function ScoreMethodology() {
 
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-800 ring-1 ring-orange-100">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-100">
                 <RefreshIcon className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
                   Transparansi harga
                 </p>
                 <h3 className="mt-0.5 text-base font-extrabold text-slate-950">

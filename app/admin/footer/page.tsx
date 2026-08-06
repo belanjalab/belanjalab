@@ -179,7 +179,7 @@ export default async function AdminFooterPage({
       <div className="mx-auto max-w-4xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
@@ -230,7 +230,7 @@ export default async function AdminFooterPage({
                   footer?.company_description ??
                   "Membantu masyarakat Indonesia memilih produk dengan lebih cerdas."
                 }
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
               />
             </label>
 
@@ -242,7 +242,7 @@ export default async function AdminFooterPage({
                   name="contact_url"
                   defaultValue={footer?.contact_url ?? ""}
                   placeholder="mailto:halo@belanjalab.com atau /contact"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -253,7 +253,7 @@ export default async function AdminFooterPage({
                   name="careers_url"
                   defaultValue={footer?.careers_url ?? ""}
                   placeholder="/careers"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -264,7 +264,7 @@ export default async function AdminFooterPage({
                   name="privacy_url"
                   defaultValue={footer?.privacy_url ?? ""}
                   placeholder="/privacy"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -275,7 +275,7 @@ export default async function AdminFooterPage({
                   name="terms_url"
                   defaultValue={footer?.terms_url ?? ""}
                   placeholder="/terms"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -286,7 +286,7 @@ export default async function AdminFooterPage({
                   name="disclaimer_url"
                   defaultValue={footer?.disclaimer_url ?? ""}
                   placeholder="/disclaimer"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
             </div>
@@ -299,7 +299,7 @@ export default async function AdminFooterPage({
 
             <button
               type="submit"
-              className="w-fit rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+              className="w-fit rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
               Simpan Footer
             </button>

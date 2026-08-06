@@ -72,6 +72,22 @@ export default function CompareClient({
     [selectedProducts],
   );
 
+  const lowestPriceProductId = useMemo(() => {
+    const withPrice = selectedProducts.filter(
+      (product): product is CompareProduct & { price: number } =>
+        typeof product.price === "number",
+    );
+    if (withPrice.length < 2) return null;
+    return withPrice.sort((a, b) => a.price - b.price)[0].id;
+  }, [selectedProducts]);
+
+  const highestScoreProductId = useMemo(() => {
+    if (selectedProducts.length < 2) return null;
+    const maxScore = Math.max(...selectedProducts.map((product) => product.score));
+    const winners = selectedProducts.filter((product) => product.score === maxScore);
+    return winners.length === 1 ? winners[0].id : null;
+  }, [selectedProducts]);
+
   function removeProduct(productId: string) {
     setSelectedProducts((current) =>
       current.filter((product) => product.id !== productId),
@@ -124,7 +140,7 @@ export default function CompareClient({
                     />
                   </div>
 
-                  <p className="mt-4 text-xs font-bold uppercase tracking-[0.1em] text-orange-700">
+                  <p className="mt-4 text-xs font-bold uppercase tracking-[0.1em] text-amber-700">
                     {product.category}
                   </p>
                   <h2 className="mt-1.5 min-h-12 text-base font-extrabold leading-6 tracking-[-0.02em] text-slate-950">
@@ -159,7 +175,7 @@ export default function CompareClient({
             </div>
           ) : (
             <div className="public-card rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                 <CompareIcon className="h-7 w-7" />
               </span>
               <h2 className="mt-4 text-xl font-extrabold text-slate-950">
@@ -178,7 +194,7 @@ export default function CompareClient({
               setSearchQuery("");
             }}
             disabled={selectedProducts.length >= 3 || products.length === 0}
-            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <span aria-hidden="true" className="text-lg">+</span>
             {selectedProducts.length >= 3 ? "Maksimal tiga produk" : "Tambahkan produk"}
@@ -208,7 +224,7 @@ export default function CompareClient({
                 </button>
               </div>
 
-              <label className="mt-5 flex min-h-12 items-center rounded-xl border border-slate-300 px-3 focus-within:border-orange-700 focus-within:ring-4 focus-within:ring-orange-100">
+              <label className="mt-5 flex min-h-12 items-center rounded-xl border border-slate-300 px-3 focus-within:border-amber-700 focus-within:ring-4 focus-within:ring-amber-100">
                 <SearchIcon className="h-5 w-5 shrink-0 text-slate-500" />
                 <span className="sr-only">Cari produk untuk dibandingkan</span>
                 <input
@@ -229,7 +245,7 @@ export default function CompareClient({
                       key={product.id}
                       type="button"
                       onClick={() => addProduct(product)}
-                      className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition hover:border-orange-300 hover:bg-orange-50"
+                      className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition hover:border-amber-300 hover:bg-amber-50"
                     >
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1 ring-1 ring-inset ring-slate-100">
                         <img
@@ -265,7 +281,7 @@ export default function CompareClient({
 
       <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
         <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Detail perbandingan
           </p>
           <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -288,15 +304,49 @@ export default function CompareClient({
                 <tbody>
                   <tr className="border-b border-slate-100">
                     <th scope="row" className="sticky left-0 z-10 bg-slate-50 px-4 py-4 font-bold text-slate-700">Harga</th>
-                    {selectedProducts.map((product) => (
-                      <td key={product.id} className="px-4 py-4 font-extrabold text-slate-950">{product.formattedPrice}</td>
-                    ))}
+                    {selectedProducts.map((product) => {
+                      const isWinner = product.id === lowestPriceProductId;
+                      return (
+                        <td
+                          key={product.id}
+                          className={`px-4 py-4 font-extrabold ${
+                            isWinner ? "bg-emerald-50 text-emerald-800" : "text-slate-950"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {product.formattedPrice}
+                            {isWinner && (
+                              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                Termurah
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                   <tr className="border-b border-slate-100">
                     <th scope="row" className="sticky left-0 z-10 bg-slate-50 px-4 py-4 font-bold text-slate-700">BelanjaLab Score</th>
-                    {selectedProducts.map((product) => (
-                      <td key={product.id} className="px-4 py-4 font-extrabold text-emerald-800">{product.score.toFixed(1)}/10</td>
-                    ))}
+                    {selectedProducts.map((product) => {
+                      const isWinner = product.id === highestScoreProductId;
+                      return (
+                        <td
+                          key={product.id}
+                          className={`px-4 py-4 font-extrabold ${
+                            isWinner ? "bg-emerald-50 text-emerald-800" : "text-emerald-800"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {product.score.toFixed(1)}/10
+                            {isWinner && (
+                              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                Tertinggi
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                   {specificationRows.map((row) => (
                     <tr key={row.key} className="border-b border-slate-100 last:border-b-0">
@@ -322,7 +372,7 @@ export default function CompareClient({
       {selectedProducts.length >= 2 && topScoredProduct && (
         <section className="px-4 py-10 md:px-5 md:py-14">
           <div className="quick-compare-surface mx-auto max-w-7xl rounded-3xl border border-slate-200 p-6 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
               Ringkasan sementara
             </p>
             <div className="mt-2 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -336,7 +386,7 @@ export default function CompareClient({
               </div>
               <a
                 href={`/product/${topScoredProduct.slug}`}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white hover:bg-orange-800"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white hover:bg-slate-800"
               >
                 Lihat analisis <ArrowRightIcon />
               </a>

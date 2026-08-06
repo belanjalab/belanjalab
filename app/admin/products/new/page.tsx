@@ -315,7 +315,7 @@ export default async function NewProductPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-700">Lab</span>
+                Belanja<span className="text-amber-700">Lab</span>
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Tambah Produk
@@ -334,7 +334,7 @@ export default async function NewProductPage({
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             CMS Admin
           </p>
 
@@ -373,7 +373,7 @@ export default async function NewProductPage({
                     name="name"
                     required
                     placeholder="Contoh: Logitech G304"
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -385,7 +385,7 @@ export default async function NewProductPage({
                     id="slug"
                     name="slug"
                     placeholder="Otomatis dari nama jika dikosongkan"
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -401,7 +401,7 @@ export default async function NewProductPage({
                     name="category_id"
                     required
                     defaultValue=""
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     <option value="" disabled>
                       Pilih kategori
@@ -423,7 +423,7 @@ export default async function NewProductPage({
                     name="brand_id"
                     required
                     defaultValue=""
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     <option value="" disabled>
                       Pilih merek
@@ -448,7 +448,7 @@ export default async function NewProductPage({
                     name="short_description"
                     maxLength={240}
                     placeholder="Ringkasan singkat produk"
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -464,7 +464,7 @@ export default async function NewProductPage({
                     name="description"
                     rows={6}
                     placeholder="Jelaskan kelebihan, kekurangan, dan target pengguna."
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -480,7 +480,7 @@ export default async function NewProductPage({
                     name="image_file"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-amber-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-amber-600"
                   />
                   <p className="mt-2 text-xs text-slate-500">
                     JPG, PNG, atau WebP. Maksimal 5 MB.
@@ -496,7 +496,7 @@ export default async function NewProductPage({
                     name="image_url"
                     type="url"
                     placeholder="https://..."
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                   <p className="mt-2 text-xs text-slate-500">
                     Dipakai jika tidak mengunggah file.
@@ -511,7 +511,7 @@ export default async function NewProductPage({
                     id="status"
                     name="status"
                     defaultValue="draft"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
@@ -546,7 +546,7 @@ export default async function NewProductPage({
                       max="10"
                       step="0.1"
                       defaultValue="0"
-                      className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                      className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                     />
                   </div>
                 ))}
@@ -571,7 +571,7 @@ export default async function NewProductPage({
                     id="marketplace_id"
                     name="marketplace_id"
                     defaultValue=""
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     <option value="">Belum ada</option>
                     {marketplaces.map((marketplace) => (
@@ -596,7 +596,7 @@ export default async function NewProductPage({
                     min="0"
                     step="1"
                     placeholder="250000"
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                   />
                 </div>
 
@@ -612,7 +612,7 @@ export default async function NewProductPage({
                     name="affiliate_url"
                     type="url"
                     placeholder="https://..."
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
@@ -628,7 +628,7 @@ export default async function NewProductPage({
 
               <button
                 type="submit"
-                className="rounded-xl bg-orange-700 px-6 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800"
               >
                 Simpan Produk
               </button>

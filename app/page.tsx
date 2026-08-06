@@ -124,7 +124,7 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-3 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                   Jelajahi kategori
                 </p>
                 <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-slate-950 sm:text-xl">
@@ -133,7 +133,7 @@ export default async function Home() {
               </div>
               <a
                 href="/search"
-                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
               >
                 Cari lainnya <ArrowRightIcon />
               </a>
@@ -145,11 +145,11 @@ export default async function Home() {
                   <a
                     key={category.id}
                     href={`/search?q=${encodeURIComponent(category.name)}`}
-                    className="group flex min-h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white p-2 text-center transition hover:border-orange-200 hover:bg-orange-50/40 sm:w-24 md:min-h-24 md:w-auto md:p-3"
+                    className="group flex min-h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white p-2 text-center transition hover:border-amber-200 hover:bg-amber-50/40 sm:w-24 md:min-h-24 md:w-auto md:p-3"
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-700 transition-colors group-hover:bg-white group-hover:shadow-sm sm:h-11 sm:w-11"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-700 transition-colors group-hover:bg-white group-hover:shadow-sm sm:h-11 sm:w-11"
                     >
                       <CategoryGlyph icon={category.icon} />
                     </span>
@@ -173,9 +173,9 @@ export default async function Home() {
         </section>
 
         <section className="px-4 pb-5 pt-4 sm:pb-7 sm:pt-5 md:px-5 md:pb-8 md:pt-6">
-          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-orange-100 px-5 py-7 sm:px-7 sm:py-8 md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] md:gap-8 md:px-8 md:py-9 lg:gap-10 lg:px-10 lg:py-11">
+          <div className="hero-surface relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-amber-100 px-5 py-7 sm:px-7 sm:py-8 md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] md:gap-8 md:px-8 md:py-9 lg:gap-10 lg:px-10 lg:py-11">
             <div className="relative z-10 flex min-w-0 flex-col justify-center">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-2 text-xs font-semibold tracking-[0.06em] text-orange-800">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-2 text-xs font-semibold tracking-[0.06em] text-amber-800">
                 <SparklesIcon className="h-4 w-4" />
                 Shopping Decision Platform
               </div>
@@ -196,7 +196,7 @@ export default async function Home() {
                 {["Cari produk", "Bandingkan pilihan", "Putuskan dengan yakin"].map(
                   (step, index) => (
                     <li key={step} className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ee4d2d] text-xs font-semibold text-white">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
                         {index + 1}
                       </span>
                       {step}
@@ -208,13 +208,13 @@ export default async function Home() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
                   href={hero?.primary_button_url ?? "/search"}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#ee4d2d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#d94322]"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                   {hero?.primary_button_text ?? "Cari produk"} <ArrowRightIcon />
                 </a>
                 <a
                   href={hero?.secondary_button_url ?? "/compare"}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-orange-300 hover:text-orange-700"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700"
                 >
                   <CompareIcon className="h-[18px] w-[18px]" />
                   {hero?.secondary_button_text ?? "Bandingkan"}
@@ -227,7 +227,7 @@ export default async function Home() {
                   <a
                     key={item}
                     href={`/search?q=${encodeURIComponent(item)}`}
-                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
+                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
                   >
                     {item}
                   </a>
@@ -239,13 +239,13 @@ export default async function Home() {
             <div className="relative z-10 mt-8 flex items-center justify-center md:mt-0">
               <div
                 aria-hidden="true"
-                className="absolute inset-6 rounded-full bg-orange-300/30 blur-3xl"
+                className="absolute inset-6 rounded-full bg-amber-200/40 blur-3xl"
               />
 
               <article className="hero-product-card relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 sm:max-w-md sm:p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">
                       Produk Pilihan
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
@@ -285,8 +285,8 @@ export default async function Home() {
                 </p>
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl border border-orange-100 bg-orange-50/70 p-3">
-                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-orange-800">
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-amber-800">
                       Kekuatan utama
                     </p>
                     <p className="mt-1 text-xs font-extrabold leading-5 text-slate-950 sm:text-sm">
@@ -311,7 +311,7 @@ export default async function Home() {
                     <p className="text-xs font-semibold text-slate-500">
                       {heroPriceLabel}
                     </p>
-                    <p className="mt-1 text-base font-semibold text-[#ee4d2d]">
+                    <p className="mt-1 text-base font-semibold text-slate-900">
                       {heroProductPrice}
                     </p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
@@ -325,7 +325,7 @@ export default async function Home() {
                   {heroProductSlug && (
                     <a
                       href={`/product/${heroProductSlug}`}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#ee4d2d] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#d94322]"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                     >
                       Lihat analisis
                       <ArrowRightIcon />
@@ -345,7 +345,7 @@ export default async function Home() {
                 href={href}
                 className="flex gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50 sm:p-3"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
                   <Icon className="h-[18px] w-[18px]" />
                 </div>
                 <div className="min-w-0">
@@ -370,7 +370,7 @@ export default async function Home() {
               <QuickComparison products={quickComparisonProducts} />
             ) : (
               <div className="quick-compare-surface rounded-3xl border border-slate-200 p-6 sm:p-8">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                   Bandingkan cepat
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -381,7 +381,7 @@ export default async function Home() {
                 </p>
                 <a
                   href="/compare"
-                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition-colors hover:bg-orange-800"
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white transition-colors hover:bg-slate-800"
                 >
                   Buka perbandingan <ArrowRightIcon />
                 </a>
@@ -397,7 +397,7 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
               <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                   Pilihan terkurasi
                 </p>
                 <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
@@ -409,7 +409,7 @@ export default async function Home() {
               </div>
               <a
                 href="/search"
-                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
               >
                 Cari produk <ArrowRightIcon />
               </a>
@@ -450,7 +450,7 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                   Panduan praktis
                 </p>
                 <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -459,7 +459,7 @@ export default async function Home() {
               </div>
               <a
                 href="/articles"
-                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
               >
                 Lihat semua <ArrowRightIcon />
               </a>
@@ -493,7 +493,7 @@ export default async function Home() {
                     </div>
 
                     <div className="min-w-0 p-4 md:p-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-orange-700">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-700">
                         Artikel
                       </p>
                       <h3 className="mt-1.5 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base md:mt-2 md:text-base md:leading-6">

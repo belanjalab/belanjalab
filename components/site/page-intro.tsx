@@ -17,8 +17,8 @@ export default function PageIntro({
 }: PageIntroProps) {
   return (
     <section className={`px-4 md:px-5 ${compact ? "py-5 md:py-7" : "py-7 md:py-10"}`}>
-      <div className="page-intro-surface mx-auto max-w-7xl overflow-hidden rounded-2xl border border-slate-200 border-t-[3px] border-t-[#ee4d2d] px-5 py-6 shadow-sm sm:px-7 md:px-9 md:py-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-orange-700">
+      <div className="page-intro-surface mx-auto max-w-7xl overflow-hidden rounded-2xl border border-slate-200 border-t-[3px] border-t-amber-500 px-5 py-6 shadow-sm sm:px-7 md:px-9 md:py-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-amber-700">
           {eyebrow}
         </p>
         <h1 className="brand-text-balance mt-2 max-w-4xl text-2xl font-bold leading-[1.16] tracking-[-0.03em] text-slate-950 sm:text-3xl md:text-4xl">

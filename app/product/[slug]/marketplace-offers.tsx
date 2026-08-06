@@ -102,7 +102,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
     <section>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Perbandingan harga
           </p>
           <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -206,9 +206,9 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
                     </p>
                   </div>
 
-                  <div className="rounded-xl bg-orange-50 p-3">
-                    <p className="text-xs font-semibold text-orange-800">Total</p>
-                    <p className="mt-1 text-sm font-extrabold text-orange-900">
+                  <div className="rounded-xl bg-amber-50 p-3">
+                    <p className="text-xs font-semibold text-amber-800">Total</p>
+                    <p className="mt-1 text-sm font-extrabold text-amber-900">
                       {offer.formattedTotalPrice}
                     </p>
                   </div>
@@ -227,7 +227,7 @@ export default function MarketplaceOffers({ offers }: MarketplaceOffersProps) {
                       href={offer.affiliateUrl ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer sponsored"
-                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-extrabold text-white transition hover:bg-orange-800"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-extrabold text-white transition hover:bg-slate-800"
                     >
                       Buka toko <ExternalLinkIcon className="h-4 w-4" />
                     </a>

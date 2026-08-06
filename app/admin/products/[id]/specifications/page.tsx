@@ -222,7 +222,7 @@ export default async function ProductSpecificationsPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-700">Lab</span>
+                Belanja<span className="text-amber-700">Lab</span>
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Spesifikasi Produk
@@ -241,7 +241,7 @@ export default async function ProductSpecificationsPage({
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             CMS Admin
           </p>
 
@@ -356,7 +356,7 @@ export default async function ProductSpecificationsPage({
                         <div className="flex justify-end border-t border-slate-100 pt-4">
                           <button
                             type="submit"
-                            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-orange-700 px-4 text-xs font-bold text-white hover:bg-orange-800"
+                            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-4 text-xs font-bold text-white hover:bg-slate-800"
                           >
                             Simpan
                           </button>
@@ -464,7 +464,7 @@ export default async function ProductSpecificationsPage({
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                  className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
                 >
                   Tambah Spesifikasi
                 </button>

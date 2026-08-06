@@ -65,7 +65,7 @@ export default async function ForgotPasswordPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
@@ -74,7 +74,7 @@ export default async function ForgotPasswordPage({
         </Link>
 
         <div className="mt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             Pemulihan Akun
           </p>
 
@@ -122,13 +122,13 @@ export default async function ForgotPasswordPage({
               autoComplete="email"
               required
               placeholder="admin@belanjalab.com"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-orange-700 px-5 py-3.5 text-sm font-bold text-white hover:bg-orange-800"
+            className="w-full rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white hover:bg-slate-800"
           >
             Kirim Link Reset
           </button>
@@ -136,7 +136,7 @@ export default async function ForgotPasswordPage({
 
         <Link
           href="/admin/login"
-          className="mt-6 block text-center text-sm font-bold text-orange-700 hover:text-orange-800"
+          className="mt-6 block text-center text-sm font-bold text-amber-700 hover:text-amber-800"
         >
           Kembali ke login
         </Link>

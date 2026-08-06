@@ -288,7 +288,7 @@ export default async function EditProductPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-700">Lab</span>
+                Belanja<span className="text-amber-700">Lab</span>
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Edit Produk
@@ -307,7 +307,7 @@ export default async function EditProductPage({
 
       <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             CMS Admin
           </p>
 
@@ -364,7 +364,7 @@ export default async function EditProductPage({
                     name="name"
                     required
                     defaultValue={product.name}
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -377,7 +377,7 @@ export default async function EditProductPage({
                     name="slug"
                     required
                     defaultValue={product.slug}
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -390,7 +390,7 @@ export default async function EditProductPage({
                     name="category_id"
                     required
                     defaultValue={product.categoryId}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     {options.categories.map((category) => (
                       <option key={category.id} value={category.id}>
@@ -409,7 +409,7 @@ export default async function EditProductPage({
                     name="brand_id"
                     required
                     defaultValue={product.brandId}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     {options.brands.map((brand) => (
                       <option key={brand.id} value={brand.id}>
@@ -428,7 +428,7 @@ export default async function EditProductPage({
                     name="short_description"
                     maxLength={240}
                     defaultValue={product.shortDescription}
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -441,7 +441,7 @@ export default async function EditProductPage({
                     name="description"
                     rows={6}
                     defaultValue={product.description}
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -477,7 +477,7 @@ export default async function EditProductPage({
                     name="image_file"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-amber-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-amber-600"
                   />
                   <p className="mt-2 text-xs text-slate-500">
                     Gambar lama di Storage akan dihapus setelah gambar baru berhasil disimpan.
@@ -493,7 +493,7 @@ export default async function EditProductPage({
                     name="image_url"
                     type="url"
                     placeholder="https://..."
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
 
@@ -505,20 +505,20 @@ export default async function EditProductPage({
                     id="status"
                     name="status"
                     defaultValue={product.status}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
                   </select>
                 </div>
 
-                <div className="md:col-span-2 grid gap-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 md:grid-cols-[1fr_180px] md:items-end">
+                <div className="md:col-span-2 grid gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 md:grid-cols-[1fr_180px] md:items-end">
                   <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
                     <input
                       type="checkbox"
                       name="is_featured"
                       defaultChecked={product.isFeatured}
-                      className="h-4 w-4 accent-orange-500"
+                      className="h-4 w-4 accent-amber-500"
                     />
                     Tampilkan sebagai Featured Product di Homepage
                   </label>
@@ -535,7 +535,7 @@ export default async function EditProductPage({
                       max="9999"
                       defaultValue={product.featuredOrder ?? ""}
                       placeholder="0"
-                      className="mt-2 w-full rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+                      className="mt-2 w-full rounded-xl border border-amber-200 bg-white px-4 py-3 text-sm outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
@@ -581,7 +581,7 @@ export default async function EditProductPage({
                       max="10"
                       step="0.1"
                       defaultValue={Number(value)}
-                      className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                      className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                     />
                   </div>
                 ))}
@@ -615,7 +615,7 @@ export default async function EditProductPage({
 
                 <button
                   type="submit"
-                  className="rounded-xl bg-orange-700 px-6 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                  className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800"
                 >
                   Simpan Perubahan
                 </button>

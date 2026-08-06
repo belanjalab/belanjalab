@@ -44,7 +44,7 @@ export default function SiteFooter({ footer }: SiteFooterProps) {
               className="h-10 w-10 rounded-full object-cover"
             />
             <span className="text-xl font-extrabold tracking-[-0.035em]">
-              Belanja<span className="text-orange-500">Lab</span>
+              Belanja<span className="text-amber-400">Lab</span>
             </span>
           </Link>
 

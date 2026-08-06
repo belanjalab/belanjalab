@@ -42,28 +42,26 @@ const drawerNavigation = [
   { label: "Tentang BelanjaLab", href: "/#tentang", icon: InfoIcon },
 ];
 
-function BrandMark({ compact = false }: { compact?: boolean }) {
+function BrandMark({ onDark = false }: { onDark?: boolean }) {
   return (
     <>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5 md:h-10 md:w-10">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-black/5 md:h-9 md:w-9">
         <img
           src="/images/logo-belanjalab.png"
           alt=""
           aria-hidden="true"
-          width={40}
-          height={40}
+          width={36}
+          height={36}
           className="h-8 w-8 rounded-full object-cover md:h-9 md:w-9"
         />
       </span>
       <span
-        className={`tracking-[-0.035em] text-white ${
-          compact ? "text-lg" : "text-lg md:text-xl"
+        className={`text-lg tracking-[-0.035em] md:text-xl ${
+          onDark ? "text-white" : "text-slate-950"
         }`}
       >
         <span className="font-semibold">Belanja</span>
-        <span className="ml-1 rounded-md bg-white px-1.5 py-0.5 text-sm font-semibold text-orange-700 md:text-base">
-          Lab
-        </span>
+        <span className="ml-0.5 font-semibold text-amber-600">Lab</span>
       </span>
     </>
   );
@@ -132,13 +130,13 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
         Lewati ke konten utama
       </a>
 
-      <header className="sticky top-0 z-50 bg-[#ee4d2d] text-white shadow-[0_2px_12px_rgba(120,45,20,0.18)]">
-        <div className="hidden border-b border-white/15 lg:block">
-          <div className="mx-auto flex min-h-8 max-w-7xl items-center justify-between px-5 text-xs text-orange-50">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="hidden border-b border-slate-100 bg-slate-50 lg:block">
+          <div className="mx-auto flex min-h-8 max-w-7xl items-center justify-between px-5 text-xs text-slate-500">
             <p>Belanja lebih yakin dengan skor, perbandingan, dan harga yang transparan.</p>
             <nav aria-label="Navigasi informasi" className="flex items-center gap-5">
               {utilityNavigation.map((item) => (
-                <Link key={item.label} href={item.href} className="hover:text-white">
+                <Link key={item.label} href={item.href} className="hover:text-slate-900">
                   {item.label}
                 </Link>
               ))}
@@ -154,7 +152,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             aria-label="Buka menu utama"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 lg:hidden"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
           >
             <MenuIcon />
           </button>
@@ -171,7 +169,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             action="/search"
             method="get"
             role="search"
-            className="ml-3 hidden h-11 min-w-0 flex-1 items-center rounded-lg bg-white p-1 shadow-sm ring-1 ring-black/5 focus-within:ring-2 focus-within:ring-orange-200 md:flex lg:ml-6"
+            className="ml-3 hidden h-11 min-w-0 flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 p-1 focus-within:border-slate-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-100 md:flex lg:ml-6"
           >
             <label htmlFor="header-search" className="sr-only">
               Cari produk, merek, atau kategori
@@ -205,8 +203,8 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                   aria-current={isActive ? "page" : undefined}
                   className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-white text-orange-700"
-                      : "text-white hover:bg-white/10"
+                      ? "bg-amber-50 text-amber-800"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {item.label}
@@ -219,7 +217,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             href="/search"
             aria-label="Buka pencarian produk"
             aria-current={active === "search" ? "page" : undefined}
-            className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 md:hidden"
+            className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
           >
             <SearchIcon />
           </Link>
@@ -230,7 +228,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             action="/search"
             method="get"
             role="search"
-            className="mx-auto flex h-10 max-w-7xl items-center rounded-lg bg-white p-1 shadow-sm"
+            className="mx-auto flex h-10 max-w-7xl items-center rounded-lg border border-slate-200 bg-slate-50 p-1"
           >
             <label htmlFor="mobile-header-search" className="sr-only">
               Cari produk, merek, atau kategori
@@ -272,13 +270,13 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             aria-label="Menu utama"
             className="mobile-drawer-enter relative flex h-full w-[min(86vw,22rem)] flex-col border-r border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/20"
           >
-            <div className="-mx-4 -mt-4 flex min-h-16 items-center justify-between gap-3 bg-[#ee4d2d] px-4">
+            <div className="-mx-4 -mt-4 flex min-h-16 items-center justify-between gap-3 bg-slate-950 px-4">
               <Link
                 href="/"
                 onClick={() => closeMenu()}
                 className="flex min-h-11 items-center gap-2 rounded-lg"
               >
-                <BrandMark compact />
+                <BrandMark onDark />
               </Link>
 
               <button
@@ -301,7 +299,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                   key={label}
                   href={href}
                   onClick={() => closeMenu()}
-                  className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-orange-50 hover:text-orange-800"
+                  className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
                     <Icon className="h-[18px] w-[18px]" />
@@ -311,8 +309,8 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               ))}
             </nav>
 
-            <div className="mt-auto rounded-xl border border-orange-100 bg-orange-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-orange-800">
+            <div className="mt-auto rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-amber-700">
                 BelanjaLab Score
               </p>
               <p className="mt-1 text-sm leading-6 text-slate-700">
@@ -321,7 +319,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               <Link
                 href="/compare"
                 onClick={() => closeMenu()}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ee4d2d] px-4 text-sm font-semibold text-white hover:bg-[#d94322]"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
               >
                 <CompareIcon className="h-[18px] w-[18px]" /> Bandingkan produk
               </Link>

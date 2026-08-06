@@ -84,7 +84,7 @@ export default async function ArticlesPage() {
           <div className="mx-auto max-w-7xl">
             {articles.length === 0 ? (
               <div className="public-card rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                   <ArticleIcon className="h-7 w-7" />
                 </span>
                 <h2 className="mt-4 text-xl font-extrabold text-slate-950">
@@ -99,7 +99,7 @@ export default async function ArticlesPage() {
                 {articles.map((article) => (
                   <article
                     key={article.id}
-                    className="public-card group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg"
+                    className="public-card group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-lg"
                   >
                     <Link
                       href={`/articles/${article.slug}`}
@@ -133,7 +133,7 @@ export default async function ArticlesPage() {
                           </span>
                         </div>
 
-                        <h2 className="mt-3 text-xl font-extrabold leading-7 tracking-[-0.025em] text-slate-950 transition-colors group-hover:text-orange-800">
+                        <h2 className="mt-3 text-xl font-extrabold leading-7 tracking-[-0.025em] text-slate-950 transition-colors group-hover:text-amber-800">
                           {article.title}
                         </h2>
 
@@ -143,7 +143,7 @@ export default async function ArticlesPage() {
                           </p>
                         )}
 
-                        <span className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-orange-700 transition-colors group-hover:text-orange-800">
+                        <span className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-amber-700 transition-colors group-hover:text-amber-800">
                           Baca artikel <ArrowRightIcon />
                         </span>
                       </div>

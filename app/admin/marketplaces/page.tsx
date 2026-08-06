@@ -310,7 +310,7 @@ export default async function AdminMarketplacesPage({
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
@@ -324,7 +324,7 @@ export default async function AdminMarketplacesPage({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
               href="/admin/prices"
-              className="inline-flex items-center justify-center rounded-xl bg-orange-700 px-4 py-3 text-sm font-bold text-white hover:bg-orange-800"
+              className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
               Kelola Harga
             </Link>
@@ -383,12 +383,12 @@ export default async function AdminMarketplacesPage({
               minLength={2}
               maxLength={80}
               placeholder="Contoh: Tokopedia"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-orange-400"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-amber-400"
             />
 
             <button
               type="submit"
-              className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
               Tambah Marketplace
             </button>
@@ -423,7 +423,7 @@ export default async function AdminMarketplacesPage({
                   key={marketplace.id}
                   className="grid gap-4 px-5 py-4 lg:grid-cols-[auto_1fr_auto]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-sm font-black text-orange-600">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-sm font-black text-amber-600">
                     {index + 1}
                   </div>
 
@@ -445,7 +445,7 @@ export default async function AdminMarketplacesPage({
                         minLength={2}
                         maxLength={80}
                         defaultValue={marketplace.name}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-orange-400"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-amber-400"
                       />
                       <p className="mt-1 truncate text-xs text-slate-400">
                         ID: {marketplace.id}

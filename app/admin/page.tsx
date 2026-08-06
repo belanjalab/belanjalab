@@ -494,7 +494,7 @@ export default async function AdminPage({
 
             <div>
               <p className="text-sm font-black">
-                Belanja<span className="text-orange-700">Lab</span>
+                Belanja<span className="text-amber-700">Lab</span>
               </p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Admin
@@ -580,7 +580,7 @@ export default async function AdminPage({
 
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
                 CMS Admin
               </p>
 
@@ -597,49 +597,49 @@ export default async function AdminPage({
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <Link
                 href="/admin/taxonomies"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Kelola Kategori & Merek
               </Link>
 
               <Link
                 href="/admin/marketplaces"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Kelola Marketplace
               </Link>
 
               <Link
                 href="/admin/hero"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Kelola Hero Homepage
               </Link>
 
               <Link
                 href="/admin/footer"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Kelola Footer Homepage
               </Link>
 
               <Link
                 href="/admin/articles"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Kelola Artikel
               </Link>
 
               <Link
                 href="/admin/products/import"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-orange-300 hover:text-orange-700"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
               >
                 Import Produk CSV
               </Link>
 
               <Link
                 href="/admin/products/new"
-                className="rounded-xl bg-orange-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-orange-800"
+                className="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-slate-800"
               >
                 + Tambah Produk
               </Link>
@@ -698,8 +698,8 @@ export default async function AdminPage({
           </div>
 
           {completeness !== "all" && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
-              <p className="text-xs font-bold text-orange-700">
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-bold text-amber-700">
                 Filter aktif:{" "}
                 {completeness === "without_price"
                   ? "Produk tanpa harga"
@@ -711,7 +711,7 @@ export default async function AdminPage({
                   /([?&])completeness=[^&]+&?/,
                   "$1",
                 ).replace(/[?&]$/, "")}
-                className="ml-auto text-xs font-bold text-orange-700 underline"
+                className="ml-auto text-xs font-bold text-amber-700 underline"
               >
                 Hapus filter
               </Link>
@@ -760,14 +760,14 @@ export default async function AdminPage({
               name="q"
               defaultValue={rawQuery ?? ""}
               placeholder="Cari nama, slug, merek, atau kategori..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
 
             <select
               name="sort"
               defaultValue={sort}
               aria-label="Urutkan produk"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-orange-400"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-amber-400"
             >
               <option value="newest">Terbaru</option>
               <option value="oldest">Terlama</option>
@@ -843,7 +843,7 @@ export default async function AdminPage({
                   className={`rounded-full px-4 py-2 text-xs font-bold transition ${
                     isActive
                       ? "bg-slate-950 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-amber-700"
                   }`}
                 >
                   {String(label)} ({Number(count)})
@@ -935,7 +935,7 @@ export default async function AdminPage({
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/products/${product.id}/preview`}
-                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-center text-xs font-bold text-slate-600 hover:border-amber-300 hover:text-amber-700"
                       >
                         Preview
                       </Link>
@@ -987,7 +987,7 @@ export default async function AdminPage({
                           {product.brand} · {product.category}
                         </p>
 
-                        <p className="mt-3 text-sm font-black text-orange-700">
+                        <p className="mt-3 text-sm font-black text-amber-700">
                           {product.formattedPrice}
                         </p>
 
@@ -1036,7 +1036,7 @@ export default async function AdminPage({
 
               <Link
                 href="/admin/products/new"
-                className="mt-5 inline-flex rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                className="mt-5 inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
               >
                 + Tambah Produk
               </Link>
@@ -1058,7 +1058,7 @@ export default async function AdminPage({
                 {currentPage > 1 ? (
                   <Link
                     href={buildAdminUrl(currentPage - 1)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-amber-300 hover:text-amber-700"
                   >
                     ← Sebelumnya
                   </Link>
@@ -1075,7 +1075,7 @@ export default async function AdminPage({
                 {currentPage < totalPages ? (
                   <Link
                     href={buildAdminUrl(currentPage + 1)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-amber-300 hover:text-amber-700"
                   >
                     Berikutnya →
                   </Link>

@@ -45,13 +45,13 @@ export default function MobileBottomNav({ active }: MobileBottomNavProps) {
             aria-current={isActive ? "page" : undefined}
             className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium transition-colors ${
               isActive
-                ? "text-[#ee4d2d]"
+                ? "text-amber-700"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             }`}
           >
             <span
               className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
-                isActive ? "bg-orange-50" : "bg-transparent"
+                isActive ? "bg-amber-50" : "bg-transparent"
               }`}
             >
               <Icon className="h-[19px] w-[19px]" />

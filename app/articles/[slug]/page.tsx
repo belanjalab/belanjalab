@@ -161,7 +161,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <article className="px-4 pb-14 pt-8 md:px-5 md:pb-20 md:pt-12">
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
                 <ArticleIcon className="h-4 w-4" /> Panduan Belanja
               </span>
               <h1 className="brand-text-balance mt-5 text-3xl font-extrabold leading-[1.1] tracking-[-0.04em] text-slate-950 sm:text-4xl md:text-5xl">
@@ -211,7 +211,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <div className="mt-12 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <Link
                 href="/articles"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:border-orange-300 hover:text-orange-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:border-amber-300 hover:text-amber-800"
               >
                 Artikel lainnya
               </Link>

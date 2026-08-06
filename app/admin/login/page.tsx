@@ -86,7 +86,7 @@ export default async function AdminLoginPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
@@ -95,7 +95,7 @@ export default async function AdminLoginPage({
         </Link>
 
         <div className="mt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             Area Terbatas
           </p>
 
@@ -144,7 +144,7 @@ export default async function AdminLoginPage({
               autoComplete="email"
               required
               placeholder="admin@belanjalab.com"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
@@ -159,7 +159,7 @@ export default async function AdminLoginPage({
 
               <Link
                 href="/admin/forgot-password"
-                className="text-xs font-bold text-orange-700 hover:text-orange-800"
+                className="text-xs font-bold text-amber-700 hover:text-amber-800"
               >
                 Lupa password?
               </Link>
@@ -172,13 +172,13 @@ export default async function AdminLoginPage({
               autoComplete="current-password"
               required
               placeholder="Masukkan password"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-orange-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800"
+            className="w-full rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
           >
             Masuk
           </button>

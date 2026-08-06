@@ -24,7 +24,7 @@ export default function DecisionProductCard({
       : Math.min(100, Math.max(0, product.scoreValue * 10));
 
   return (
-    <article className="decision-card group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
+    <article className="decision-card group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
       <div className="relative">
         <a
           href={`/product/${product.slug}`}
@@ -55,13 +55,13 @@ export default function DecisionProductCard({
         </p>
 
         <h3 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-slate-900 sm:min-h-12 sm:text-base sm:leading-6">
-          <a href={`/product/${product.slug}`} className="transition-colors hover:text-orange-700">
+          <a href={`/product/${product.slug}`} className="transition-colors hover:text-slate-700">
             {product.name}
           </a>
         </h3>
 
-        <div className="mt-3 rounded-lg bg-orange-50 px-3 py-2.5">
-          <p className="text-xs font-medium text-orange-700">
+        <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2.5">
+          <p className="text-xs font-medium text-amber-800">
             {product.topStrength ? "Unggul di" : "Ringkasan"}
           </p>
           <p className="mt-0.5 line-clamp-1 text-xs font-semibold leading-5 text-slate-800 sm:text-sm">
@@ -73,7 +73,7 @@ export default function DecisionProductCard({
 
         <div className="mt-3">
           <p className="text-xs font-medium text-slate-500">Harga mulai</p>
-          <p className="mt-0.5 text-base font-semibold tracking-[-0.02em] text-[#ee4d2d] sm:text-lg">
+          <p className="mt-0.5 text-base font-semibold tracking-[-0.02em] text-slate-900 sm:text-lg">
             {product.price}
           </p>
         </div>
@@ -100,7 +100,7 @@ export default function DecisionProductCard({
           <a
             href={`/product/${product.slug}`}
             aria-label={`Lihat analisis lengkap ${product.name}`}
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-[#ee4d2d] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#d94322]"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
           >
             Lihat analisis <ArrowRightIcon className="h-4 w-4" />
           </a>
@@ -108,7 +108,7 @@ export default function DecisionProductCard({
             href={compareHref}
             aria-label={`Tambahkan ${product.name} ke perbandingan`}
             title="Tambahkan ke perbandingan"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
           >
             <CompareIcon className="h-[18px] w-[18px]" />
             <span className="sr-only">Bandingkan</span>

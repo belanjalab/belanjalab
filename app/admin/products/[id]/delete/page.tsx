@@ -134,7 +134,7 @@ export default async function DeleteProductPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin

@@ -72,7 +72,7 @@ export default function BulkProductActions({
             checked={allSelected}
             onChange={toggleAll}
             disabled={products.length === 0}
-            className="h-4 w-4 rounded border-slate-300 text-orange-700 focus:ring-orange-400"
+            className="h-4 w-4 rounded border-slate-300 text-amber-700 focus:ring-amber-400"
           />
           Pilih semua produk di halaman ini
         </label>
@@ -248,7 +248,7 @@ export default function BulkProductActions({
               key={product.id}
               className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition ${
                 selected
-                  ? "border-orange-300 bg-orange-50"
+                  ? "border-amber-300 bg-amber-50"
                   : "border-slate-100 bg-slate-50 hover:border-slate-200"
               }`}
             >
@@ -256,7 +256,7 @@ export default function BulkProductActions({
                 type="checkbox"
                 checked={selected}
                 onChange={() => toggleProduct(product.id)}
-                className="h-4 w-4 rounded border-slate-300 text-orange-700 focus:ring-orange-400"
+                className="h-4 w-4 rounded border-slate-300 text-amber-700 focus:ring-amber-400"
               />
 
               <span className="min-w-0 flex-1">

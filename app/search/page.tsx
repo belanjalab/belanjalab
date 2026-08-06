@@ -108,7 +108,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           }
           compact
         >
-          <form action="/search" method="get" role="search" className="flex max-w-3xl items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-[0_14px_40px_-24px_rgba(15,23,42,0.45)] transition focus-within:border-orange-700 focus-within:ring-4 focus-within:ring-orange-100">
+          <form action="/search" method="get" role="search" className="flex max-w-3xl items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-[0_14px_40px_-24px_rgba(15,23,42,0.45)] transition focus-within:border-amber-700 focus-within:ring-4 focus-within:ring-amber-100">
             <label htmlFor="search" className="sr-only">
               Cari produk, merek, atau kategori
             </label>
@@ -127,7 +127,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             />
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-extrabold text-white transition-colors hover:bg-orange-800 sm:px-5"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-extrabold text-white transition-colors hover:bg-slate-800 sm:px-5"
             >
               Cari
               <ArrowRightIcon className="h-[18px] w-[18px]" />
@@ -142,7 +142,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 {products.map((product) => (
                   <article
                     key={product.id}
-                    className="public-card group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg"
+                    className="public-card group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-lg"
                   >
                     <Link
                       href={`/product/${product.slug}`}
@@ -164,7 +164,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                           {product.brand} · {product.category}
                         </p>
 
-                        <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-extrabold leading-5 tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-orange-800 sm:min-h-12 sm:text-base sm:leading-6">
+                        <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-extrabold leading-5 tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-amber-800 sm:min-h-12 sm:text-base sm:leading-6">
                           {product.name}
                         </h2>
 
@@ -175,7 +175,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         <div className="mt-4 flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-slate-500">Harga mulai</p>
-                            <p className="mt-1 truncate text-sm font-semibold text-[#ee4d2d] sm:text-base">
+                            <p className="mt-1 truncate text-sm font-semibold text-slate-900 sm:text-base">
                               {product.formattedPrice}
                             </p>
                           </div>
@@ -202,7 +202,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 {page > 1 ? (
                   <Link
                     href={buildSearchPageUrl(query, page - 1)}
-                    className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold hover:border-orange-300 hover:text-orange-800"
+                    className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold hover:border-amber-300 hover:text-amber-800"
                   >
                     Sebelumnya
                   </Link>
@@ -227,8 +227,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         aria-current={pageNumber === page ? "page" : undefined}
                         className={`flex h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-extrabold ${
                           pageNumber === page
-                            ? "bg-orange-700 text-white"
-                            : "border border-slate-200 bg-white hover:border-orange-300 hover:text-orange-800"
+                            ? "bg-slate-900 text-white"
+                            : "border border-slate-200 bg-white hover:border-amber-300 hover:text-amber-800"
                         }`}
                       >
                         {pageNumber}
@@ -240,7 +240,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 {page < totalPages ? (
                   <Link
                     href={buildSearchPageUrl(query, page + 1)}
-                    className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold hover:border-orange-300 hover:text-orange-800"
+                    className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold hover:border-amber-300 hover:text-amber-800"
                   >
                     Berikutnya
                   </Link>
@@ -254,7 +254,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
             {query.length >= 2 && total === 0 && (
               <div className="public-card rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                   <SearchIcon className="h-7 w-7" />
                 </span>
                 <h2 className="mt-4 text-xl font-extrabold tracking-[-0.02em] text-slate-950">
@@ -275,7 +275,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             {query.length < 2 && (
               <div>
                 <div className="mb-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                     Coba pencarian ini
                   </p>
                   <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl">
@@ -291,13 +291,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     <Link
                       key={keyword}
                       href={`/search?q=${encodeURIComponent(keyword)}`}
-                      className="public-card group flex min-h-28 items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-orange-200"
+                      className="public-card group flex min-h-28 items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-amber-200"
                     >
                       <div>
                         <p className="text-base font-extrabold text-slate-950">{keyword}</p>
                         <p className="mt-1 text-sm text-slate-600">{description}</p>
                       </div>
-                      <ArrowRightIcon className="h-5 w-5 text-orange-700 transition-transform group-hover:translate-x-1" />
+                      <ArrowRightIcon className="h-5 w-5 text-amber-700 transition-transform group-hover:translate-x-1" />
                     </Link>
                   ))}
                 </div>

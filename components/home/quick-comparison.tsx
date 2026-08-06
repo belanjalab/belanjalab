@@ -93,7 +93,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
     <div className="quick-compare-surface overflow-hidden rounded-3xl border border-slate-200 p-5 sm:p-7 lg:p-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Bandingkan cepat
           </p>
           <h2 className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-2xl lg:text-3xl">
@@ -106,7 +106,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
 
         <a
           href={compareHref}
-          className="inline-flex min-h-11 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition-colors hover:bg-orange-800 active:bg-orange-900"
+          className="inline-flex min-h-11 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white transition-colors hover:bg-slate-800 active:bg-slate-950"
         >
           Buka perbandingan <ArrowRightIcon />
         </a>
@@ -211,11 +211,11 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
             Ringkasan harga
           </p>
-          <p className="mt-1.5 text-sm font-bold leading-6 text-orange-950">
+          <p className="mt-1.5 text-sm font-bold leading-6 text-amber-950">
             {priceWinner && absolutePriceDifference !== null
               ? `${priceWinner.name} lebih rendah sekitar ${formatRupiah(absolutePriceDifference)}.`
               : priceDifference === null
@@ -231,7 +231,7 @@ export default function QuickComparison({ products }: QuickComparisonProps) {
         </p>
         <a
           href={compareHref}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
         >
           <CompareIcon className="h-[18px] w-[18px]" />
           Bandingkan detail

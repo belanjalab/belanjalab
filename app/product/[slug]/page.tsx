@@ -218,7 +218,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   href={`/search?q=${encodeURIComponent(category)}`}
-                  className="inline-flex min-h-9 items-center rounded-full bg-orange-50 px-3 text-xs font-extrabold text-orange-800 ring-1 ring-orange-100"
+                  className="inline-flex min-h-9 items-center rounded-full bg-amber-50 px-3 text-xs font-extrabold text-amber-800 ring-1 ring-amber-100"
                 >
                   {category}
                 </Link>
@@ -274,13 +274,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <a
                   href="#harga-marketplace"
-                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white transition hover:bg-orange-800"
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white transition hover:bg-slate-800"
                 >
                   Bandingkan harga <ArrowRightIcon />
                 </a>
                 <Link
                   href={`/compare?products=${encodeURIComponent(product.slug)}`}
-                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800"
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
                 >
                   <CompareIcon className="h-5 w-5" /> Bandingkan produk
                 </Link>
@@ -292,7 +292,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="bg-slate-50 px-4 py-10 md:px-5 md:py-14">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                 Tentang produk
               </p>
               <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -308,7 +308,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
                 Penilaian
               </p>
               <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-slate-950 sm:text-3xl">
@@ -325,7 +325,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     </div>
                     <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-orange-700"
+                        className="h-full rounded-full bg-emerald-600"
                         style={{ width: `${Math.min(Math.max(value * 10, 0), 100)}%` }}
                       />
                     </div>
@@ -345,7 +345,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="bg-slate-950 px-4 py-10 text-white md:px-5 md:py-12">
           <div className="mx-auto flex max-w-7xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-400">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-400">
                 Belanja lebih yakin
               </p>
               <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl">
@@ -354,7 +354,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
             <Link
               href={`/compare?products=${encodeURIComponent(product.slug)}`}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 text-sm font-extrabold text-white hover:bg-orange-500"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 text-sm font-extrabold text-slate-950 transition-colors hover:bg-amber-300"
             >
               Buka perbandingan <ArrowRightIcon />
             </Link>

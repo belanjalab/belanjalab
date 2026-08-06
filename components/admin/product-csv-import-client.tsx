@@ -426,7 +426,7 @@ export default function ProductCsvImportClient() {
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="inline-flex min-h-11 items-center justify-center w-fit rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-bold text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
+            className="inline-flex min-h-11 items-center justify-center w-fit rounded-lg border border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-600 transition hover:border-amber-300 hover:bg-amber-100"
           >
             Download Template CSV
           </button>
@@ -436,7 +436,7 @@ export default function ProductCsvImportClient() {
           type="file"
           accept=".csv,text/csv"
           onChange={handleFileChange}
-          className="mt-5 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+          className="mt-5 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-amber-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-amber-600"
         />
 
         {fileName && (
@@ -640,7 +640,7 @@ export default function ProductCsvImportClient() {
                 isValidating ||
                 importResults.length > 0
               }
-              className="rounded-xl bg-orange-700 px-6 py-3 text-sm font-bold text-white hover:bg-orange-800 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isValidating
                 ? "Memvalidasi..."

@@ -10,10 +10,10 @@ export default function NotFound() {
       <SiteHeader />
       <main id="konten-utama" className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4 py-12 text-slate-900">
         <section className="public-card w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center sm:p-10">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
             <SearchIcon className="h-7 w-7" />
           </span>
-          <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Error 404
           </p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-4xl">
@@ -31,7 +31,7 @@ export default function NotFound() {
             </Link>
             <Link
               href="/search"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-5 text-sm font-extrabold text-slate-700 hover:border-orange-300 hover:text-orange-800"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-5 text-sm font-extrabold text-slate-700 hover:border-amber-300 hover:text-amber-800"
             >
               Cari produk
             </Link>

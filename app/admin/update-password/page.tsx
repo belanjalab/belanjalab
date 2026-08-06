@@ -86,7 +86,7 @@ export default async function UpdatePasswordPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
@@ -95,7 +95,7 @@ export default async function UpdatePasswordPage({
         </Link>
 
         <div className="mt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             Pemulihan Akun
           </p>
 
@@ -135,7 +135,7 @@ export default async function UpdatePasswordPage({
               minLength={8}
               required
               placeholder="Minimal 8 karakter"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
@@ -155,13 +155,13 @@ export default async function UpdatePasswordPage({
               minLength={8}
               required
               placeholder="Ketik ulang password"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-orange-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800"
+            className="w-full rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
           >
             Simpan Password Baru
           </button>
@@ -169,7 +169,7 @@ export default async function UpdatePasswordPage({
 
         <Link
           href="/admin/login"
-          className="mt-6 block text-center text-sm font-bold text-orange-700 hover:text-orange-800"
+          className="mt-6 block text-center text-sm font-bold text-amber-700 hover:text-amber-800"
         >
           Kembali ke login
         </Link>

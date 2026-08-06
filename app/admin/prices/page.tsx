@@ -356,7 +356,7 @@ export default async function AdminPricesPage({
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
@@ -456,7 +456,7 @@ export default async function AdminPricesPage({
                         step="1"
                         required
                         defaultValue={Number(item.price ?? 0)}
-                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -471,7 +471,7 @@ export default async function AdminPricesPage({
                         defaultValue={Number(
                           item.original_price ?? item.price ?? 0,
                         )}
-                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -483,7 +483,7 @@ export default async function AdminPricesPage({
                         min="0"
                         step="1"
                         defaultValue={Number(item.shipping_cost ?? 0)}
-                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -492,7 +492,7 @@ export default async function AdminPricesPage({
                       <select
                         name="stock_status"
                         defaultValue={item.stock_status ?? "in_stock"}
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-amber-400"
                       >
                         <option value="in_stock">Tersedia</option>
                         <option value="out_of_stock">Habis</option>
@@ -512,7 +512,7 @@ export default async function AdminPricesPage({
                               : item.affiliate_url ?? ""
                           }
                           placeholder="https://..."
-                          className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-orange-400"
+                          className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-amber-400"
                         />
                       </label>
 
@@ -521,7 +521,7 @@ export default async function AdminPricesPage({
                           type="checkbox"
                           name="is_available"
                           defaultChecked={item.is_available !== false}
-                          className="h-4 w-4 accent-orange-500"
+                          className="h-4 w-4 accent-amber-500"
                         />
                         Tampilkan sebagai tersedia
                       </label>
@@ -529,7 +529,7 @@ export default async function AdminPricesPage({
 
                     <button
                       type="submit"
-                      className="rounded-xl bg-orange-700 px-4 py-3 text-sm font-bold text-white hover:bg-orange-800"
+                      className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
                     >
                       Sync Manual
                     </button>

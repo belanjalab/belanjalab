@@ -62,7 +62,7 @@ export default async function RecoveryConfirmPage({
 
           <div>
             <p className="text-lg font-black">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
               Admin
@@ -71,7 +71,7 @@ export default async function RecoveryConfirmPage({
         </Link>
 
         <div className="mt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             Konfirmasi Pemulihan
           </p>
 
@@ -104,7 +104,7 @@ export default async function RecoveryConfirmPage({
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-orange-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800"
+              className="w-full rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
             >
               Verifikasi dan Lanjutkan
             </button>
@@ -117,7 +117,7 @@ export default async function RecoveryConfirmPage({
 
         <Link
           href="/admin/login"
-          className="mt-6 block text-center text-sm font-bold text-orange-700 hover:text-orange-800"
+          className="mt-6 block text-center text-sm font-bold text-amber-700 hover:text-amber-800"
         >
           Kembali ke login
         </Link>

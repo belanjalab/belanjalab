@@ -40,7 +40,7 @@ export default async function ProductImportPage() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">

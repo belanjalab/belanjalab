@@ -21,7 +21,7 @@ export default function GlobalError({
       <SiteHeader />
       <main id="konten-utama" className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4 py-12 text-slate-900">
         <section className="public-card w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
             Terjadi gangguan
           </p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-4xl">
@@ -33,7 +33,7 @@ export default function GlobalError({
           <button
             type="button"
             onClick={reset}
-            className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-orange-700 px-5 text-sm font-extrabold text-white hover:bg-orange-800"
+            className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white hover:bg-slate-800"
           >
             Coba lagi
           </button>

@@ -282,7 +282,7 @@ export default async function AdminHeroPage({
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
@@ -335,7 +335,7 @@ export default async function AdminHeroPage({
                   required
                   minLength={3}
                   maxLength={120}
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -344,7 +344,7 @@ export default async function AdminHeroPage({
                 <select
                   name="featured_product_id"
                   defaultValue=""
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-medium outline-none focus:border-amber-400"
                 >
                   <option value="">Tanpa produk pilihan</option>
                   {productOptions.map((product) => (
@@ -362,7 +362,7 @@ export default async function AdminHeroPage({
                 name="subtitle"
                 maxLength={300}
                 rows={3}
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
               />
             </label>
 
@@ -372,7 +372,7 @@ export default async function AdminHeroPage({
                 type="text"
                 name="hero_image_url"
                 placeholder="/images/hero/produk.webp"
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
               />
             </label>
 
@@ -383,7 +383,7 @@ export default async function AdminHeroPage({
                   type="text"
                   name="primary_button_text"
                   maxLength={40}
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -393,7 +393,7 @@ export default async function AdminHeroPage({
                   type="text"
                   name="primary_button_url"
                   placeholder="/search"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -403,7 +403,7 @@ export default async function AdminHeroPage({
                   type="text"
                   name="secondary_button_text"
                   maxLength={40}
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -413,7 +413,7 @@ export default async function AdminHeroPage({
                   type="text"
                   name="secondary_button_url"
                   placeholder="/compare"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
             </div>
@@ -427,7 +427,7 @@ export default async function AdminHeroPage({
                   min={0}
                   max={9999}
                   defaultValue={0}
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -435,7 +435,7 @@ export default async function AdminHeroPage({
                 <input
                   type="checkbox"
                   name="is_active"
-                  className="h-4 w-4 accent-orange-500"
+                  className="h-4 w-4 accent-amber-500"
                 />
                 Aktifkan Hero ini
               </label>
@@ -443,7 +443,7 @@ export default async function AdminHeroPage({
 
             <button
               type="submit"
-              className="w-fit rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+              className="w-fit rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
               Simpan Hero
             </button>
@@ -510,7 +510,7 @@ export default async function AdminHeroPage({
                         minLength={3}
                         maxLength={120}
                         defaultValue={hero.title}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -519,7 +519,7 @@ export default async function AdminHeroPage({
                       <select
                         name="featured_product_id"
                         defaultValue={hero.featured_product_id ?? ""}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-medium outline-none focus:border-amber-400"
                       >
                         <option value="">Tanpa produk pilihan</option>
                         {productOptions.map((product) => (
@@ -538,7 +538,7 @@ export default async function AdminHeroPage({
                       maxLength={300}
                       rows={3}
                       defaultValue={hero.subtitle ?? ""}
-                      className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                      className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                     />
                   </label>
 
@@ -548,7 +548,7 @@ export default async function AdminHeroPage({
                       type="text"
                       name="hero_image_url"
                       defaultValue={hero.hero_image_url ?? ""}
-                      className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                      className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                     />
                   </label>
 
@@ -560,7 +560,7 @@ export default async function AdminHeroPage({
                         name="primary_button_text"
                         maxLength={40}
                         defaultValue={hero.primary_button_text ?? ""}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -570,7 +570,7 @@ export default async function AdminHeroPage({
                         type="text"
                         name="primary_button_url"
                         defaultValue={hero.primary_button_url ?? ""}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -581,7 +581,7 @@ export default async function AdminHeroPage({
                         name="secondary_button_text"
                         maxLength={40}
                         defaultValue={hero.secondary_button_text ?? ""}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -591,7 +591,7 @@ export default async function AdminHeroPage({
                         type="text"
                         name="secondary_button_url"
                         defaultValue={hero.secondary_button_url ?? ""}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
                   </div>
@@ -605,7 +605,7 @@ export default async function AdminHeroPage({
                         min={0}
                         max={9999}
                         defaultValue={hero.sort_order}
-                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                        className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                       />
                     </label>
 
@@ -614,7 +614,7 @@ export default async function AdminHeroPage({
                         type="checkbox"
                         name="is_active"
                         defaultChecked={hero.is_active}
-                        className="h-4 w-4 accent-orange-500"
+                        className="h-4 w-4 accent-amber-500"
                       />
                       Aktifkan Hero ini
                     </label>

@@ -341,7 +341,7 @@ export default function AffiliateLinkImportClient({
             </p>
           </div>
 
-          <div className="w-fit rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-700">
+          <div className="w-fit rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
             Maksimal {MAX_AFFILIATE_LINKS} link
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function AffiliateLinkImportClient({
             "https://s.shopee.co.id/xxxxxxxx",
             "https://shopee.co.id/nama-produk-i.123456.789012",
           ].join("\n")}
-          className="mt-5 block w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-6 text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+          className="mt-5 block w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-6 text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
         />
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -376,7 +376,7 @@ export default function AffiliateLinkImportClient({
             <button
               type="button"
               onClick={handleValidate}
-              className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-800"
+              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
             >
               Validasi & Preview
             </button>
@@ -496,7 +496,7 @@ export default function AffiliateLinkImportClient({
                               href={row.normalizedUrl}
                               target="_blank"
                               rel="noreferrer noopener"
-                              className="block max-w-xl break-all font-semibold text-slate-700 hover:text-orange-800"
+                              className="block max-w-xl break-all font-semibold text-slate-700 hover:text-amber-800"
                             >
                               {row.normalizedUrl}
                             </a>
@@ -685,7 +685,7 @@ export default function AffiliateLinkImportClient({
                             ) =>
                               updateTextField(item.id, "name", event.target.value)
                             }
-                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                           />
                         </label>
 
@@ -705,7 +705,7 @@ export default function AffiliateLinkImportClient({
                               )
                             }
                             placeholder="https://..."
-                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                           />
                         </label>
 
@@ -727,7 +727,7 @@ export default function AffiliateLinkImportClient({
                                 )
                               }
                               placeholder="0"
-                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                             />
                           </label>
 
@@ -748,7 +748,7 @@ export default function AffiliateLinkImportClient({
                                 )
                               }
                               placeholder="Opsional"
-                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                              className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                             />
                           </label>
                         </div>
@@ -769,7 +769,7 @@ export default function AffiliateLinkImportClient({
                               )
                             }
                             rows={3}
-                            className="mt-1 block w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-xs leading-5 text-slate-700 outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            className="mt-1 block w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-xs leading-5 text-slate-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                           />
                         </label>
                       </div>
@@ -787,7 +787,7 @@ export default function AffiliateLinkImportClient({
                           href={item.affiliateUrl}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="block break-all font-semibold hover:text-orange-800"
+                          className="block break-all font-semibold hover:text-amber-800"
                         >
                           Affiliate: {item.affiliateUrl}
                         </a>
@@ -796,7 +796,7 @@ export default function AffiliateLinkImportClient({
                             href={item.resolvedUrl}
                             target="_blank"
                             rel="noreferrer noopener"
-                            className="block break-all font-semibold hover:text-orange-800"
+                            className="block break-all font-semibold hover:text-amber-800"
                           >
                             Produk: {item.resolvedUrl}
                           </a>

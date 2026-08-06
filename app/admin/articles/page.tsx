@@ -209,7 +209,7 @@ export default async function AdminArticlesPage({
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-orange-600">
+            <p className="text-sm font-bold text-amber-600">
               BelanjaLab Admin
             </p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
@@ -276,7 +276,7 @@ export default async function AdminArticlesPage({
                   required
                   minLength={3}
                   maxLength={160}
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
 
@@ -287,7 +287,7 @@ export default async function AdminArticlesPage({
                   name="slug"
                   maxLength={180}
                   placeholder="Otomatis dari judul jika dikosongkan"
-                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                  className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
                 />
               </label>
             </div>
@@ -298,7 +298,7 @@ export default async function AdminArticlesPage({
                 name="excerpt"
                 maxLength={500}
                 rows={3}
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
               />
             </label>
 
@@ -309,7 +309,7 @@ export default async function AdminArticlesPage({
                 required
                 minLength={20}
                 rows={12}
-                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-orange-400"
+                className="rounded-xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-amber-400"
               />
             </label>
 
@@ -319,7 +319,7 @@ export default async function AdminArticlesPage({
                 type="file"
                 name="cover_file"
                 accept="image/jpeg,image/png,image/webp"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-orange-600"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-amber-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-amber-600"
               />
               <span className="text-xs font-medium text-slate-400">
                 JPG, PNG, atau WebP. Maksimal 5 MB.
@@ -330,14 +330,14 @@ export default async function AdminArticlesPage({
               <input
                 type="checkbox"
                 name="published"
-                className="h-4 w-4 accent-orange-500"
+                className="h-4 w-4 accent-amber-500"
               />
               Publikasikan artikel
             </label>
 
             <button
               type="submit"
-              className="w-fit rounded-xl bg-orange-700 px-5 py-3 text-sm font-bold text-white hover:bg-orange-800"
+              className="w-fit rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
             >
               Simpan Artikel
             </button>
@@ -433,7 +433,7 @@ export default async function AdminArticlesPage({
                       href={`/articles/${article.slug}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-700"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-center text-xs font-bold text-slate-600 hover:border-amber-300 hover:text-amber-700"
                     >
                       Preview
                     </a>

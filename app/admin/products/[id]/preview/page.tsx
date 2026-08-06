@@ -239,7 +239,7 @@ export default async function AdminProductPreviewPage({
             />
 
             <span className="text-base font-black md:text-xl">
-              Belanja<span className="text-orange-700">Lab</span>
+              Belanja<span className="text-amber-700">Lab</span>
             </span>
           </Link>
 
@@ -251,7 +251,7 @@ export default async function AdminProductPreviewPage({
 
       <section className="border-b border-slate-100 px-4 py-4 md:px-6">
         <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-hidden text-xs text-slate-400 md:text-xs">
-          <Link href="/admin" className="shrink-0 hover:text-orange-700">
+          <Link href="/admin" className="shrink-0 hover:text-amber-700">
             Admin
           </Link>
           <span>/</span>
@@ -277,7 +277,7 @@ export default async function AdminProductPreviewPage({
 
           <div className="flex flex-col justify-center">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600 md:text-xs">
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-600 md:text-xs">
                 {category}
               </span>
 
@@ -300,7 +300,7 @@ export default async function AdminProductPreviewPage({
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Harga mulai
                 </p>
-                <p className="mt-2 text-xl font-black text-orange-700 md:text-2xl">
+                <p className="mt-2 text-xl font-black text-amber-700 md:text-2xl">
                   {lowestPrice !== null
                     ? formatRupiah(lowestPrice)
                     : "Belum tersedia"}
@@ -336,7 +336,7 @@ export default async function AdminProductPreviewPage({
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#harga-marketplace"
-                className="flex-1 rounded-xl bg-orange-700 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-800"
+                className="flex-1 rounded-xl bg-slate-900 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-slate-800"
               >
                 Lihat Harga
               </a>
@@ -344,7 +344,7 @@ export default async function AdminProductPreviewPage({
               {product.status === "published" && (
                 <Link
                   href={`/product/${product.slug}`}
-                  className="flex-1 rounded-xl border border-slate-200 px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:border-orange-300 hover:text-orange-700"
+                  className="flex-1 rounded-xl border border-slate-200 px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:border-amber-300 hover:text-amber-700"
                 >
                   Buka Halaman Publik
                 </Link>
@@ -357,7 +357,7 @@ export default async function AdminProductPreviewPage({
       <section className="bg-slate-50 px-4 py-8 md:px-6 md:py-14">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
               Tentang Produk
             </p>
 
@@ -375,7 +375,7 @@ export default async function AdminProductPreviewPage({
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
               Penilaian
             </p>
 
@@ -397,7 +397,7 @@ export default async function AdminProductPreviewPage({
 
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-orange-700"
+                      className="h-full rounded-full bg-slate-900"
                       style={{
                         width: `${Math.min(Math.max(value * 10, 0), 100)}%`,
                       }}
@@ -415,7 +415,7 @@ export default async function AdminProductPreviewPage({
         className="scroll-mt-24 px-4 py-8 md:px-6 md:py-14"
       >
         <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
             Marketplace
           </p>
 
@@ -440,7 +440,7 @@ export default async function AdminProductPreviewPage({
                   </div>
 
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
-                    <p className="text-lg font-black text-orange-700">
+                    <p className="text-lg font-black text-amber-700">
                       {formatRupiah(offer.numericPrice)}
                     </p>
 
