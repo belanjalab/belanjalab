@@ -638,6 +638,13 @@ export default async function AdminPage({
               </Link>
 
               <Link
+                href="/admin/import/shopee"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700"
+              >
+                Shopee Affiliate Import
+              </Link>
+
+              <Link
                 href="/admin/products/new"
                 className="rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-slate-800"
               >

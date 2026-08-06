@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { parseAffiliateLinks } from "@/lib/affiliate-import/parser";
 import {
@@ -84,6 +84,15 @@ function isProductReady(item: AffiliateProductPreview) {
   );
 }
 
+function canAutoScan(result: AffiliateLinkParseResult) {
+  return (
+    result.rows.length === 1 &&
+    result.summary.readyCount === 1 &&
+    result.summary.invalidCount === 0 &&
+    result.summary.duplicateCount === 0
+  );
+}
+
 function ProductImagePreview({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = useState(false);
 
@@ -144,6 +153,8 @@ export default function AffiliateLinkImportClient({
   const [scanError, setScanError] = useState("");
   const [scanProgress, setScanProgress] = useState({ completed: 0, total: 0 });
   const [retryingIds, setRetryingIds] = useState<string[]>([]);
+  const scanSequenceRef = useRef(0);
+  const lastAutoScannedUrlRef = useRef("");
 
   const scanSummary = useMemo(() => {
     return {
@@ -155,7 +166,89 @@ export default function AffiliateLinkImportClient({
     };
   }, [scanItems]);
 
+  const scanProducts = useCallback(async (validLinks: string[]) => {
+    if (validLinks.length === 0) {
+      return;
+    }
+
+    const scanSequence = scanSequenceRef.current + 1;
+    scanSequenceRef.current = scanSequence;
+    const batches = chunkLinks(validLinks);
+
+    setIsScanning(true);
+    setScanItems([]);
+    setScanError("");
+    setScanProgress({ completed: 0, total: validLinks.length });
+
+    try {
+      let completedCount = 0;
+
+      for (const batch of batches) {
+        const response = await requestProductScan(batch);
+
+        if (scanSequenceRef.current !== scanSequence) {
+          return;
+        }
+
+        completedCount += response.items.length;
+        setScanItems((currentItems) => [
+          ...currentItems,
+          ...response.items,
+        ]);
+        setScanProgress({
+          completed: completedCount,
+          total: validLinks.length,
+        });
+      }
+    } catch (error) {
+      if (scanSequenceRef.current !== scanSequence) {
+        return;
+      }
+
+      setScanError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil data produk Shopee.",
+      );
+    } finally {
+      if (scanSequenceRef.current === scanSequence) {
+        setIsScanning(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const nextResult = parseAffiliateLinks(trimmedInput);
+      setResult(nextResult);
+      setFormError("");
+
+      if (!canAutoScan(nextResult)) {
+        return;
+      }
+
+      const validUrl = nextResult.validLinks[0];
+
+      if (!validUrl || lastAutoScannedUrlRef.current === validUrl) {
+        return;
+      }
+
+      lastAutoScannedUrlRef.current = validUrl;
+      void scanProducts(nextResult.validLinks);
+    }, 650);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [input, scanProducts]);
+
   function clearScanState() {
+    scanSequenceRef.current += 1;
+    setIsScanning(false);
     setScanItems([]);
     setScanError("");
     setScanProgress({ completed: 0, total: 0 });
@@ -163,10 +256,13 @@ export default function AffiliateLinkImportClient({
   }
 
   function handleInputChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    setInput(event.target.value);
+    const nextInput = event.target.value;
+
+    setInput(nextInput);
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    lastAutoScannedUrlRef.current = "";
     clearScanState();
   }
 
@@ -184,6 +280,15 @@ export default function AffiliateLinkImportClient({
     setFormError("");
     setCopyMessage("");
     clearScanState();
+
+    if (canAutoScan(nextResult)) {
+      const validUrl = nextResult.validLinks[0];
+
+      if (validUrl) {
+        lastAutoScannedUrlRef.current = validUrl;
+        void scanProducts(nextResult.validLinks);
+      }
+    }
   }
 
   function handleReset() {
@@ -191,6 +296,7 @@ export default function AffiliateLinkImportClient({
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    lastAutoScannedUrlRef.current = "";
     clearScanState();
   }
 
@@ -214,37 +320,7 @@ export default function AffiliateLinkImportClient({
       return;
     }
 
-    const batches = chunkLinks(result.validLinks);
-    setIsScanning(true);
-    setScanItems([]);
-    setScanError("");
-    setScanProgress({ completed: 0, total: result.validLinks.length });
-
-    try {
-      let completedCount = 0;
-
-      for (const batch of batches) {
-        const response = await requestProductScan(batch);
-        completedCount += response.items.length;
-
-        setScanItems((currentItems) => [
-          ...currentItems,
-          ...response.items,
-        ]);
-        setScanProgress({
-          completed: completedCount,
-          total: result.validLinks.length,
-        });
-      }
-    } catch (error) {
-      setScanError(
-        error instanceof Error
-          ? error.message
-          : "Gagal mengambil data produk Shopee.",
-      );
-    } finally {
-      setIsScanning(false);
-    }
+    await scanProducts(result.validLinks);
   }
 
   async function handleRetryItem(item: AffiliateProductPreview) {
@@ -336,8 +412,8 @@ export default function AffiliateLinkImportClient({
               Paste Link Shopee
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
-              Satu link per baris paling mudah dibaca. Teks tambahan di sekitar
-              URL tetap akan dipindai secara otomatis.
+              Tempel satu link untuk menampilkan foto, nama, dan harga secara
+              otomatis. Untuk banyak link, gunakan satu link per baris.
             </p>
           </div>
 
@@ -361,7 +437,7 @@ export default function AffiliateLinkImportClient({
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-slate-500">
-            Link duplikat tidak akan ikut ke proses berikutnya.
+            Satu link dipindai otomatis setelah ditempel. Link duplikat tidak ikut diproses.
           </p>
 
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -378,7 +454,7 @@ export default function AffiliateLinkImportClient({
               onClick={handleValidate}
               className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
             >
-              Validasi & Preview
+              Validasi Ulang
             </button>
           </div>
         </div>
