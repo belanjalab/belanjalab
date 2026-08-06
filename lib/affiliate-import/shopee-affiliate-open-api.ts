@@ -441,8 +441,7 @@ export async function fetchShopeeAffiliateOpenApiMetadata({
     return {
       configured: false,
       metadata: null,
-      warning:
-        "Shopee Affiliate Open API belum aktif. Tambahkan SHOPEE_AFFILIATE_APP_ID dan SHOPEE_AFFILIATE_APP_SECRET di Cloudflare.",
+      warning: null,
     };
   }
 

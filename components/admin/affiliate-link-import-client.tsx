@@ -390,18 +390,18 @@ export default function AffiliateLinkImportClient({
         className={`rounded-2xl border px-5 py-4 text-sm leading-6 ${
           openApiConfigured
             ? "border-green-200 bg-green-50 text-green-800"
-            : "border-amber-200 bg-amber-50 text-amber-900"
+            : "border-blue-200 bg-blue-50 text-blue-900"
         }`}
       >
         <p className="font-black">
           {openApiConfigured
             ? "Shopee Affiliate Open API aktif"
-            : "Shopee Affiliate Open API belum aktif"}
+            : "Mode otomatis tanpa Open API"}
         </p>
         <p className="mt-1 text-xs leading-5">
           {openApiConfigured
             ? "Nama, gambar, dan harga akan diprioritaskan dari API resmi Shopee Affiliate."
-            : "Tanpa Open API, pengambilan dari halaman publik Shopee hanya best effort dan dapat dibatasi. Tambahkan SHOPEE_AFFILIATE_APP_ID dan SHOPEE_AFFILIATE_APP_SECRET pada runtime variables Cloudflare."}
+            : "Kredensial Shopee tidak wajib. Sistem tetap mencoba halaman publik, endpoint produk Shopee, lalu fallback link preview gratis untuk mengambil nama, foto, dan harga."}
         </p>
       </div>
 

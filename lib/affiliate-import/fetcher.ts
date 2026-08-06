@@ -4,7 +4,11 @@ import {
   extractShopeeProductIds,
   parseAffiliateProductMetadata,
 } from "@/lib/affiliate-import/metadata";
-import { fetchShopeeAffiliateOpenApiMetadata } from "@/lib/affiliate-import/shopee-affiliate-open-api";
+import { fetchMicrolinkMetadata } from "@/lib/affiliate-import/microlink";
+import {
+  fetchShopeeAffiliateOpenApiMetadata,
+  isShopeeAffiliateOpenApiConfigured,
+} from "@/lib/affiliate-import/shopee-affiliate-open-api";
 import { fetchShopeeProductApiMetadata } from "@/lib/affiliate-import/shopee-product-api";
 import type {
   AffiliateProductFetchErrorCode,
@@ -27,6 +31,16 @@ const REQUEST_HEADERS = {
   Referer: "https://shopee.co.id/",
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+} as const;
+
+const SOCIAL_PREVIEW_HEADERS = {
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "id-ID,id;q=0.9,en;q=0.8",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+  Referer: "https://shopee.co.id/",
+  "User-Agent":
+    "facebookexternalhit/1.1 (+https://www.facebook.com/externalhit_uatext.php)",
 } as const;
 
 class AffiliateFetchError extends Error {
@@ -127,13 +141,17 @@ function normalizeRedirectUrl(location: string, currentUrl: URL) {
   return nextUrl;
 }
 
-async function fetchWithSafeRedirects(inputUrl: string, signal: AbortSignal) {
+async function fetchWithSafeRedirects(
+  inputUrl: string,
+  signal: AbortSignal,
+  headers: Record<string, string> = REQUEST_HEADERS,
+) {
   let currentUrl = normalizeShopeeUrl(inputUrl);
 
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
     const response = await fetch(currentUrl, {
       method: "GET",
-      headers: REQUEST_HEADERS,
+      headers,
       redirect: "manual",
       cache: "no-store",
       signal,
@@ -320,6 +338,22 @@ function hasCompleteMetadata(metadata: {
   return Boolean(metadata.name && metadata.imageUrl && metadata.price !== null);
 }
 
+function getMetadataScore(metadata: {
+  name: string;
+  imageUrl: string;
+  price: number | null;
+  description?: string;
+  canonicalUrl?: string | null;
+}) {
+  return (
+    (metadata.name ? 3 : 0) +
+    (metadata.imageUrl ? 4 : 0) +
+    (metadata.price !== null ? 3 : 0) +
+    (metadata.description ? 1 : 0) +
+    (metadata.canonicalUrl ? 1 : 0)
+  );
+}
+
 function getMissingFieldLabels(metadata: {
   name: string;
   imageUrl: string;
@@ -478,14 +512,46 @@ export async function scanAffiliateProduct(
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const { html, finalUrl, warning: pageWarning } = await fetchProductPage(
+    const pageResult = await fetchProductPage(
       normalizedAffiliateUrl,
       controller.signal,
     );
-    const htmlMetadata = parseAffiliateProductMetadata(
-      html,
+    const { finalUrl } = pageResult;
+    let pageWarning = pageResult.warning;
+    let htmlMetadata = parseAffiliateProductMetadata(
+      pageResult.html,
       finalUrl.toString(),
     );
+
+    if (!hasCompleteMetadata(htmlMetadata)) {
+      try {
+        const socialFetch = await fetchWithSafeRedirects(
+          finalUrl.toString(),
+          controller.signal,
+          SOCIAL_PREVIEW_HEADERS,
+        );
+        const socialPage = await readHtmlSafely(socialFetch.response);
+        const socialMetadata = parseAffiliateProductMetadata(
+          socialPage.html,
+          socialFetch.finalUrl.toString(),
+        );
+
+        if (getMetadataScore(socialMetadata) > getMetadataScore(htmlMetadata)) {
+          htmlMetadata = socialMetadata;
+        }
+
+        pageWarning = combineWarnings(pageWarning, socialPage.warning);
+      } catch (error) {
+        if (!(error instanceof Error && error.name === "AbortError")) {
+          pageWarning = combineWarnings(
+            pageWarning,
+            error instanceof Error
+              ? `Preview sosial Shopee tidak dapat dibaca: ${error.message}`
+              : "Preview sosial Shopee tidak dapat dibaca.",
+          );
+        }
+      }
+    }
     const idsFromResolvedUrl = extractShopeeProductIds(finalUrl.toString());
     const idsFromCanonicalUrl = htmlMetadata.canonicalUrl
       ? extractShopeeProductIds(htmlMetadata.canonicalUrl)
@@ -501,17 +567,21 @@ export async function scanAffiliateProduct(
         idsFromCanonicalUrl.itemId ??
         idsFromAffiliateUrl.itemId,
     };
+    const openApiConfigured = isShopeeAffiliateOpenApiConfigured();
     const openApiResult =
-      ids.shopId && ids.itemId
+      openApiConfigured && ids.shopId && ids.itemId
         ? await fetchShopeeAffiliateOpenApiMetadata({
             shopId: ids.shopId,
             itemId: ids.itemId,
             signal: controller.signal,
           })
         : {
-            configured: false,
+            configured: openApiConfigured,
             metadata: null,
-            warning: "Shop ID dan item ID Shopee tidak ditemukan dari link.",
+            warning:
+              openApiConfigured && (!ids.shopId || !ids.itemId)
+                ? "Shop ID dan item ID Shopee tidak ditemukan dari link."
+                : null,
           };
     const officialMetadata = openApiResult.metadata;
     const metadataBeforeInternalApi = {
@@ -530,11 +600,9 @@ export async function scanAffiliateProduct(
             signal: controller.signal,
           })
         : null;
-    const metadata = {
+    const metadataBeforeMicrolink = {
       name:
         officialMetadata?.name || apiMetadata?.name || htmlMetadata.name || "",
-      description:
-        apiMetadata?.description || htmlMetadata.description || "",
       imageUrl:
         officialMetadata?.imageUrl ||
         apiMetadata?.imageUrl ||
@@ -545,20 +613,58 @@ export async function scanAffiliateProduct(
         apiMetadata?.price ??
         htmlMetadata.price ??
         null,
+    };
+    const microlinkMetadata = !hasCompleteMetadata(metadataBeforeMicrolink)
+      ? await fetchMicrolinkMetadata({
+          url:
+            officialMetadata?.canonicalUrl ||
+            apiMetadata?.canonicalUrl ||
+            htmlMetadata.canonicalUrl ||
+            finalUrl.toString(),
+          signal: controller.signal,
+        })
+      : null;
+    const metadata = {
+      name:
+        officialMetadata?.name ||
+        apiMetadata?.name ||
+        htmlMetadata.name ||
+        microlinkMetadata?.name ||
+        "",
+      description:
+        apiMetadata?.description ||
+        htmlMetadata.description ||
+        microlinkMetadata?.description ||
+        "",
+      imageUrl:
+        officialMetadata?.imageUrl ||
+        apiMetadata?.imageUrl ||
+        htmlMetadata.imageUrl ||
+        microlinkMetadata?.imageUrl ||
+        "",
+      price:
+        officialMetadata?.price ??
+        apiMetadata?.price ??
+        htmlMetadata.price ??
+        microlinkMetadata?.price ??
+        null,
       priceMax:
         officialMetadata?.priceMax ??
         apiMetadata?.priceMax ??
         htmlMetadata.priceMax ??
+        microlinkMetadata?.priceMax ??
         null,
       currency:
         officialMetadata?.currency ||
         apiMetadata?.currency ||
         htmlMetadata.currency ||
+        microlinkMetadata?.currency ||
         null,
       canonicalUrl:
         officialMetadata?.canonicalUrl ||
         apiMetadata?.canonicalUrl ||
         htmlMetadata.canonicalUrl ||
+        microlinkMetadata?.canonicalUrl ||
         null,
     };
     const fallbackName = deriveProductNameFromUrl(
@@ -591,6 +697,12 @@ export async function scanAffiliateProduct(
     if (apiMetadata) {
       warnings.push(
         "Metadata yang belum tersedia dilengkapi dari endpoint produk Shopee.",
+      );
+    }
+
+    if (microlinkMetadata) {
+      warnings.push(
+        "Metadata yang belum tersedia dilengkapi melalui fallback link preview.",
       );
     }
 
