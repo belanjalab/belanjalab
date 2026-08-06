@@ -1,396 +1,212 @@
-import {
-  deriveProductNameFromUrl,
-  extractEmbeddedShopeeProductUrl,
-  extractShopeeProductIds,
-  parseAffiliateProductMetadata,
-} from "@/lib/affiliate-import/metadata";
-import { fetchJinaReaderMetadata } from "@/lib/affiliate-import/jina-reader";
-import { fetchMicrolinkMetadata } from "@/lib/affiliate-import/microlink";
-import { fetchShopeeProductApiMetadata } from "@/lib/affiliate-import/shopee-product-api";
 import type {
   AffiliateProductFetchErrorCode,
   AffiliateProductPreview,
 } from "@/lib/affiliate-import/types";
 
-const REQUEST_TIMEOUT_MS = 45_000;
-const MAX_REDIRECTS = 6;
-const MAX_HTML_BYTES = 2_500_000;
-const SCAN_CONCURRENCY = 2;
-
-const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
+const REQUEST_TIMEOUT_MS = 7_000;
+const MAX_HTML_BYTES = 128_000;
 
 const REQUEST_HEADERS = {
-  Accept:
-    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-  "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
-  "Cache-Control": "no-cache",
-  Pragma: "no-cache",
-  Referer: "https://shopee.co.id/",
+  Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "id-ID,id;q=0.9,en;q=0.7",
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 } as const;
-
-const SOCIAL_PREVIEW_HEADERS = {
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-  "Accept-Language": "id-ID,id;q=0.9,en;q=0.8",
-  "Cache-Control": "no-cache",
-  Pragma: "no-cache",
-  Referer: "https://shopee.co.id/",
-  "User-Agent":
-    "facebookexternalhit/1.1 (+https://www.facebook.com/externalhit_uatext.php)",
-} as const;
-
-class AffiliateFetchError extends Error {
-  readonly code: AffiliateProductFetchErrorCode;
-
-  constructor(code: AffiliateProductFetchErrorCode, message: string) {
-    super(message);
-    this.name = "AffiliateFetchError";
-    this.code = code;
-  }
-}
 
 function normalizeHostname(hostname: string) {
   return hostname.toLowerCase().replace(/\.$/, "");
 }
 
 export function isAllowedShopeeHostname(hostname: string) {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalized = normalizeHostname(hostname);
 
   return (
-    normalizedHostname === "shopee.co.id" ||
-    normalizedHostname.endsWith(".shopee.co.id") ||
-    normalizedHostname === "shope.ee" ||
-    normalizedHostname.endsWith(".shope.ee") ||
-    normalizedHostname === "shp.ee" ||
-    normalizedHostname.endsWith(".shp.ee")
+    normalized === "shopee.co.id" ||
+    normalized.endsWith(".shopee.co.id") ||
+    normalized === "shope.ee" ||
+    normalized.endsWith(".shope.ee") ||
+    normalized === "shp.ee" ||
+    normalized.endsWith(".shp.ee")
   );
 }
 
 function normalizeShopeeUrl(value: string) {
-  let parsedUrl: URL;
+  const url = new URL(value);
 
-  try {
-    parsedUrl = new URL(value);
-  } catch {
-    throw new AffiliateFetchError(
-      "unsupported-url",
-      "Format link Shopee tidak valid.",
-    );
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("unsupported-url");
   }
 
-  if (!isAllowedShopeeHostname(parsedUrl.hostname)) {
-    throw new AffiliateFetchError(
-      "unsupported-url",
-      "Link harus menggunakan domain resmi Shopee Indonesia.",
-    );
+  if (!isAllowedShopeeHostname(url.hostname)) {
+    throw new Error("unsupported-url");
   }
 
-  if (parsedUrl.username || parsedUrl.password) {
-    throw new AffiliateFetchError(
-      "unsupported-url",
-      "Link dengan kredensial tidak diizinkan.",
-    );
-  }
-
-  if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
-    throw new AffiliateFetchError(
-      "unsupported-url",
-      "Protokol link tidak didukung.",
-    );
-  }
-
-  parsedUrl.protocol = "https:";
-  parsedUrl.hash = "";
-
-  return parsedUrl;
+  url.protocol = "https:";
+  url.hash = "";
+  return url.toString();
 }
 
-function normalizeRedirectUrl(location: string, currentUrl: URL) {
-  let nextUrl: URL;
-
-  try {
-    nextUrl = new URL(location, currentUrl);
-  } catch {
-    throw new AffiliateFetchError(
-      "redirect-failed",
-      "Shopee mengembalikan alamat redirect yang tidak valid.",
-    );
-  }
-
-  if (!isAllowedShopeeHostname(nextUrl.hostname)) {
-    throw new AffiliateFetchError(
-      "redirect-domain-blocked",
-      "Redirect keluar dari domain resmi Shopee diblokir untuk keamanan.",
-    );
-  }
-
-  if (nextUrl.protocol !== "https:" && nextUrl.protocol !== "http:") {
-    throw new AffiliateFetchError(
-      "redirect-domain-blocked",
-      "Protokol redirect tidak didukung.",
-    );
-  }
-
-  nextUrl.protocol = "https:";
-  nextUrl.hash = "";
-
-  return nextUrl;
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\\u002f/gi, "/")
+    .replace(/\\u0026/gi, "&")
+    .replace(/\\\//g, "/")
+    .trim();
 }
 
-async function fetchWithSafeRedirects(
-  inputUrl: string,
-  signal: AbortSignal,
-  headers: Record<string, string> = REQUEST_HEADERS,
-) {
-  let currentUrl = normalizeShopeeUrl(inputUrl);
-
-  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
-    const response = await fetch(currentUrl, {
-      method: "GET",
-      headers,
-      redirect: "manual",
-      cache: "no-store",
-      signal,
-    });
-
-    if (!REDIRECT_STATUS_CODES.has(response.status)) {
-      const responseUrl = response.url
-        ? normalizeRedirectUrl(response.url, currentUrl)
-        : currentUrl;
-
-      return {
-        response,
-        finalUrl: responseUrl,
-      };
-    }
-
-    const location = response.headers.get("location");
-    await response.body?.cancel();
-
-    if (!location) {
-      throw new AffiliateFetchError(
-        "redirect-failed",
-        "Shopee tidak memberikan tujuan redirect.",
-      );
-    }
-
-    if (redirectCount === MAX_REDIRECTS) {
-      throw new AffiliateFetchError(
-        "redirect-failed",
-        "Jumlah redirect Shopee melebihi batas aman.",
-      );
-    }
-
-    currentUrl = normalizeRedirectUrl(location, currentUrl);
-  }
-
-  throw new AffiliateFetchError(
-    "redirect-failed",
-    "Redirect Shopee tidak dapat diselesaikan.",
+function readAttribute(tag: string, attributeName: string) {
+  const pattern = new RegExp(
+    `\\b${attributeName}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
+    "i",
   );
+  const match = tag.match(pattern);
+  return decodeHtml(match?.[1] ?? match?.[2] ?? match?.[3] ?? "");
 }
 
-async function readResponseText(response: Response) {
+function normalizeImageUrl(value: string, baseUrl: string) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const decoded = decodeHtml(value);
+    const url = new URL(
+      decoded.startsWith("//") ? `https:${decoded}` : decoded,
+      baseUrl,
+    );
+    const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname.toLowerCase();
+    const isImage =
+      hostname.endsWith("susercontent.com") ||
+      hostname.includes("img.shopee") ||
+      /\.(?:avif|gif|jpe?g|png|webp)$/i.test(pathname);
+
+    if (!isImage) {
+      return "";
+    }
+
+    url.protocol = "https:";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function extractMetaImage(html: string, baseUrl: string) {
+  const metaPattern = /<meta\b[^>]*>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = metaPattern.exec(html)) !== null) {
+    const tag = match[0];
+    const key = (readAttribute(tag, "property") || readAttribute(tag, "name"))
+      .toLowerCase()
+      .trim();
+
+    if (
+      key !== "og:image" &&
+      key !== "og:image:secure_url" &&
+      key !== "twitter:image" &&
+      key !== "twitter:image:src"
+    ) {
+      continue;
+    }
+
+    const imageUrl = normalizeImageUrl(readAttribute(tag, "content"), baseUrl);
+
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return "";
+}
+
+function extractFallbackImage(html: string, baseUrl: string) {
+  const normalized = decodeHtml(html);
+  const pattern = /https?:\/\/[^"'\s<>\\]+/gi;
+  let match: RegExpExecArray | null;
+  let checked = 0;
+
+  while ((match = pattern.exec(normalized)) !== null && checked < 120) {
+    checked += 1;
+    const imageUrl = normalizeImageUrl(match[0], baseUrl);
+
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return "";
+}
+
+async function readLimitedHtml(response: Response) {
   if (!response.body) {
-    const text = await response.text();
-    return text.slice(0, MAX_HTML_BYTES);
+    return (await response.text()).slice(0, MAX_HTML_BYTES);
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let totalBytes = 0;
   let html = "";
+  let totalBytes = 0;
 
   try {
-    while (true) {
+    while (totalBytes < MAX_HTML_BYTES) {
       const { done, value } = await reader.read();
 
-      if (done) {
-        html += decoder.decode();
+      if (done || !value) {
         break;
       }
 
-      if (!value) {
-        continue;
-      }
+      const remaining = MAX_HTML_BYTES - totalBytes;
+      const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
 
-      const remainingBytes = MAX_HTML_BYTES - totalBytes;
-
-      if (remainingBytes <= 0) {
-        await reader.cancel();
-        break;
-      }
-
-      const chunk =
-        value.byteLength > remainingBytes
-          ? value.subarray(0, remainingBytes)
-          : value;
-
-      totalBytes += chunk.byteLength;
       html += decoder.decode(chunk, { stream: true });
+      totalBytes += chunk.byteLength;
 
-      if (totalBytes >= MAX_HTML_BYTES) {
-        await reader.cancel();
-        html += decoder.decode();
+      // Metadata gambar umumnya berada di bagian head. Berhenti secepat mungkin.
+      if (/<\/head>/i.test(html) || chunk.byteLength < value.byteLength) {
         break;
       }
     }
   } finally {
-    reader.releaseLock();
+    html += decoder.decode();
+
+    try {
+      await reader.cancel();
+    } catch {
+      // Stream sudah selesai.
+    }
   }
 
   return html;
 }
 
-function ensureHtmlResponse(response: Response) {
-  if (!response.ok) {
-    throw new AffiliateFetchError(
-      "http-error",
-      `Shopee mengembalikan HTTP ${response.status}. Coba lagi beberapa saat.`,
-    );
-  }
-
-  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
-
-  if (
-    contentType &&
-    !contentType.includes("text/html") &&
-    !contentType.includes("application/xhtml+xml")
-  ) {
-    throw new AffiliateFetchError(
-      "unsupported-content",
-      "Link tidak mengarah ke halaman HTML produk Shopee.",
-    );
-  }
-}
-
-function findProductUrlInQuery(url: URL) {
-  for (const [, rawValue] of url.searchParams) {
-    let candidate = rawValue;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const embeddedUrl = extractEmbeddedShopeeProductUrl(
-        candidate,
-        url.toString(),
-      );
-
-      if (embeddedUrl) {
-        return embeddedUrl;
-      }
-
-      try {
-        const decoded = decodeURIComponent(candidate);
-
-        if (decoded === candidate) {
-          break;
-        }
-
-        candidate = decoded;
-      } catch {
-        break;
-      }
-    }
-  }
-
-  return "";
-}
-
-function getProductDestination(
-  html: string,
-  finalUrl: URL,
-  canonicalUrl: string | null,
-) {
-  const candidates = [
-    canonicalUrl ?? "",
-    findProductUrlInQuery(finalUrl),
-    extractEmbeddedShopeeProductUrl(html, finalUrl.toString()),
-  ];
-
-  for (const candidate of candidates) {
-    if (!candidate) {
-      continue;
-    }
-
-    try {
-      const candidateUrl = normalizeShopeeUrl(candidate);
-      const ids = extractShopeeProductIds(candidateUrl.toString());
-
-      if (ids.shopId && ids.itemId) {
-        return candidateUrl.toString();
-      }
-    } catch {
-      // Kandidat lain masih dapat diperiksa.
-    }
-  }
-
-  return "";
-}
-
-function hasCompleteMetadata(metadata: {
-  name: string;
-  imageUrl: string;
-  price: number | null;
-}) {
-  return Boolean(metadata.name && metadata.imageUrl && metadata.price !== null);
-}
-
-function getMetadataScore(metadata: {
-  name: string;
-  imageUrl: string;
-  price: number | null;
-  description?: string;
-  canonicalUrl?: string | null;
-}) {
-  return (
-    (metadata.name ? 3 : 0) +
-    (metadata.imageUrl ? 4 : 0) +
-    (metadata.price !== null ? 3 : 0) +
-    (metadata.description ? 1 : 0) +
-    (metadata.canonicalUrl ? 1 : 0)
-  );
-}
-
-function getMissingFieldLabels(metadata: {
-  name: string;
-  imageUrl: string;
-  price: number | null;
-}) {
-  const missingFields: string[] = [];
-
-  if (!metadata.name) {
-    missingFields.push("nama");
-  }
-
-  if (!metadata.imageUrl) {
-    missingFields.push("gambar");
-  }
-
-  if (metadata.price === null) {
-    missingFields.push("harga");
-  }
-
-  return missingFields;
-}
-
-function createFailurePreview(
+function createPreview(
   affiliateUrl: string,
-  error: AffiliateFetchError,
+  options: {
+    resolvedUrl?: string | null;
+    imageUrl?: string;
+    errorCode?: AffiliateProductFetchErrorCode | null;
+    message: string;
+  },
 ): AffiliateProductPreview {
+  const imageUrl = options.imageUrl ?? "";
+
   return {
-    id: affiliateUrl,
+    id: crypto.randomUUID(),
     marketplace: "shopee",
     affiliateUrl,
-    resolvedUrl: null,
-    status: "failed",
-    errorCode: error.code,
-    message: error.message,
-    warnings: [
-      "Shopee dapat membatasi akses otomatis. Data tetap bisa dilengkapi manual pada tahap preview.",
-    ],
-    name: deriveProductNameFromUrl(affiliateUrl),
+    resolvedUrl: options.resolvedUrl ?? null,
+    status: imageUrl ? "success" : "failed",
+    errorCode: imageUrl ? null : (options.errorCode ?? "metadata-not-found"),
+    message: options.message,
+    warnings: [],
+    name: "",
     description: "",
-    imageUrl: "",
+    imageUrl,
     price: null,
     priceMax: null,
     currency: null,
@@ -400,419 +216,90 @@ function createFailurePreview(
   };
 }
 
-type ProductPageFetchResult = {
-  html: string;
-  finalUrl: URL;
-  warning: string | null;
-};
+async function scanImageLink(affiliateUrl: string) {
+  let normalizedUrl: string;
 
-function combineWarnings(...warnings: Array<string | null | undefined>) {
-  const uniqueWarnings = warnings.filter(
-    (warning, index, values): warning is string =>
-      Boolean(warning) && values.indexOf(warning) === index,
-  );
-
-  return uniqueWarnings.length > 0 ? uniqueWarnings.join(" ") : null;
-}
-
-async function readHtmlSafely(response: Response) {
   try {
-    ensureHtmlResponse(response);
-
-    return {
-      html: await readResponseText(response),
-      warning: null,
-    };
-  } catch (error) {
-    await response.body?.cancel().catch(() => undefined);
-
-    if (error instanceof AffiliateFetchError) {
-      return {
-        html: "",
-        warning: error.message,
-      };
-    }
-
-    throw error;
-  }
-}
-
-async function fetchProductPage(
-  inputUrl: string,
-  signal: AbortSignal,
-): Promise<ProductPageFetchResult> {
-  const firstFetch = await fetchWithSafeRedirects(inputUrl, signal);
-  const firstPage = await readHtmlSafely(firstFetch.response);
-  const firstMetadata = parseAffiliateProductMetadata(
-    firstPage.html,
-    firstFetch.finalUrl.toString(),
-  );
-  const firstIds = extractShopeeProductIds(firstFetch.finalUrl.toString());
-  const discoveredProductDestination = getProductDestination(
-    firstPage.html,
-    firstFetch.finalUrl,
-    firstMetadata.canonicalUrl,
-  );
-  const canonicalProductDestination =
-    firstIds.shopId && firstIds.itemId
-      ? `https://shopee.co.id/product/${firstIds.shopId}/${firstIds.itemId}`
-      : "";
-  const productDestination =
-    discoveredProductDestination || canonicalProductDestination;
-
-  if (
-    productDestination &&
-    productDestination !== firstFetch.finalUrl.toString() &&
-    (!firstIds.shopId || !firstIds.itemId || !hasCompleteMetadata(firstMetadata))
-  ) {
-    try {
-      const secondFetch = await fetchWithSafeRedirects(productDestination, signal);
-      const secondPage = await readHtmlSafely(secondFetch.response);
-
-      return {
-        html: secondPage.html || firstPage.html,
-        finalUrl: secondFetch.finalUrl,
-        warning: combineWarnings(firstPage.warning, secondPage.warning),
-      };
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw error;
-      }
-
-      const secondWarning =
-        error instanceof Error
-          ? `Halaman produk kedua tidak dapat dibaca: ${error.message}`
-          : "Halaman produk kedua tidak dapat dibaca.";
-
-      return {
-        html: firstPage.html,
-        finalUrl: normalizeShopeeUrl(productDestination),
-        warning: combineWarnings(firstPage.warning, secondWarning),
-      };
-    }
+    normalizedUrl = normalizeShopeeUrl(affiliateUrl);
+  } catch {
+    return createPreview(affiliateUrl, {
+      errorCode: "unsupported-url",
+      message: "Link Shopee tidak valid atau domain tidak didukung.",
+    });
   }
 
-  return {
-    html: firstPage.html,
-    finalUrl: productDestination
-      ? normalizeShopeeUrl(productDestination)
-      : firstFetch.finalUrl,
-    warning: firstPage.warning,
-  };
-}
-
-export async function scanAffiliateProduct(
-  affiliateUrl: string,
-): Promise<AffiliateProductPreview> {
-  const normalizedAffiliateUrl = normalizeShopeeUrl(affiliateUrl).toString();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const pageResult = await fetchProductPage(
-      normalizedAffiliateUrl,
-      controller.signal,
-    );
-    const { finalUrl } = pageResult;
-    let pageWarning = pageResult.warning;
-    let htmlMetadata = parseAffiliateProductMetadata(
-      pageResult.html,
-      finalUrl.toString(),
-    );
+    const response = await fetch(normalizedUrl, {
+      method: "GET",
+      headers: REQUEST_HEADERS,
+      redirect: "follow",
+      signal: controller.signal,
+    });
 
-    if (!hasCompleteMetadata(htmlMetadata)) {
-      try {
-        const socialFetch = await fetchWithSafeRedirects(
-          finalUrl.toString(),
-          controller.signal,
-          SOCIAL_PREVIEW_HEADERS,
-        );
-        const socialPage = await readHtmlSafely(socialFetch.response);
-        const socialMetadata = parseAffiliateProductMetadata(
-          socialPage.html,
-          socialFetch.finalUrl.toString(),
-        );
+    if (!response.ok) {
+      return createPreview(affiliateUrl, {
+        resolvedUrl: response.url || normalizedUrl,
+        errorCode: "http-error",
+        message: `Shopee mengembalikan HTTP ${response.status}.`,
+      });
+    }
 
-        if (getMetadataScore(socialMetadata) > getMetadataScore(htmlMetadata)) {
-          htmlMetadata = socialMetadata;
-        }
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
 
-        pageWarning = combineWarnings(pageWarning, socialPage.warning);
-      } catch (error) {
-        if (!(error instanceof Error && error.name === "AbortError")) {
-          pageWarning = combineWarnings(
-            pageWarning,
-            error instanceof Error
-              ? `Preview sosial Shopee tidak dapat dibaca: ${error.message}`
-              : "Preview sosial Shopee tidak dapat dibaca.",
-          );
-        }
+    if (contentType && !contentType.includes("text/html")) {
+      return createPreview(affiliateUrl, {
+        resolvedUrl: response.url || normalizedUrl,
+        errorCode: "unsupported-content",
+        message: "Respons Shopee bukan halaman HTML.",
+      });
+    }
+
+    let resolvedUrl = normalizedUrl;
+
+    try {
+      if (response.url) {
+        resolvedUrl = normalizeShopeeUrl(response.url);
       }
-    }
-    const idsFromResolvedUrl = extractShopeeProductIds(finalUrl.toString());
-    const idsFromCanonicalUrl = htmlMetadata.canonicalUrl
-      ? extractShopeeProductIds(htmlMetadata.canonicalUrl)
-      : { shopId: null, itemId: null };
-    const idsFromAffiliateUrl = extractShopeeProductIds(normalizedAffiliateUrl);
-    const ids = {
-      shopId:
-        idsFromResolvedUrl.shopId ??
-        idsFromCanonicalUrl.shopId ??
-        idsFromAffiliateUrl.shopId,
-      itemId:
-        idsFromResolvedUrl.itemId ??
-        idsFromCanonicalUrl.itemId ??
-        idsFromAffiliateUrl.itemId,
-    };
-    const productUrl =
-      htmlMetadata.canonicalUrl ||
-      (ids.shopId && ids.itemId
-        ? `https://shopee.co.id/product/${ids.shopId}/${ids.itemId}`
-        : finalUrl.toString());
-    const nameFromUrl = deriveProductNameFromUrl(productUrl);
-    const metadataBeforeInternalApi = {
-      name: htmlMetadata.name || nameFromUrl,
-      imageUrl: htmlMetadata.imageUrl,
-      price: htmlMetadata.price,
-    };
-    const apiMetadata =
-      !hasCompleteMetadata(metadataBeforeInternalApi) && ids.shopId && ids.itemId
-        ? await fetchShopeeProductApiMetadata({
-            shopId: ids.shopId,
-            itemId: ids.itemId,
-            refererUrl: productUrl,
-            productName: htmlMetadata.name || nameFromUrl,
-            signal: controller.signal,
-          })
-        : null;
-    const metadataBeforeMicrolink = {
-      name: apiMetadata?.name || htmlMetadata.name || nameFromUrl,
-      imageUrl: apiMetadata?.imageUrl || htmlMetadata.imageUrl,
-      price: apiMetadata?.price ?? htmlMetadata.price,
-    };
-    const microlinkMetadata = !hasCompleteMetadata(metadataBeforeMicrolink)
-      ? await fetchMicrolinkMetadata({
-          url: apiMetadata?.canonicalUrl || productUrl,
-          signal: controller.signal,
-        })
-      : null;
-    const metadataBeforeReader = {
-      name:
-        apiMetadata?.name ||
-        htmlMetadata.name ||
-        microlinkMetadata?.name ||
-        nameFromUrl,
-      imageUrl:
-        apiMetadata?.imageUrl ||
-        htmlMetadata.imageUrl ||
-        microlinkMetadata?.imageUrl ||
-        "",
-      price:
-        apiMetadata?.price ??
-        htmlMetadata.price ??
-        microlinkMetadata?.price ??
-        null,
-    };
-    const readerResult = !hasCompleteMetadata(metadataBeforeReader)
-      ? await fetchJinaReaderMetadata({
-          url:
-            apiMetadata?.canonicalUrl ||
-            htmlMetadata.canonicalUrl ||
-            microlinkMetadata?.canonicalUrl ||
-            productUrl,
-          productName: metadataBeforeReader.name,
-          shopId: ids.shopId,
-          itemId: ids.itemId,
-          signal: controller.signal,
-        })
-      : {
-          metadata: null,
-          warning: null,
-        };
-    const readerMetadata = readerResult.metadata;
-    const metadata = {
-      name:
-        apiMetadata?.name ||
-        htmlMetadata.name ||
-        microlinkMetadata?.name ||
-        readerMetadata?.name ||
-        nameFromUrl,
-      description:
-        apiMetadata?.description ||
-        htmlMetadata.description ||
-        microlinkMetadata?.description ||
-        readerMetadata?.description ||
-        "",
-      imageUrl:
-        apiMetadata?.imageUrl ||
-        htmlMetadata.imageUrl ||
-        microlinkMetadata?.imageUrl ||
-        readerMetadata?.imageUrl ||
-        "",
-      price:
-        apiMetadata?.price ??
-        htmlMetadata.price ??
-        readerMetadata?.price ??
-        microlinkMetadata?.price ??
-        null,
-      priceMax:
-        apiMetadata?.priceMax ??
-        htmlMetadata.priceMax ??
-        readerMetadata?.priceMax ??
-        microlinkMetadata?.priceMax ??
-        null,
-      currency:
-        apiMetadata?.currency ||
-        htmlMetadata.currency ||
-        readerMetadata?.currency ||
-        microlinkMetadata?.currency ||
-        null,
-      canonicalUrl:
-        apiMetadata?.canonicalUrl ||
-        htmlMetadata.canonicalUrl ||
-        microlinkMetadata?.canonicalUrl ||
-        readerMetadata?.canonicalUrl ||
-        productUrl,
-    };
-    const fallbackName = deriveProductNameFromUrl(
-      metadata.canonicalUrl || finalUrl.toString(),
-    );
-    const name = metadata.name || fallbackName;
-    const priceMax =
-      metadata.priceMax !== null &&
-      metadata.price !== null &&
-      metadata.priceMax > metadata.price
-        ? metadata.priceMax
-        : null;
-    const normalizedMetadata = {
-      ...metadata,
-      name,
-      priceMax,
-    };
-    const missingFields = getMissingFieldLabels(normalizedMetadata);
-    const status = hasCompleteMetadata(normalizedMetadata)
-      ? "success"
-      : "partial";
-    const warnings: string[] = [];
-
-    if (apiMetadata) {
-      warnings.push(
-        apiMetadata.source === "search-items"
-          ? "Metadata dilengkapi dari hasil pencarian produk Shopee."
-          : "Metadata dilengkapi dari endpoint publik produk Shopee.",
-      );
+    } catch {
+      // Gunakan URL input apabila redirect berakhir di domain lain.
     }
 
-    if (microlinkMetadata) {
-      warnings.push(
-        "Metadata yang belum tersedia dilengkapi melalui fallback link preview.",
-      );
-    }
+    const html = await readLimitedHtml(response);
+    const imageUrl =
+      extractMetaImage(html, resolvedUrl) ||
+      extractFallbackImage(html, resolvedUrl);
 
-    if (readerMetadata) {
-      warnings.push(
-        readerMetadata.source === "jina-shopee-search"
-          ? "Harga dilengkapi dari halaman pencarian Shopee yang dirender otomatis."
-          : "Metadata dilengkapi melalui browser reader tanpa Shopee Affiliate API.",
-      );
-    }
-
-    if (readerResult.warning && missingFields.length > 0) {
-      warnings.push(readerResult.warning);
-    }
-
-    if (pageWarning && missingFields.length > 0) {
-      warnings.push(`Halaman publik Shopee tidak dapat dibaca penuh: ${pageWarning}`);
-    }
-
-    if (priceMax !== null) {
-      warnings.push(
-        "Produk memiliki rentang harga variasi; harga terendah dan tertinggi ditampilkan.",
-      );
-    }
-
-    if (missingFields.length > 0) {
-      warnings.push(
-        `${missingFields.join(", ")} belum berhasil dibaca otomatis setelah semua jalur dicoba. Klik Coba Ulang atau lengkapi manual.`,
-      );
-    }
-
-    const uniqueWarnings = warnings.filter(
-      (warning, index, values) => values.indexOf(warning) === index,
-    );
-
-    return {
-      id: normalizedAffiliateUrl,
-      marketplace: "shopee",
-      affiliateUrl: normalizedAffiliateUrl,
-      resolvedUrl: normalizedMetadata.canonicalUrl || finalUrl.toString(),
-      status,
-      errorCode: missingFields.length > 0 ? "metadata-not-found" : null,
-      message:
-        status === "success"
-          ? "Nama, gambar, dan harga berhasil diambil tanpa Affiliate API."
-          : `Data berhasil diambil sebagian. Lengkapi ${missingFields.join(", ")}.`,
-      warnings: uniqueWarnings,
-      name: normalizedMetadata.name,
-      description: normalizedMetadata.description,
-      imageUrl: normalizedMetadata.imageUrl,
-      price: normalizedMetadata.price,
-      priceMax: normalizedMetadata.priceMax,
-      currency: normalizedMetadata.currency,
-      shopId: ids.shopId,
-      itemId: ids.itemId,
-      fetchedAt: new Date().toISOString(),
-    };
+    return createPreview(affiliateUrl, {
+      resolvedUrl,
+      imageUrl,
+      errorCode: imageUrl ? null : "metadata-not-found",
+      message: imageUrl
+        ? "Link gambar berhasil diambil."
+        : "Link gambar tidak ditemukan dari halaman Shopee.",
+    });
   } catch (error) {
-    if (error instanceof AffiliateFetchError) {
-      return createFailurePreview(normalizedAffiliateUrl, error);
-    }
+    const timedOut = error instanceof DOMException && error.name === "AbortError";
 
-    if (error instanceof Error && error.name === "AbortError") {
-      return createFailurePreview(
-        normalizedAffiliateUrl,
-        new AffiliateFetchError(
-          "request-timeout",
-          "Pengambilan data melewati batas waktu. Coba ulang link ini.",
-        ),
-      );
-    }
-
-    return createFailurePreview(
-      normalizedAffiliateUrl,
-      new AffiliateFetchError(
-        "fetch-failed",
-        error instanceof Error
-          ? `Gagal mengambil data: ${error.message}`
-          : "Gagal mengambil data produk dari Shopee.",
-      ),
-    );
+    return createPreview(affiliateUrl, {
+      errorCode: timedOut ? "request-timeout" : "fetch-failed",
+      message: timedOut
+        ? "Permintaan ke Shopee melewati batas waktu."
+        : "Halaman Shopee gagal dibaca.",
+    });
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
   }
 }
 
 export async function scanAffiliateProducts(links: string[]) {
-  const results = new Array<AffiliateProductPreview>(links.length);
-  let nextIndex = 0;
+  const items: AffiliateProductPreview[] = [];
 
-  async function worker() {
-    while (true) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-
-      if (currentIndex >= links.length) {
-        return;
-      }
-
-      results[currentIndex] = await scanAffiliateProduct(
-        links[currentIndex] as string,
-      );
-    }
+  for (const link of links) {
+    items.push(await scanImageLink(link));
   }
 
-  const workerCount = Math.min(SCAN_CONCURRENCY, links.length);
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
-
-  return results;
+  return items;
 }
