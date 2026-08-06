@@ -37,10 +37,6 @@ const PRODUCT_STATUS_LABELS: Record<AffiliateProductPreview["status"], string> =
   failed: "Gagal",
 };
 
-type AffiliateLinkImportClientProps = {
-  openApiConfigured: boolean;
-};
-
 function getLinkKindLabel(row: ParsedAffiliateLink) {
   if (row.kind === "affiliate-shortlink") {
     return "Short link affiliate";
@@ -141,9 +137,7 @@ async function requestProductScan(links: string[]) {
   return payload;
 }
 
-export default function AffiliateLinkImportClient({
-  openApiConfigured,
-}: AffiliateLinkImportClientProps) {
+export default function AffiliateLinkImportClient() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AffiliateLinkParseResult | null>(null);
   const [formError, setFormError] = useState("");
@@ -386,22 +380,11 @@ export default function AffiliateLinkImportClient({
 
   return (
     <section className="mt-8 space-y-6">
-      <div
-        className={`rounded-2xl border px-5 py-4 text-sm leading-6 ${
-          openApiConfigured
-            ? "border-green-200 bg-green-50 text-green-800"
-            : "border-blue-200 bg-blue-50 text-blue-900"
-        }`}
-      >
-        <p className="font-black">
-          {openApiConfigured
-            ? "Shopee Affiliate Open API aktif"
-            : "Mode otomatis tanpa Open API"}
-        </p>
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm leading-6 text-blue-900">
+        <p className="font-black">Pemindaian otomatis tanpa Shopee Affiliate API</p>
         <p className="mt-1 text-xs leading-5">
-          {openApiConfigured
-            ? "Nama, gambar, dan harga akan diprioritaskan dari API resmi Shopee Affiliate."
-            : "Kredensial Shopee tidak wajib. Sistem tetap mencoba halaman publik, endpoint produk Shopee, lalu fallback link preview gratis untuk mengambil nama, foto, dan harga."}
+          Sistem mencoba metadata halaman, state produk, endpoint publik Shopee,
+          link preview, dan browser reader untuk mengambil nama, foto, serta harga.
         </p>
       </div>
 

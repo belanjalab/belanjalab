@@ -226,6 +226,136 @@ function parsePriceNumber(value: unknown) {
   return Math.round(numericValue);
 }
 
+const SHOPEE_INTERNAL_PRICE_SCALE = 100_000;
+const EMBEDDED_PRICE_KEYS = new Set([
+  "price",
+  "price_min",
+  "price_max",
+  "current_price",
+  "sale_price",
+  "promotion_price",
+]);
+
+function parseShopeeEmbeddedPrice(value: string) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return null;
+  }
+
+  // Nilai harga dari state internal Shopee umumnya dikalikan 100.000.
+  // Nilai kecil dipertahankan untuk berjaga-jaga jika format berubah.
+  const normalizedValue =
+    numericValue >= SHOPEE_INTERNAL_PRICE_SCALE * 10
+      ? numericValue / SHOPEE_INTERNAL_PRICE_SCALE
+      : numericValue;
+  const price = Math.round(normalizedValue);
+
+  return price >= 100 && price <= 5_000_000_000 ? price : null;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractEmbeddedShopeeOffer(html: string, pageUrl: string): ParsedOffer {
+  const ids = extractShopeeProductIds(pageUrl);
+
+  if (!ids.itemId) {
+    return {
+      price: null,
+      priceMax: null,
+      currency: null,
+    };
+  }
+
+  const decodedHtml = decodeEscapedHtml(decodeHtmlEntities(html));
+  const itemIdPattern = new RegExp(
+    `(?:itemid|item_id|itemId)[\"']?\\s*[:=]\\s*[\"']?${escapeRegExp(ids.itemId)}(?:[^0-9]|$)`,
+    "gi",
+  );
+  const shopIdPattern = ids.shopId
+    ? new RegExp(
+        `(?:shopid|shop_id|shopId)[\"']?\\s*[:=]\\s*[\"']?${escapeRegExp(ids.shopId)}(?:[^0-9]|$)`,
+        "i",
+      )
+    : null;
+  const windows: string[] = [];
+
+  for (const match of decodedHtml.matchAll(itemIdPattern)) {
+    const matchIndex = match.index ?? 0;
+    const windowStart = Math.max(0, matchIndex - 2_500);
+    const windowEnd = Math.min(decodedHtml.length, matchIndex + 16_000);
+    const candidateWindow = decodedHtml.slice(windowStart, windowEnd);
+
+    if (shopIdPattern && !shopIdPattern.test(candidateWindow)) {
+      continue;
+    }
+
+    windows.push(candidateWindow);
+
+    if (windows.length >= 5) {
+      break;
+    }
+  }
+
+  if (windows.length === 0) {
+    return {
+      price: null,
+      priceMax: null,
+      currency: null,
+    };
+  }
+
+  const lowPrices: number[] = [];
+  const highPrices: number[] = [];
+  const genericPrices: number[] = [];
+  const keyValuePattern =
+    /["'](price|price_min|price_max|current_price|sale_price|promotion_price)["']\s*:\s*["']?(\d+(?:\.\d+)?)/gi;
+
+  for (const candidateWindow of windows) {
+    for (const match of candidateWindow.matchAll(keyValuePattern)) {
+      const key = match[1]?.toLowerCase() ?? "";
+
+      if (!EMBEDDED_PRICE_KEYS.has(key)) {
+        continue;
+      }
+
+      const price = parseShopeeEmbeddedPrice(match[2] ?? "");
+
+      if (price === null) {
+        continue;
+      }
+
+      if (key === "price_min") {
+        lowPrices.push(price);
+      } else if (key === "price_max") {
+        highPrices.push(price);
+      } else {
+        genericPrices.push(price);
+      }
+    }
+  }
+
+  const uniqueLowPrices = Array.from(new Set(lowPrices)).sort((a, b) => a - b);
+  const uniqueHighPrices = Array.from(new Set(highPrices)).sort((a, b) => a - b);
+  const uniqueGenericPrices = Array.from(new Set(genericPrices)).sort(
+    (a, b) => a - b,
+  );
+  const price = uniqueLowPrices[0] ?? uniqueGenericPrices[0] ?? null;
+  const highestPrice =
+    uniqueHighPrices.at(-1) ?? uniqueGenericPrices.at(-1) ?? price;
+
+  return {
+    price,
+    priceMax:
+      price !== null && highestPrice !== null && highestPrice > price
+        ? highestPrice
+        : price,
+    currency: price !== null ? "IDR" : null,
+  };
+}
+
 function getJsonLdNodes(html: string) {
   const nodes: JsonRecord[] = [];
 
@@ -500,6 +630,7 @@ export function parseAffiliateProductMetadata(
 ): ParsedAffiliateProductMetadata {
   const metaValues = collectMetaValues(html);
   const jsonLdProduct = extractJsonLdProduct(html);
+  const embeddedOffer = extractEmbeddedShopeeOffer(html, pageUrl);
   const fallbackPrice = extractFallbackPrice(html);
 
   const rawName = cleanupProductName(
@@ -543,10 +674,15 @@ export function parseAffiliateProductMetadata(
     ]),
   );
 
-  const price = jsonLdProduct?.offer.price ?? metaPrice ?? fallbackPrice.price;
+  const price =
+    jsonLdProduct?.offer.price ??
+    metaPrice ??
+    embeddedOffer.price ??
+    fallbackPrice.price;
   const priceMax =
     jsonLdProduct?.offer.priceMax ??
     metaPriceMax ??
+    embeddedOffer.priceMax ??
     fallbackPrice.priceMax ??
     price;
   const currency =
@@ -555,6 +691,7 @@ export function parseAffiliateProductMetadata(
       "product:price:currency",
       "og:price:currency",
     ]) ||
+    embeddedOffer.currency ||
     (price !== null ? "IDR" : null);
 
   const canonicalUrl = normalizeAbsoluteUrl(

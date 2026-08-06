@@ -4,18 +4,15 @@ import {
   extractShopeeProductIds,
   parseAffiliateProductMetadata,
 } from "@/lib/affiliate-import/metadata";
+import { fetchJinaReaderMetadata } from "@/lib/affiliate-import/jina-reader";
 import { fetchMicrolinkMetadata } from "@/lib/affiliate-import/microlink";
-import {
-  fetchShopeeAffiliateOpenApiMetadata,
-  isShopeeAffiliateOpenApiConfigured,
-} from "@/lib/affiliate-import/shopee-affiliate-open-api";
 import { fetchShopeeProductApiMetadata } from "@/lib/affiliate-import/shopee-product-api";
 import type {
   AffiliateProductFetchErrorCode,
   AffiliateProductPreview,
 } from "@/lib/affiliate-import/types";
 
-const REQUEST_TIMEOUT_MS = 25_000;
+const REQUEST_TIMEOUT_MS = 45_000;
 const MAX_REDIRECTS = 6;
 const MAX_HTML_BYTES = 2_500_000;
 const SCAN_CONCURRENCY = 2;
@@ -567,105 +564,115 @@ export async function scanAffiliateProduct(
         idsFromCanonicalUrl.itemId ??
         idsFromAffiliateUrl.itemId,
     };
-    const openApiConfigured = isShopeeAffiliateOpenApiConfigured();
-    const openApiResult =
-      openApiConfigured && ids.shopId && ids.itemId
-        ? await fetchShopeeAffiliateOpenApiMetadata({
-            shopId: ids.shopId,
-            itemId: ids.itemId,
-            signal: controller.signal,
-          })
-        : {
-            configured: openApiConfigured,
-            metadata: null,
-            warning:
-              openApiConfigured && (!ids.shopId || !ids.itemId)
-                ? "Shop ID dan item ID Shopee tidak ditemukan dari link."
-                : null,
-          };
-    const officialMetadata = openApiResult.metadata;
+    const productUrl =
+      htmlMetadata.canonicalUrl ||
+      (ids.shopId && ids.itemId
+        ? `https://shopee.co.id/product/${ids.shopId}/${ids.itemId}`
+        : finalUrl.toString());
+    const nameFromUrl = deriveProductNameFromUrl(productUrl);
     const metadataBeforeInternalApi = {
-      name: officialMetadata?.name || htmlMetadata.name || "",
-      imageUrl: officialMetadata?.imageUrl || htmlMetadata.imageUrl || "",
-      price: officialMetadata?.price ?? htmlMetadata.price ?? null,
+      name: htmlMetadata.name || nameFromUrl,
+      imageUrl: htmlMetadata.imageUrl,
+      price: htmlMetadata.price,
     };
-    const needsInternalApiFallback =
-      !hasCompleteMetadata(metadataBeforeInternalApi);
     const apiMetadata =
-      needsInternalApiFallback && ids.shopId && ids.itemId
+      !hasCompleteMetadata(metadataBeforeInternalApi) && ids.shopId && ids.itemId
         ? await fetchShopeeProductApiMetadata({
             shopId: ids.shopId,
             itemId: ids.itemId,
-            refererUrl: `https://shopee.co.id/product/${ids.shopId}/${ids.itemId}`,
+            refererUrl: productUrl,
+            productName: htmlMetadata.name || nameFromUrl,
             signal: controller.signal,
           })
         : null;
     const metadataBeforeMicrolink = {
-      name:
-        officialMetadata?.name || apiMetadata?.name || htmlMetadata.name || "",
-      imageUrl:
-        officialMetadata?.imageUrl ||
-        apiMetadata?.imageUrl ||
-        htmlMetadata.imageUrl ||
-        "",
-      price:
-        officialMetadata?.price ??
-        apiMetadata?.price ??
-        htmlMetadata.price ??
-        null,
+      name: apiMetadata?.name || htmlMetadata.name || nameFromUrl,
+      imageUrl: apiMetadata?.imageUrl || htmlMetadata.imageUrl,
+      price: apiMetadata?.price ?? htmlMetadata.price,
     };
     const microlinkMetadata = !hasCompleteMetadata(metadataBeforeMicrolink)
       ? await fetchMicrolinkMetadata({
-          url:
-            officialMetadata?.canonicalUrl ||
-            apiMetadata?.canonicalUrl ||
-            htmlMetadata.canonicalUrl ||
-            finalUrl.toString(),
+          url: apiMetadata?.canonicalUrl || productUrl,
           signal: controller.signal,
         })
       : null;
-    const metadata = {
+    const metadataBeforeReader = {
       name:
-        officialMetadata?.name ||
         apiMetadata?.name ||
         htmlMetadata.name ||
         microlinkMetadata?.name ||
-        "",
-      description:
-        apiMetadata?.description ||
-        htmlMetadata.description ||
-        microlinkMetadata?.description ||
-        "",
+        nameFromUrl,
       imageUrl:
-        officialMetadata?.imageUrl ||
         apiMetadata?.imageUrl ||
         htmlMetadata.imageUrl ||
         microlinkMetadata?.imageUrl ||
         "",
       price:
-        officialMetadata?.price ??
         apiMetadata?.price ??
         htmlMetadata.price ??
         microlinkMetadata?.price ??
         null,
+    };
+    const readerResult = !hasCompleteMetadata(metadataBeforeReader)
+      ? await fetchJinaReaderMetadata({
+          url:
+            apiMetadata?.canonicalUrl ||
+            htmlMetadata.canonicalUrl ||
+            microlinkMetadata?.canonicalUrl ||
+            productUrl,
+          productName: metadataBeforeReader.name,
+          shopId: ids.shopId,
+          itemId: ids.itemId,
+          signal: controller.signal,
+        })
+      : {
+          metadata: null,
+          warning: null,
+        };
+    const readerMetadata = readerResult.metadata;
+    const metadata = {
+      name:
+        apiMetadata?.name ||
+        htmlMetadata.name ||
+        microlinkMetadata?.name ||
+        readerMetadata?.name ||
+        nameFromUrl,
+      description:
+        apiMetadata?.description ||
+        htmlMetadata.description ||
+        microlinkMetadata?.description ||
+        readerMetadata?.description ||
+        "",
+      imageUrl:
+        apiMetadata?.imageUrl ||
+        htmlMetadata.imageUrl ||
+        microlinkMetadata?.imageUrl ||
+        readerMetadata?.imageUrl ||
+        "",
+      price:
+        apiMetadata?.price ??
+        htmlMetadata.price ??
+        readerMetadata?.price ??
+        microlinkMetadata?.price ??
+        null,
       priceMax:
-        officialMetadata?.priceMax ??
         apiMetadata?.priceMax ??
         htmlMetadata.priceMax ??
+        readerMetadata?.priceMax ??
         microlinkMetadata?.priceMax ??
         null,
       currency:
-        officialMetadata?.currency ||
         apiMetadata?.currency ||
         htmlMetadata.currency ||
+        readerMetadata?.currency ||
         microlinkMetadata?.currency ||
         null,
       canonicalUrl:
-        officialMetadata?.canonicalUrl ||
         apiMetadata?.canonicalUrl ||
         htmlMetadata.canonicalUrl ||
         microlinkMetadata?.canonicalUrl ||
-        null,
+        readerMetadata?.canonicalUrl ||
+        productUrl,
     };
     const fallbackName = deriveProductNameFromUrl(
       metadata.canonicalUrl || finalUrl.toString(),
@@ -688,15 +695,11 @@ export async function scanAffiliateProduct(
       : "partial";
     const warnings: string[] = [];
 
-    if (officialMetadata) {
-      warnings.push(
-        "Nama, gambar, dan harga diprioritaskan dari Shopee Affiliate Open API.",
-      );
-    }
-
     if (apiMetadata) {
       warnings.push(
-        "Metadata yang belum tersedia dilengkapi dari endpoint produk Shopee.",
+        apiMetadata.source === "search-items"
+          ? "Metadata dilengkapi dari hasil pencarian produk Shopee."
+          : "Metadata dilengkapi dari endpoint publik produk Shopee.",
       );
     }
 
@@ -706,8 +709,16 @@ export async function scanAffiliateProduct(
       );
     }
 
-    if (!officialMetadata && openApiResult.warning) {
-      warnings.push(openApiResult.warning);
+    if (readerMetadata) {
+      warnings.push(
+        readerMetadata.source === "jina-shopee-search"
+          ? "Harga dilengkapi dari halaman pencarian Shopee yang dirender otomatis."
+          : "Metadata dilengkapi melalui browser reader tanpa Shopee Affiliate API.",
+      );
+    }
+
+    if (readerResult.warning && missingFields.length > 0) {
+      warnings.push(readerResult.warning);
     }
 
     if (pageWarning && missingFields.length > 0) {
@@ -722,7 +733,7 @@ export async function scanAffiliateProduct(
 
     if (missingFields.length > 0) {
       warnings.push(
-        `Metadata ${missingFields.join(", ")} tidak tersedia dan perlu dilengkapi manual.`,
+        `${missingFields.join(", ")} belum berhasil dibaca otomatis setelah semua jalur dicoba. Klik Coba Ulang atau lengkapi manual.`,
       );
     }
 
@@ -739,7 +750,7 @@ export async function scanAffiliateProduct(
       errorCode: missingFields.length > 0 ? "metadata-not-found" : null,
       message:
         status === "success"
-          ? "Nama, gambar, dan harga berhasil diambil."
+          ? "Nama, gambar, dan harga berhasil diambil tanpa Affiliate API."
           : `Data berhasil diambil sebagian. Lengkapi ${missingFields.join(", ")}.`,
       warnings: uniqueWarnings,
       name: normalizedMetadata.name,

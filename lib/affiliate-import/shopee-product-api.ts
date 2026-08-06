@@ -8,13 +8,14 @@ export type ShopeeProductApiMetadata = {
   priceMax: number | null;
   currency: "IDR";
   canonicalUrl: string;
-  source: "pdp-get-pc" | "item-get";
+  source: "pdp-get-pc" | "item-get" | "search-items";
 };
 
 type FetchShopeeProductApiInput = {
   shopId: string;
   itemId: string;
   refererUrl: string;
+  productName?: string;
   signal: AbortSignal;
 };
 
@@ -31,8 +32,24 @@ const API_HEADERS = {
   "X-Api-Source": "pc",
   "X-Requested-With": "XMLHttpRequest",
   "X-Shopee-Language": "id",
+  "Sec-Fetch-Dest": "empty",
+  "Sec-Fetch-Mode": "cors",
+  "Sec-Fetch-Site": "same-origin",
   Origin: "https://shopee.co.id",
 } as const;
+
+function createSessionHeaders(referer: string, apiSource: "pc" | "srp") {
+  const csrfToken = crypto.randomUUID().replace(/-/g, "");
+  const clientId = crypto.randomUUID().replace(/-/g, "");
+
+  return {
+    ...API_HEADERS,
+    Referer: referer,
+    "X-Api-Source": apiSource,
+    "X-CSRFToken": csrfToken,
+    Cookie: `csrftoken=${csrfToken}; language=id; SPC_CLIENTID=${clientId}`,
+  };
+}
 
 function asRecord(value: unknown): UnknownRecord | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -419,11 +436,14 @@ export async function fetchShopeeProductApiMetadata({
   shopId,
   itemId,
   refererUrl,
+  productName = "",
   signal,
 }: FetchShopeeProductApiInput): Promise<ShopeeProductApiMetadata | null> {
   const endpoints: Array<{
     url: URL;
     source: ShopeeProductApiMetadata["source"];
+    referer: string;
+    apiSource: "pc" | "srp";
   }> = [
     {
       url: new URL(
@@ -431,6 +451,8 @@ export async function fetchShopeeProductApiMetadata({
         "https://shopee.co.id",
       ),
       source: "pdp-get-pc",
+      referer: refererUrl,
+      apiSource: "pc",
     },
     {
       url: new URL(
@@ -438,17 +460,35 @@ export async function fetchShopeeProductApiMetadata({
         "https://shopee.co.id",
       ),
       source: "item-get",
+      referer: refererUrl,
+      apiSource: "pc",
     },
   ];
+
+  if (productName.trim()) {
+    const searchUrl = new URL("/api/v4/search/search_items", "https://shopee.co.id");
+    searchUrl.searchParams.set("by", "relevancy");
+    searchUrl.searchParams.set("keyword", productName.trim());
+    searchUrl.searchParams.set("limit", "20");
+    searchUrl.searchParams.set("newest", "0");
+    searchUrl.searchParams.set("order", "desc");
+    searchUrl.searchParams.set("page_type", "search");
+    searchUrl.searchParams.set("scenario", "PAGE_GLOBAL_SEARCH");
+    searchUrl.searchParams.set("version", "2");
+
+    endpoints.push({
+      url: searchUrl,
+      source: "search-items",
+      referer: `https://shopee.co.id/search?keyword=${encodeURIComponent(productName.trim())}`,
+      apiSource: "srp",
+    });
+  }
 
   for (const endpoint of endpoints) {
     try {
       const response = await fetch(endpoint.url, {
         method: "GET",
-        headers: {
-          ...API_HEADERS,
-          Referer: refererUrl,
-        },
+        headers: createSessionHeaders(endpoint.referer, endpoint.apiSource),
         redirect: "error",
         cache: "no-store",
         signal,
