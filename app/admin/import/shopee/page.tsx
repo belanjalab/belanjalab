@@ -41,11 +41,11 @@ export default async function ShopeeImportPage() {
           <div>
             <p className="text-sm font-bold text-amber-600">BelanjaLab Admin</p>
             <h1 className="mt-1 text-3xl font-black text-slate-900">
-              Shopee Affiliate Import
+              Ambil Link Gambar Shopee
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Tempel link Shopee Affiliate. Sistem otomatis memvalidasi link dan
-              menampilkan foto, nama, harga, serta deskripsi produk.
+              Tempel link pendek atau link produk Shopee untuk mengambil URL
+              gambar utama. Hasil dapat disalin atau diekspor ke CSV.
             </p>
           </div>
 
