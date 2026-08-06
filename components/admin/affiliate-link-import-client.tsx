@@ -10,6 +10,46 @@ import {
   type AffiliateProductScanResponse,
 } from "@/lib/affiliate-import/types";
 
+
+const BLOCKED_IMAGE_MARKERS = [
+  "/assets/",
+  "app_icon",
+  "app-icon",
+  "apple-touch-icon",
+  "favicon",
+  "ios_icon",
+  "ios-icon",
+  "mobilemall-live",
+  "shopee-mobilemall",
+  "shopee_logo",
+  "shopee-logo",
+];
+
+function isShopeeProductImageUrl(value: string) {
+  if (!value.trim()) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    const normalized = url.toString().toLowerCase();
+    const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname.toLowerCase();
+
+    if (BLOCKED_IMAGE_MARKERS.some((marker) => normalized.includes(marker))) {
+      return false;
+    }
+
+    return (
+      (hostname.endsWith("susercontent.com") && pathname.includes("/file/")) ||
+      (hostname.endsWith("shopee.co.id") && pathname.includes("/file/")) ||
+      (hostname.includes("img.shopee") && pathname.includes("/file/"))
+    );
+  } catch {
+    return false;
+  }
+}
+
 function escapeCsvCell(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
 }
@@ -17,7 +57,7 @@ function escapeCsvCell(value: string) {
 function downloadImageCsv(items: AffiliateProductPreview[]) {
   const imageUrls = items
     .map((item) => item.imageUrl.trim())
-    .filter(Boolean);
+    .filter(isShopeeProductImageUrl);
 
   const content = `\uFEFFimage_url\r\n${imageUrls
     .map(escapeCsvCell)
@@ -66,7 +106,7 @@ async function requestImageScan(link: string) {
 function ImagePreview({ item }: { item: AffiliateProductPreview }) {
   const [previewFailed, setPreviewFailed] = useState(false);
 
-  if (!item.imageUrl || previewFailed) {
+  if (!isShopeeProductImageUrl(item.imageUrl) || previewFailed) {
     return (
       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-slate-100 px-2 text-center text-xs font-semibold text-slate-400">
         Tidak ada preview
@@ -94,7 +134,7 @@ export default function AffiliateLinkImportClient() {
   const [copyMessage, setCopyMessage] = useState("");
 
   const successfulItems = useMemo(
-    () => items.filter((item) => Boolean(item.imageUrl.trim())),
+    () => items.filter((item) => isShopeeProductImageUrl(item.imageUrl)),
     [items],
   );
 
@@ -128,7 +168,9 @@ export default function AffiliateLinkImportClient() {
         });
       }
 
-      const foundCount = results.filter((item) => item.imageUrl.trim()).length;
+      const foundCount = results.filter((item) =>
+        isShopeeProductImageUrl(item.imageUrl),
+      ).length;
       const invalidCount = parsed.summary.invalidCount;
       const duplicateCount = parsed.summary.duplicateCount;
       const notes = [
@@ -311,8 +353,11 @@ export default function AffiliateLinkImportClient() {
           )}
 
           <div className="space-y-3">
-            {items.map((item, index) => (
-              <article
+            {items.map((item, index) => {
+              const hasProductImage = isShopeeProductImageUrl(item.imageUrl);
+
+              return (
+                <article
                 key={item.id}
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
@@ -326,16 +371,16 @@ export default function AffiliateLinkImportClient() {
                       </span>
                       <span
                         className={`rounded-full border px-2.5 py-1 text-xs font-black ${
-                          item.imageUrl
+                          hasProductImage
                             ? "border-green-200 bg-green-50 text-green-700"
                             : "border-red-200 bg-red-50 text-red-700"
                         }`}
                       >
-                        {item.imageUrl ? "Berhasil" : "Gagal"}
+                        {hasProductImage ? "Berhasil" : "Gagal"}
                       </span>
                     </div>
 
-                    {item.imageUrl ? (
+                    {hasProductImage ? (
                       <input
                         readOnly
                         value={item.imageUrl}
@@ -353,7 +398,7 @@ export default function AffiliateLinkImportClient() {
                     </p>
                   </div>
 
-                  {item.imageUrl && (
+                  {hasProductImage && (
                     <button
                       type="button"
                       onClick={() => handleCopy(item.imageUrl)}
@@ -363,8 +408,9 @@ export default function AffiliateLinkImportClient() {
                     </button>
                   )}
                 </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
       )}
