@@ -20,12 +20,6 @@ type SiteHeaderProps = {
   active?: PublicSection;
 };
 
-const desktopNavigation = [
-  { label: "Kategori", href: "/#kategori", key: "home" as const },
-  { label: "Bandingkan", href: "/compare", key: "compare" as const },
-  { label: "Artikel", href: "/articles", key: "articles" as const },
-];
-
 const drawerNavigation = [
   { label: "Beranda", href: "/", icon: HomeIcon },
   { label: "Jelajahi kategori", href: "/#kategori", icon: CategoryIcon },
@@ -124,7 +118,10 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
         Lewati ke konten utama
       </a>
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <header
+        data-active-section={active}
+        className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80"
+      >
         <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 sm:px-4 md:gap-4 md:px-5 lg:min-h-[72px]">
           <button
             ref={menuButtonRef}
@@ -172,27 +169,6 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               Cari
             </button>
           </form>
-
-          <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-1 lg:flex">
-            {desktopNavigation.map((item) => {
-              const isActive = active === item.key && item.key !== "home";
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-amber-50 text-amber-800"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
 
           <span
             aria-hidden="true"
