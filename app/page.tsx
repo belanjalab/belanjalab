@@ -7,6 +7,7 @@ import {
   getFeaturedProducts,
   type FeaturedProduct,
 } from "@/lib/products";
+import CategoryVisual from "@/components/home/category-visual";
 import DecisionProductCard from "@/components/home/decision-product-card";
 import QuickComparison from "@/components/home/quick-comparison";
 import ScoreMethodology from "@/components/home/score-methodology";
@@ -16,7 +17,6 @@ import SiteHeader from "@/components/site/site-header";
 import {
   ArrowRightIcon,
   ArticleIcon,
-  CategoryGlyph,
   CompareIcon,
   RefreshIcon,
   ScoreIcon,
@@ -145,15 +145,15 @@ export default async function Home() {
                   <a
                     key={category.id}
                     href={`/search?q=${encodeURIComponent(category.name)}`}
-                    className="group flex min-h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white p-2 text-center transition hover:border-amber-200 hover:bg-amber-50/40 sm:w-24 md:min-h-24 md:w-auto md:p-3"
+                    className="category-card group flex min-h-24 w-24 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white px-2 py-3 text-center transition hover:border-amber-200 hover:bg-amber-50/50 sm:w-28 md:min-h-28 md:w-auto md:px-3"
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-700 transition-colors group-hover:bg-white group-hover:shadow-sm sm:h-11 sm:w-11"
+                      className="category-visual-shell relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-amber-50 to-orange-100 shadow-sm ring-1 ring-amber-100/80 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
                     >
-                      <CategoryGlyph icon={category.icon} />
+                      <CategoryVisual icon={category.icon} className="h-14 w-14 sm:h-16 sm:w-16" />
                     </span>
-                    <span className="mt-2 text-xs font-medium leading-4 text-slate-700 sm:text-sm">
+                    <span className="mt-2.5 text-xs font-semibold leading-4 text-slate-700 transition-colors group-hover:text-amber-800 sm:text-sm">
                       {category.name}
                     </span>
                   </a>
@@ -166,6 +166,50 @@ export default async function Home() {
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
                   Gunakan pencarian untuk menemukan produk yang kamu butuhkan.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section
+          id="produk"
+          className="scroll-mt-24 border-b border-slate-200 bg-[#f6f6f6] px-4 py-8 md:px-5 md:py-12"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
+              <div className="max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
+                  Sedang populer
+                </p>
+                <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Produk Terlaris
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                  Lihat produk populer beserta skor, kekuatan utama, sumber harga, dan waktu pembaruannya.
+                </p>
+              </div>
+              <a
+                href="/search"
+                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
+              >
+                Cari produk <ArrowRightIcon />
+              </a>
+            </div>
+
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((product) => (
+                  <DecisionProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                <p className="text-sm font-bold text-slate-700">
+                  Rekomendasi produk baru sedang kami siapkan.
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Gunakan pencarian untuk menjelajahi produk lainnya.
                 </p>
               </div>
             )}
@@ -385,50 +429,6 @@ export default async function Home() {
                 >
                   Buka perbandingan <ArrowRightIcon />
                 </a>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
-          id="produk"
-          className="scroll-mt-24 px-4 py-10 md:px-5 md:py-16"
-        >
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
-              <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
-                  Pilihan terkurasi
-                </p>
-                <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                  Produk Pilihan BelanjaLab
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                  Lihat alasan penilaian, kekuatan utama, sumber harga, dan waktu pembaruannya sebelum membuka analisis lengkap.
-                </p>
-              </div>
-              <a
-                href="/search"
-                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
-              >
-                Cari produk <ArrowRightIcon />
-              </a>
-            </div>
-
-            {products.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                {products.map((product) => (
-                  <DecisionProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-sm font-bold text-slate-700">
-                  Rekomendasi produk baru sedang kami siapkan.
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Gunakan pencarian untuk menjelajahi produk lainnya.
-                </p>
               </div>
             )}
           </div>

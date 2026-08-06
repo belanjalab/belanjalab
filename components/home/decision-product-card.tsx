@@ -40,13 +40,15 @@ export default function DecisionProductCard({
           />
         </a>
 
-        <span className="absolute left-2.5 top-2.5 max-w-[65%] truncate rounded-md bg-white/95 px-2 py-1 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-          {product.brand || product.category}
-        </span>
+        <div className="absolute inset-x-2.5 top-2.5 z-10 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span className="max-w-[72%] truncate rounded-md bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm ring-1 ring-slate-200 backdrop-blur sm:max-w-[52%] sm:text-xs">
+            {product.brand || product.category}
+          </span>
 
-        <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white shadow-sm">
-          Score {product.score}
-        </span>
+          <span className="inline-flex max-w-[78%] self-end whitespace-nowrap rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm sm:max-w-none sm:self-auto sm:text-xs">
+            Score {product.score}
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col border-t border-slate-100 p-3.5 sm:p-4">
