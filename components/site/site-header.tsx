@@ -20,12 +20,6 @@ type SiteHeaderProps = {
   active?: PublicSection;
 };
 
-const utilityNavigation = [
-  { label: "Metodologi skor", href: "/#metodologi" },
-  { label: "Artikel", href: "/articles" },
-  { label: "Tentang BelanjaLab", href: "/#tentang" },
-];
-
 const desktopNavigation = [
   { label: "Kategori", href: "/#kategori", key: "home" as const },
   { label: "Bandingkan", href: "/compare", key: "compare" as const },
@@ -131,19 +125,6 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
       </a>
 
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="hidden border-b border-slate-100 bg-slate-50 lg:block">
-          <div className="mx-auto flex min-h-8 max-w-7xl items-center justify-between px-5 text-xs text-slate-500">
-            <p>Belanja lebih yakin dengan skor, perbandingan, dan harga yang transparan.</p>
-            <nav aria-label="Navigasi informasi" className="flex items-center gap-5">
-              {utilityNavigation.map((item) => (
-                <Link key={item.label} href={item.href} className="hover:text-slate-900">
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-
         <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 sm:px-4 md:gap-4 md:px-5 lg:min-h-[72px]">
           <button
             ref={menuButtonRef}
@@ -213,14 +194,10 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             })}
           </nav>
 
-          <Link
-            href="/search"
-            aria-label="Buka pencarian produk"
-            aria-current={active === "search" ? "page" : undefined}
-            className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
-          >
-            <SearchIcon />
-          </Link>
+          <span
+            aria-hidden="true"
+            className="ml-auto block h-11 w-11 shrink-0 md:hidden"
+          />
         </div>
 
         <div className="px-3 pb-3 md:hidden">
