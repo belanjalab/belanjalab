@@ -61,6 +61,46 @@ function formatRupiah(value: number | null) {
   }).format(value);
 }
 
+function escapeCsvCell(value: string | number | null) {
+  const normalizedValue = value === null ? "" : String(value);
+
+  return `"${normalizedValue.replace(/"/g, '""')}"`;
+}
+
+function createImageLinkCsv(items: AffiliateProductPreview[]) {
+  const rows: Array<Array<string | number | null>> = [
+    ["no", "name", "image_url", "affiliate_url", "product_url"],
+    ...items
+      .filter((item) => item.imageUrl.trim())
+      .map((item, index) => [
+        index + 1,
+        item.name,
+        item.imageUrl.trim(),
+        item.affiliateUrl,
+        item.resolvedUrl ?? "",
+      ]),
+  ];
+
+  return `\uFEFF${rows
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\r\n")}`;
+}
+
+function downloadCsv(content: string, filename: string) {
+  const blob = new Blob([content], {
+    type: "text/csv;charset=utf-8",
+  });
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+}
+
 function chunkLinks(links: string[]) {
   const chunks: string[][] = [];
 
@@ -142,6 +182,7 @@ export default function AffiliateLinkImportClient() {
   const [result, setResult] = useState<AffiliateLinkParseResult | null>(null);
   const [formError, setFormError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
   const [scanItems, setScanItems] = useState<AffiliateProductPreview[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState("");
@@ -157,6 +198,7 @@ export default function AffiliateLinkImportClient() {
       partial: scanItems.filter((item) => item.status === "partial").length,
       failed: scanItems.filter((item) => item.status === "failed").length,
       ready: scanItems.filter(isProductReady).length,
+      images: scanItems.filter((item) => item.imageUrl.trim()).length,
     };
   }, [scanItems]);
 
@@ -172,6 +214,7 @@ export default function AffiliateLinkImportClient() {
     setIsScanning(true);
     setScanItems([]);
     setScanError("");
+    setExportMessage("");
     setScanProgress({ completed: 0, total: validLinks.length });
 
     try {
@@ -256,6 +299,7 @@ export default function AffiliateLinkImportClient() {
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    setExportMessage("");
     lastAutoScannedUrlRef.current = "";
     clearScanState();
   }
@@ -273,6 +317,7 @@ export default function AffiliateLinkImportClient() {
     setResult(nextResult);
     setFormError("");
     setCopyMessage("");
+    setExportMessage("");
     clearScanState();
 
     if (canAutoScan(nextResult)) {
@@ -290,6 +335,7 @@ export default function AffiliateLinkImportClient() {
     setResult(null);
     setFormError("");
     setCopyMessage("");
+    setExportMessage("");
     lastAutoScannedUrlRef.current = "";
     clearScanState();
   }
@@ -315,6 +361,25 @@ export default function AffiliateLinkImportClient() {
     }
 
     await scanProducts(result.validLinks);
+  }
+
+  function handleExportImageLinks() {
+    const exportableItems = scanItems.filter((item) => item.imageUrl.trim());
+
+    if (exportableItems.length === 0) {
+      setExportMessage("Belum ada link gambar yang bisa diekspor.");
+      return;
+    }
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    downloadCsv(
+      createImageLinkCsv(exportableItems),
+      `belanjalab-shopee-image-links-${dateStamp}.csv`,
+    );
+    setExportMessage(
+      `${exportableItems.length} link gambar berhasil diekspor ke CSV.`,
+    );
   }
 
   async function handleRetryItem(item: AffiliateProductPreview) {
@@ -670,15 +735,34 @@ export default function AffiliateLinkImportClient() {
             </div>
           </div>
 
-          <div>
-            <h2 className="text-xl font-black text-slate-900">
-              Hasil Pengambilan Data
-            </h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Periksa dan koreksi data sebelum nanti disimpan sebagai draft
-              produk. Harga marketplace dapat berubah sewaktu-waktu.
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">
+                Hasil Pengambilan Data
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Periksa dan koreksi data sebelum nanti disimpan sebagai draft
+                produk. Harga marketplace dapat berubah sewaktu-waktu.
+              </p>
+            </div>
+
+            {!isScanning && (
+              <button
+                type="button"
+                onClick={handleExportImageLinks}
+                disabled={scanSummary.images === 0}
+                className="shrink-0 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-black text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Export Link Gambar ({scanSummary.images})
+              </button>
+            )}
           </div>
+
+          {exportMessage && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800">
+              {exportMessage}
+            </div>
+          )}
 
           <div className="grid gap-5 xl:grid-cols-2">
             {scanItems.map((item, index) => {
