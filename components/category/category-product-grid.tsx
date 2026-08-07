@@ -5,15 +5,27 @@ import type { CategoryProduct } from "@/lib/categories";
 type CategoryProductGridProps = {
   products: CategoryProduct[];
   categoryName: string;
-  categorySlug: string;
+  basePath: string;
   currentPage: number;
   totalPages: number;
+  query?: Record<string, string>;
 };
 
-function getPageHref(slug: string, page: number) {
-  return page <= 1
-    ? `/kategori/${encodeURIComponent(slug)}`
-    : `/kategori/${encodeURIComponent(slug)}?page=${page}`;
+function getPageHref(
+  basePath: string,
+  page: number,
+  query: Record<string, string>,
+) {
+  const params = new URLSearchParams(query);
+
+  if (page <= 1) {
+    params.delete("page");
+  } else {
+    params.set("page", String(page));
+  }
+
+  const suffix = params.toString();
+  return suffix ? `${basePath}?${suffix}` : basePath;
 }
 
 function getVisiblePages(currentPage: number, totalPages: number) {
@@ -33,25 +45,26 @@ function getVisiblePages(currentPage: number, totalPages: number) {
 export default function CategoryProductGrid({
   products,
   categoryName,
-  categorySlug,
+  basePath,
   currentPage,
   totalPages,
+  query = {},
 }: CategoryProductGridProps) {
   if (products.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center">
         <p className="text-lg font-black text-slate-800">
-          Produk {categoryName} belum tersedia
+          Produk {categoryName} belum ditemukan
         </p>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
-          Produk published pada kategori ini akan otomatis tampil di sini.
-          Kamu tetap bisa mencari produk lain melalui pencarian BelanjaLab.
+          Coba hapus filter harga atau merek. Produk published yang sesuai akan
+          otomatis tampil di halaman ini.
         </p>
         <Link
-          href="/search"
+          href={basePath}
           className="mt-5 inline-flex rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
         >
-          Cari Produk
+          Hapus Filter
         </Link>
       </div>
     );
@@ -122,7 +135,7 @@ export default function CategoryProductGrid({
           {currentPage > 1 && (
             <Link
               rel="prev"
-              href={getPageHref(categorySlug, currentPage - 1)}
+              href={getPageHref(basePath, currentPage - 1, query)}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
             >
               Sebelumnya
@@ -136,10 +149,10 @@ export default function CategoryProductGrid({
             return (
               <span key={page} className="contents">
                 {showGap && (
-                  <span className="px-1 text-xs text-slate-400">…</span>
+                  <span className="px-1 text-xs text-slate-400">...</span>
                 )}
                 <Link
-                  href={getPageHref(categorySlug, page)}
+                  href={getPageHref(basePath, page, query)}
                   aria-current={page === currentPage ? "page" : undefined}
                   className={`flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-xs font-black ${
                     page === currentPage
@@ -156,7 +169,7 @@ export default function CategoryProductGrid({
           {currentPage < totalPages && (
             <Link
               rel="next"
-              href={getPageHref(categorySlug, currentPage + 1)}
+              href={getPageHref(basePath, currentPage + 1, query)}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
             >
               Berikutnya
