@@ -9,6 +9,7 @@ import type {
 } from "@/lib/categories";
 import { categoryFiltersToQuery } from "@/lib/category-navigation";
 import { SITE_URL } from "@/lib/site-config";
+import { getRecommendationPagesForCategory } from "@/lib/recommendations";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -46,6 +47,9 @@ export default function CategoryLandingView({
   const visibleSubcategories = subcategories.filter(
     (item) => item.slug !== subcategory?.slug,
   );
+  const relatedRecommendations = getRecommendationPagesForCategory(
+    category.slug,
+  ).slice(0, 4);
 
   const breadcrumbItems = [
     {
@@ -272,6 +276,49 @@ export default function CategoryLandingView({
           />
         </div>
       </section>
+
+      {relatedRecommendations.length > 0 && (
+        <section className="border-t border-slate-100 px-4 py-8 md:px-6 md:py-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-500">
+                  Rekomendasi populer
+                </p>
+                <h2 className="mt-1 text-xl font-black md:text-2xl">
+                  Pilihan {category.name} berdasarkan kebutuhan
+                </h2>
+              </div>
+              <Link
+                href="/rekomendasi"
+                className="text-xs font-black text-orange-500 hover:text-orange-600 md:text-sm"
+              >
+                Semua rekomendasi
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedRecommendations.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/rekomendasi/${item.slug}`}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-sm"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">
+                    {item.eyebrow}
+                  </p>
+                  <p className="mt-2 text-base font-black text-slate-900">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
+                    {item.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="bg-slate-50 px-4 py-10 md:px-6 md:py-16">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">

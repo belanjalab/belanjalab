@@ -5,6 +5,7 @@ import {
   matchesCategorySubcategoryText,
 } from "@/lib/categories";
 import { SITE_URL } from "@/lib/site-config";
+import { getAllRecommendationPages } from "@/lib/recommendations";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export const revalidate = 3600;
@@ -81,6 +82,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/rekomendasi`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
       url: `${SITE_URL}/articles`,
       lastModified: new Date(),
       changeFrequency: "daily",
@@ -121,6 +128,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })),
   );
 
+  const recommendationRoutes: MetadataRoute.Sitemap =
+    getAllRecommendationPages().map((recommendation) => ({
+      url: `${SITE_URL}/rekomendasi/${recommendation.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    }));
+
   const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
     url: `${SITE_URL}/product/${product.slug}`,
     lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
@@ -141,6 +156,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...categoryRoutes,
     ...subcategoryRoutes,
+    ...recommendationRoutes,
     ...productRoutes,
     ...articleRoutes,
   ];
