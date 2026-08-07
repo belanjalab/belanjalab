@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { SITE_URL } from "@/lib/site-config";
+import CategoryVisual from "@/components/home/category-visual";
+import { ArrowRightIcon } from "@/components/home/home-icons";
+import Breadcrumbs from "@/components/site/breadcrumbs";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
+import { getCategoryIconKey } from "@/lib/categories";
+import { getActiveSiteFooter } from "@/lib/footer";
 import { getAllRecommendationPages } from "@/lib/recommendations";
+import { SITE_URL } from "@/lib/site-config";
 
 export const revalidate = 3600;
 
@@ -26,8 +34,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RecommendationHubPage() {
+export default async function RecommendationHubPage() {
   const recommendations = getAllRecommendationPages();
+  const footer = await getActiveSiteFooter();
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -49,118 +58,97 @@ export default function RecommendationHubPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-        }}
-      />
+    <>
+      <SiteHeader active="recommendations" />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-6 md:py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
-            <span className="text-base font-black md:text-xl">
-              Belanja<span className="text-orange-500">Lab</span>
-            </span>
-          </Link>
+      <main
+        id="konten-utama"
+        className="min-h-screen bg-[#f6f6f6] pb-20 text-slate-900 md:pb-0"
+      >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
+        />
 
-          <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <Link href="/kategori" className="hover:text-slate-950">
-              Kategori
-            </Link>
-            <Link href="/rekomendasi" className="font-bold text-orange-500">
-              Rekomendasi
-            </Link>
-            <Link href="/compare" className="hover:text-slate-950">
-              Perbandingan
-            </Link>
-            <Link href="/articles" className="hover:text-slate-950">
-              Artikel
-            </Link>
-          </nav>
+        <Breadcrumbs
+          items={[{ label: "Beranda", href: "/" }, { label: "Rekomendasi" }]}
+        />
 
-          <Link
-            href="/search"
-            className="ml-auto rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500 md:px-4 md:text-sm"
-          >
-            Cari Produk
-          </Link>
-        </div>
-      </header>
-
-      <section className="border-b border-slate-100 bg-slate-50 px-4 py-10 md:px-6 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <nav className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-            <Link href="/" className="hover:text-orange-500">
-              Beranda
-            </Link>
-            <span>/</span>
-            <span className="text-slate-600">Rekomendasi</span>
-          </nav>
-
-          <p className="mt-8 text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-            Belanja lebih terarah
-          </p>
-          <h1 className="mt-3 max-w-4xl text-3xl font-black leading-tight tracking-tight md:text-5xl">
-            Rekomendasi Produk Terbaik {CURRENT_YEAR}
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
-            Mulai dari kebutuhan atau budget. BelanjaLab menyusun landing page
-            rekomendasi berdasarkan produk published, skor, kategori, dan harga
-            marketplace yang tersedia.
-          </p>
-        </div>
-      </section>
-
-      <section className="px-4 py-10 md:px-6 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recommendations.map((item) => (
-              <Link
-                key={item.slug}
-                href={`/rekomendasi/${item.slug}`}
-                className="group rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
-              >
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-500">
-                  {item.eyebrow}
-                </p>
-                <h2 className="mt-2 text-xl font-black text-slate-900 group-hover:text-orange-500">
-                  {item.title} {CURRENT_YEAR}
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  {item.description}
-                </p>
-                <span className="mt-5 inline-flex text-xs font-black text-slate-900 group-hover:text-orange-500">
-                  Lihat rekomendasi →
-                </span>
-              </Link>
-            ))}
+        <section className="px-4 py-6 md:px-5 md:py-9">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 md:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.13em] text-amber-700">
+              Belanja lebih terarah
+            </p>
+            <h1 className="brand-text-balance mt-2 max-w-4xl text-3xl font-bold leading-[1.15] tracking-[-0.04em] text-slate-950 sm:text-4xl md:text-5xl">
+              Rekomendasi Produk Terbaik {CURRENT_YEAR}
+            </h1>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+              Mulai dari kebutuhan atau budget. BelanjaLab menyusun pilihan
+              berdasarkan kategori, skor produk, dan harga marketplace.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-slate-50 px-4 py-10 md:px-6 md:py-14">
-        <div className="mx-auto max-w-7xl rounded-3xl border border-slate-200 bg-white p-6 md:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
-            Cara menggunakan BelanjaLab
-          </p>
-          <h2 className="mt-2 text-2xl font-black">
-            Gunakan rekomendasi sebagai titik awal, lalu bandingkan detailnya
-          </h2>
-          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600 md:text-base md:leading-8">
-            Ranking membantu mempersempit pilihan, tetapi keputusan akhir tetap
-            perlu mempertimbangkan kebutuhan pribadi. Buka halaman produk untuk
-            melihat skor, spesifikasi, harga marketplace, lalu gunakan fitur
-            perbandingan jika kamu masih memiliki beberapa kandidat.
-          </p>
-        </div>
-      </section>
-    </main>
+        <section className="px-4 pb-12 md:px-5 md:pb-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              {recommendations.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/rekomendasi/${item.slug}`}
+                  className="public-card group flex min-h-56 gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-lg sm:p-6"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="category-visual-shell relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-amber-50 to-orange-100 ring-1 ring-amber-100 sm:h-20 sm:w-20"
+                  >
+                    <CategoryVisual
+                      icon={getCategoryIconKey(item.categorySlug, item.categorySlug)}
+                      className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
+                    />
+                  </span>
+
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-amber-700">
+                      {item.eyebrow}
+                    </p>
+                    <h2 className="mt-2 text-lg font-bold tracking-[-0.02em] text-slate-950 transition group-hover:text-amber-800 sm:text-xl">
+                      {item.title}
+                    </h2>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">
+                      {item.description}
+                    </p>
+                    <span className="mt-auto inline-flex min-h-10 items-end gap-1.5 pt-4 text-sm font-semibold text-amber-700">
+                      Lihat rekomendasi <ArrowRightIcon />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-slate-200 bg-white px-4 py-10 md:px-5 md:py-14">
+          <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-7 md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+              Cara menggunakan BelanjaLab
+            </p>
+            <h2 className="mt-2 max-w-4xl text-2xl font-bold tracking-[-0.03em] text-slate-950">
+              Gunakan rekomendasi sebagai titik awal, lalu bandingkan detailnya
+            </h2>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+              Ranking membantu mempersempit pilihan. Buka halaman produk untuk
+              melihat skor, spesifikasi, dan harga marketplace, lalu gunakan
+              fitur perbandingan jika masih ada beberapa kandidat.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter footer={footer} />
+      <MobileBottomNav />
+    </>
   );
 }

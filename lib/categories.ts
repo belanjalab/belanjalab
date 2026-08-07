@@ -37,7 +37,18 @@ type CategoryProductRow = {
   product_prices?: PriceRelation[] | null;
 };
 
-export type CategoryIconKey = string;
+export type CategoryIconKey =
+  | "gadget"
+  | "elektronik"
+  | "rumah"
+  | "gaming"
+  | "beauty"
+  | "fashion"
+  | "otomotif"
+  | "olahraga"
+  | "kesehatan"
+  | "dapur"
+  | "shopping";
 
 export type HomepageCategory = {
   id: string;
@@ -122,18 +133,27 @@ export type CategorySeoProfile = {
   buyingTips: string[];
 };
 
-const categoryIcons: Record<string, string> = {
-  gadget: "📱",
-  elektronik: "💻",
-  "rumah-tangga": "🏠",
-  rumah: "🏠",
-  gaming: "🎮",
-  beauty: "🧴",
-  fashion: "👕",
-  otomotif: "🚗",
-  olahraga: "🏃",
-  kesehatan: "🩺",
-  dapur: "🍳",
+const categoryIcons: Record<string, CategoryIconKey> = {
+  gadget: "gadget",
+  gedget: "gadget",
+  smartphone: "gadget",
+  handphone: "gadget",
+  hp: "gadget",
+  tablet: "gadget",
+  elektronik: "elektronik",
+  laptop: "elektronik",
+  komputer: "elektronik",
+  "rumah-tangga": "rumah",
+  rumah: "rumah",
+  perabotan: "rumah",
+  gaming: "gaming",
+  beauty: "beauty",
+  kecantikan: "beauty",
+  fashion: "fashion",
+  otomotif: "otomotif",
+  olahraga: "olahraga",
+  kesehatan: "kesehatan",
+  dapur: "dapur",
 };
 
 const categorySeoProfiles: Record<string, CategorySeoProfile> = {
@@ -531,11 +551,14 @@ function normalizeKey(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function getCategoryIcon(name: string, slug?: string) {
+export function getCategoryIconKey(
+  name: string,
+  slug?: string,
+): CategoryIconKey {
   const slugKey = normalizeKey(slug ?? "");
   const nameKey = normalizeKey(name);
 
-  return categoryIcons[slugKey] ?? categoryIcons[nameKey] ?? "🛍️";
+  return categoryIcons[slugKey] ?? categoryIcons[nameKey] ?? "shopping";
 }
 
 function getSingleRelation<T>(relation: Relation<T>): T | null {
@@ -576,7 +599,7 @@ function mapCategory(row: CategoryRow): PublicCategory {
     id: row.id,
     name: row.name,
     slug: row.slug,
-    icon: getCategoryIcon(row.name, row.slug),
+    icon: getCategoryIconKey(row.name, row.slug),
     createdAt: row.created_at ?? null,
   };
 }
@@ -647,7 +670,7 @@ export async function getHomepageCategories(): Promise<HomepageCategory[]> {
     id: category.id,
     name: category.name,
     slug: category.slug,
-    icon: getCategoryIcon(category.name, category.slug),
+    icon: getCategoryIconKey(category.name, category.slug),
   }));
 }
 

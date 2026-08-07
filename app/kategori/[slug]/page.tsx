@@ -7,6 +7,7 @@ import {
   getCategoryLandingData,
   getCategorySeoProfile,
 } from "@/lib/categories";
+import { getActiveSiteFooter } from "@/lib/footer";
 import {
   hasCategoryFacets,
   parseCategoryFilters,
@@ -88,7 +89,10 @@ export default async function CategoryPage({
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const requestedPage = parseCategoryPage(query.page);
   const filters = parseCategoryFilters(query);
-  const data = await getCategoryLandingData(slug, requestedPage, 24, filters);
+  const [data, footer] = await Promise.all([
+    getCategoryLandingData(slug, requestedPage, 24, filters),
+    getActiveSiteFooter(),
+  ]);
 
   if (!data) {
     return notFound();
@@ -107,6 +111,7 @@ export default async function CategoryPage({
       profile={profile}
       basePath={canonicalPath}
       canonicalPath={canonicalPath}
+      footer={footer}
     />
   );
 }

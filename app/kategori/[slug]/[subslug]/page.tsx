@@ -13,6 +13,7 @@ import {
   parseCategoryPage,
   type CategorySearchParams,
 } from "@/lib/category-navigation";
+import { getActiveSiteFooter } from "@/lib/footer";
 
 export const revalidate = 3600;
 
@@ -96,7 +97,10 @@ export default async function SubcategoryPage({
   searchParams,
 }: SubcategoryPageProps) {
   const [{ slug, subslug }, query] = await Promise.all([params, searchParams]);
-  const category = await getCategoryBySlug(slug);
+  const [category, footer] = await Promise.all([
+    getCategoryBySlug(slug),
+    getActiveSiteFooter(),
+  ]);
 
   if (!category) {
     return notFound();
@@ -136,6 +140,7 @@ export default async function SubcategoryPage({
       profile={subcategory.profile}
       basePath={canonicalPath}
       canonicalPath={canonicalPath}
+      footer={footer}
       subcategory={subcategory}
     />
   );

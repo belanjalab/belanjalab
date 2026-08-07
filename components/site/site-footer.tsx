@@ -57,10 +57,10 @@ export default function SiteFooter({ footer }: SiteFooterProps) {
           <h2 className="text-sm font-extrabold text-white">Produk</h2>
           <div className="mt-3 space-y-1 text-sm text-slate-300">
             {[
-              ["Rekomendasi", "/#produk"],
+              ["Rekomendasi", "/rekomendasi"],
               ["Perbandingan", "/compare"],
               ["Metodologi", "/#metodologi"],
-              ["Kategori", "/#kategori"],
+              ["Kategori", "/kategori"],
             ].map(([label, href]) => (
               <Link
                 key={label}

@@ -2,14 +2,21 @@ import Link from "next/link";
 
 import CategoryFilterBar from "@/components/category/category-filter-bar";
 import CategoryProductGrid from "@/components/category/category-product-grid";
+import CategoryVisual from "@/components/home/category-visual";
+import { ArrowRightIcon, ShieldCheckIcon } from "@/components/home/home-icons";
+import Breadcrumbs from "@/components/site/breadcrumbs";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
 import type {
   CategoryLandingData,
   CategorySeoProfile,
   CategorySubcategory,
 } from "@/lib/categories";
 import { categoryFiltersToQuery } from "@/lib/category-navigation";
-import { SITE_URL } from "@/lib/site-config";
+import type { SiteFooter as SiteFooterData } from "@/lib/footer";
 import { getRecommendationPagesForCategory } from "@/lib/recommendations";
+import { SITE_URL } from "@/lib/site-config";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -18,6 +25,7 @@ type CategoryLandingViewProps = {
   profile: CategorySeoProfile;
   basePath: string;
   canonicalPath: string;
+  footer: SiteFooterData;
   subcategory?: CategorySubcategory | null;
 };
 
@@ -26,6 +34,7 @@ export default function CategoryLandingView({
   profile,
   basePath,
   canonicalPath,
+  footer,
   subcategory = null,
 }: CategoryLandingViewProps) {
   const {
@@ -41,8 +50,6 @@ export default function CategoryLandingView({
   } = data;
   const absoluteUrl = `${SITE_URL}${canonicalPath}`;
   const firstItemPosition = (page - 1) * pageSize;
-  const rangeStart = total === 0 ? 0 : firstItemPosition + 1;
-  const rangeEnd = Math.min(firstItemPosition + products.length, total);
   const paginationQuery = categoryFiltersToQuery(activeFilters);
   const visibleSubcategories = subcategories.filter(
     (item) => item.slug !== subcategory?.slug,
@@ -50,27 +57,16 @@ export default function CategoryLandingView({
   const relatedRecommendations = getRecommendationPagesForCategory(
     category.slug,
   ).slice(0, 4);
+  const displayTitle = subcategory?.name ?? category.name;
 
   const breadcrumbItems = [
-    {
-      name: "Beranda",
-      path: "/",
-    },
-    {
-      name: "Kategori",
-      path: "/kategori",
-    },
-    {
-      name: category.name,
-      path: `/kategori/${category.slug}`,
-    },
+    { name: "Beranda", path: "/" },
+    { name: "Kategori", path: "/kategori" },
+    { name: category.name, path: `/kategori/${category.slug}` },
   ];
 
   if (subcategory) {
-    breadcrumbItems.push({
-      name: subcategory.name,
-      path: canonicalPath,
-    });
+    breadcrumbItems.push({ name: subcategory.name, path: canonicalPath });
   }
 
   const structuredData = {
@@ -109,253 +105,223 @@ export default function CategoryLandingView({
   };
 
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-        }}
-      />
+    <>
+      <SiteHeader active="categories" />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-6 md:py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
-            <span className="text-base font-black md:text-xl">
-              Belanja<span className="text-orange-500">Lab</span>
-            </span>
-          </Link>
+      <main
+        id="konten-utama"
+        className="min-h-screen bg-[#f6f6f6] pb-20 text-slate-900 md:pb-0"
+      >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
+        />
 
-          <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <Link href="/kategori" className="font-bold text-orange-500">
-              Kategori
-            </Link>
-            <Link href="/compare" className="hover:text-slate-950">
-              Perbandingan
-            </Link>
-            <Link href="/articles" className="hover:text-slate-950">
-              Artikel
-            </Link>
-          </nav>
+        <Breadcrumbs
+          items={breadcrumbItems.map((item, index) => ({
+            label: item.name,
+            href: index === breadcrumbItems.length - 1 ? undefined : item.path,
+          }))}
+        />
 
-          <Link
-            href="/search"
-            className="ml-auto rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500 md:px-4 md:text-sm"
-          >
-            Cari Produk
-          </Link>
-        </div>
-      </header>
+        <section className="px-4 pb-4 pt-5 md:px-5 md:pb-6 md:pt-7">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 md:p-8">
+            <div className="flex items-start gap-4 sm:gap-6">
+              <span
+                aria-hidden="true"
+                className="category-visual-shell relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-amber-50 to-orange-100 ring-1 ring-amber-100 sm:h-24 sm:w-24"
+              >
+                <CategoryVisual
+                  icon={category.icon}
+                  className="h-[4.5rem] w-[4.5rem] sm:h-[5.25rem] sm:w-[5.25rem]"
+                />
+              </span>
 
-      <section className="border-b border-slate-100 bg-slate-50 px-4 py-8 md:px-6 md:py-14">
-        <div className="mx-auto max-w-7xl">
-          <nav className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
-            {breadcrumbItems.map((item, index) => (
-              <span key={item.path} className="contents">
-                {index > 0 && <span>/</span>}
-                {index === breadcrumbItems.length - 1 ? (
-                  <span className="text-slate-600">{item.name}</span>
-                ) : (
-                  <Link href={item.path} className="hover:text-orange-500">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-amber-700">
+                  {profile.eyebrow}
+                </p>
+                <h1 className="brand-text-balance mt-1.5 max-w-4xl text-2xl font-bold leading-[1.15] tracking-[-0.035em] text-slate-950 sm:text-3xl md:text-4xl">
+                  {profile.titlePrefix} {CURRENT_YEAR}
+                </h1>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                  {profile.description}
+                </p>
+              </div>
+            </div>
+
+            {profile.popularSearches.length > 0 && (
+              <div className="category-filter-scroll -mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-1">
+                {profile.popularSearches.map((keyword) => (
+                  <Link
+                    key={keyword}
+                    href={`/search?q=${encodeURIComponent(keyword)}`}
+                    className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                  >
+                    {keyword}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {visibleSubcategories.length > 0 && (
+          <section className="px-4 pb-4 md:px-5 md:pb-6">
+            <div className="mx-auto max-w-7xl">
+              <div className="category-filter-scroll flex gap-2 overflow-x-auto pb-1">
+                <Link
+                  href={`/kategori/${category.slug}`}
+                  className={`inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition ${
+                    !subcategory
+                      ? "border-slate-950 bg-slate-950 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-amber-800"
+                  }`}
+                >
+                  Semua {category.name}
+                </Link>
+                {visibleSubcategories.map((item) => (
+                  <Link
+                    key={item.slug}
+                    href={`/kategori/${category.slug}/${item.slug}`}
+                    className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                  >
                     {item.name}
                   </Link>
-                )}
-              </span>
-            ))}
-          </nav>
-
-          <div className="mt-7 grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-                {profile.eyebrow}
-              </p>
-              <h1 className="mt-3 max-w-4xl text-3xl font-black leading-tight tracking-tight md:text-5xl">
-                {profile.titlePrefix} {CURRENT_YEAR}
-              </h1>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
-                {profile.description}
-              </p>
+                ))}
+              </div>
             </div>
+          </section>
+        )}
 
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                Produk ditemukan
-              </p>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                {total.toLocaleString("id-ID")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {visibleSubcategories.length > 0 && (
-        <section className="border-b border-slate-100 px-4 py-6 md:px-6">
+        <section className="px-4 pb-10 pt-2 md:px-5 md:pb-14 md:pt-4">
           <div className="mx-auto max-w-7xl">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-              Jelajahi subkategori
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {visibleSubcategories.map((item) => (
-                <Link
-                  key={item.slug}
-                  href={`/kategori/${category.slug}/${item.slug}`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-                >
-                  {item.name} ({item.count})
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {profile.popularSearches.length > 0 && (
-        <section className="border-b border-slate-100 px-4 py-5 md:px-6">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2">
-            <span className="mr-1 text-xs font-bold text-slate-500">
-              Pencarian populer:
-            </span>
-            {profile.popularSearches.map((keyword) => (
-              <Link
-                key={keyword}
-                href={`/search?q=${encodeURIComponent(keyword)}`}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-orange-300 hover:text-orange-500"
-              >
-                {keyword}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="px-4 py-8 md:px-6 md:py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-black md:text-2xl">
-                {subcategory ? subcategory.name : `Pilihan ${category.name}`}
-              </h2>
-              <p className="mt-1 text-xs text-slate-500 md:text-sm">
-                {total > 0
-                  ? `Menampilkan ${rangeStart}-${rangeEnd} dari ${total.toLocaleString("id-ID")} produk published.`
-                  : "Belum ada produk published yang sesuai."}
-              </p>
-            </div>
-
-            <Link
-              href={`/search?q=${encodeURIComponent(
-                subcategory?.name ?? category.name,
-              )}`}
-              className="text-xs font-black text-orange-500 hover:text-orange-600 md:text-sm"
-            >
-              Cari lebih luas
-            </Link>
-          </div>
-
-          <CategoryFilterBar
-            actionPath={basePath}
-            brands={brands}
-            brand={activeFilters.brand}
-            minPrice={activeFilters.minPrice}
-            maxPrice={activeFilters.maxPrice}
-            sort={activeFilters.sort}
-          />
-
-          <CategoryProductGrid
-            products={products}
-            categoryName={subcategory?.name ?? category.name}
-            basePath={basePath}
-            currentPage={page}
-            totalPages={totalPages}
-            query={paginationQuery}
-          />
-        </div>
-      </section>
-
-      {relatedRecommendations.length > 0 && (
-        <section className="border-t border-slate-100 px-4 py-8 md:px-6 md:py-12">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-500">
-                  Rekomendasi populer
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Pilihan BelanjaLab
                 </p>
-                <h2 className="mt-1 text-xl font-black md:text-2xl">
-                  Pilihan {category.name} berdasarkan kebutuhan
+                <h2 className="mt-1 text-xl font-bold tracking-[-0.025em] text-slate-950 sm:text-2xl">
+                  {subcategory ? subcategory.name : `Pilihan ${category.name}`}
                 </h2>
               </div>
+
               <Link
-                href="/rekomendasi"
-                className="text-xs font-black text-orange-500 hover:text-orange-600 md:text-sm"
+                href={`/search?q=${encodeURIComponent(displayTitle)}`}
+                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-50 hover:text-amber-800"
               >
-                Semua rekomendasi
+                Cari lebih luas <ArrowRightIcon />
               </Link>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedRecommendations.map((item) => (
-                <Link
-                  key={item.slug}
-                  href={`/rekomendasi/${item.slug}`}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-sm"
-                >
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">
-                    {item.eyebrow}
-                  </p>
-                  <p className="mt-2 text-base font-black text-slate-900">
-                    {item.title}
-                  </p>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-                    {item.description}
-                  </p>
-                </Link>
-              ))}
-            </div>
+            <CategoryFilterBar
+              actionPath={basePath}
+              brands={brands}
+              brand={activeFilters.brand}
+              minPrice={activeFilters.minPrice}
+              maxPrice={activeFilters.maxPrice}
+              sort={activeFilters.sort}
+            />
+
+            <CategoryProductGrid
+              products={products}
+              categoryName={displayTitle}
+              basePath={basePath}
+              currentPage={page}
+              totalPages={totalPages}
+              query={paginationQuery}
+            />
           </div>
         </section>
-      )}
 
-      <section className="bg-slate-50 px-4 py-10 md:px-6 md:py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
-          <article className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
-              Panduan belanja
-            </p>
-            <h2 className="mt-2 text-2xl font-black">
-              Memilih {subcategory?.name ?? category.name} dengan lebih yakin
-            </h2>
-            <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 md:text-base md:leading-8">
-              {profile.paragraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          </article>
-
-          <aside className="rounded-3xl bg-slate-950 p-6 text-white md:p-8">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-400">
-              Sebelum membeli
-            </p>
-            <h2 className="mt-2 text-2xl font-black">3 hal yang perlu dicek</h2>
-            <ol className="mt-6 space-y-5">
-              {profile.buyingTips.map((tip, index) => (
-                <li key={tip} className="flex gap-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-black text-orange-300">
-                    {index + 1}
-                  </span>
-                  <p className="pt-1 text-sm leading-6 text-slate-300">
-                    {tip}
+        {relatedRecommendations.length > 0 && (
+          <section className="border-y border-slate-200 bg-white px-4 py-9 md:px-5 md:py-12">
+            <div className="mx-auto max-w-7xl">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                    Rekomendasi populer
                   </p>
-                </li>
-              ))}
-            </ol>
-          </aside>
-        </div>
-      </section>
-    </main>
+                  <h2 className="mt-1 text-xl font-bold tracking-[-0.025em] text-slate-950 sm:text-2xl">
+                    Pilih berdasarkan kebutuhan
+                  </h2>
+                </div>
+                <Link
+                  href="/rekomendasi"
+                  className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-50 hover:text-amber-800"
+                >
+                  Lihat semua <ArrowRightIcon />
+                </Link>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {relatedRecommendations.map((item) => (
+                  <Link
+                    key={item.slug}
+                    href={`/rekomendasi/${item.slug}`}
+                    className="public-card group rounded-xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-amber-700">
+                      {item.eyebrow}
+                    </p>
+                    <p className="mt-2 text-base font-bold text-slate-950 transition group-hover:text-amber-800">
+                      {item.title}
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                      {item.description}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="px-4 py-10 md:px-5 md:py-14">
+          <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <article className="public-card rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 md:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                Panduan belanja
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-slate-950">
+                Memilih {displayTitle} dengan lebih yakin
+              </h2>
+              <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+                {profile.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
+
+            <aside className="rounded-2xl bg-slate-950 p-6 text-white sm:p-7 md:p-8">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-amber-300">
+                <ShieldCheckIcon className="h-5 w-5" />
+              </span>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-amber-300">
+                Sebelum membeli
+              </p>
+              <h2 className="mt-2 text-2xl font-bold">3 hal yang perlu dicek</h2>
+              <ol className="mt-6 space-y-5">
+                {profile.buyingTips.map((tip, index) => (
+                  <li key={tip} className="flex gap-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-amber-300">
+                      {index + 1}
+                    </span>
+                    <p className="pt-1 text-sm leading-6 text-slate-300">
+                      {tip}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter footer={footer} />
+      <MobileBottomNav active="categories" />
+    </>
   );
 }

@@ -14,20 +14,42 @@ import {
   SearchIcon,
 } from "@/components/home/home-icons";
 
-type PublicSection = "home" | "search" | "compare" | "articles";
+type PublicSection =
+  | "home"
+  | "categories"
+  | "recommendations"
+  | "search"
+  | "compare"
+  | "articles";
 
 type SiteHeaderProps = {
   active?: PublicSection;
 };
 
 const drawerNavigation = [
-  { label: "Beranda", href: "/", icon: HomeIcon },
-  { label: "Jelajahi kategori", href: "/#kategori", icon: CategoryIcon },
-  { label: "Cari produk", href: "/search", icon: SearchIcon },
-  { label: "Perbandingan", href: "/compare", icon: CompareIcon },
-  { label: "Metodologi skor", href: "/#metodologi", icon: ScoreIcon },
-  { label: "Artikel", href: "/articles", icon: ArticleIcon },
-  { label: "Tentang BelanjaLab", href: "/#tentang", icon: InfoIcon },
+  { label: "Beranda", href: "/", key: "home" as const, icon: HomeIcon },
+  {
+    label: "Jelajahi kategori",
+    href: "/kategori",
+    key: "categories" as const,
+    icon: CategoryIcon,
+  },
+  {
+    label: "Rekomendasi",
+    href: "/rekomendasi",
+    key: "recommendations" as const,
+    icon: ScoreIcon,
+  },
+  { label: "Cari produk", href: "/search", key: "search" as const, icon: SearchIcon },
+  {
+    label: "Perbandingan",
+    href: "/compare",
+    key: "compare" as const,
+    icon: CompareIcon,
+  },
+  { label: "Metodologi skor", href: "/#metodologi", key: null, icon: ScoreIcon },
+  { label: "Artikel", href: "/articles", key: "articles" as const, icon: ArticleIcon },
+  { label: "Tentang BelanjaLab", href: "/#tentang", key: null, icon: InfoIcon },
 ];
 
 function BrandMark({ onDark = false }: { onDark?: boolean }) {
@@ -247,19 +269,34 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
               Navigasi
             </p>
             <nav aria-label="Menu utama mobile" className="mt-2 space-y-1">
-              {drawerNavigation.map(({ label, href, icon: Icon }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  onClick={() => closeMenu()}
-                  className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                    <Icon className="h-[18px] w-[18px]" />
-                  </span>
-                  {label}
-                </Link>
-              ))}
+              {drawerNavigation.map(({ label, href, key, icon: Icon }) => {
+                const isActive = key !== null && active === key;
+
+                return (
+                  <Link
+                    key={label}
+                    href={href}
+                    onClick={() => closeMenu()}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-amber-50 text-amber-800"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                        isActive
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    {label}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="mt-auto rounded-xl border border-slate-200 bg-slate-50 p-4">

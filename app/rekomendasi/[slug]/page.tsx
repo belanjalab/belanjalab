@@ -6,6 +6,7 @@ import {
   getRecommendationBySlug,
   getRecommendationLandingData,
 } from "@/lib/recommendations";
+import { getActiveSiteFooter } from "@/lib/footer";
 
 export const revalidate = 3600;
 
@@ -75,7 +76,10 @@ export default async function RecommendationPage({
 }: RecommendationPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const requestedPage = parsePage(query.page);
-  const data = await getRecommendationLandingData(slug, requestedPage, 24);
+  const [data, footer] = await Promise.all([
+    getRecommendationLandingData(slug, requestedPage, 24),
+    getActiveSiteFooter(),
+  ]);
 
   if (!data) {
     return notFound();
@@ -88,5 +92,5 @@ export default async function RecommendationPage({
     return notFound();
   }
 
-  return <RecommendationLandingView data={data} />;
+  return <RecommendationLandingView data={data} footer={footer} />;
 }

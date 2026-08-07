@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ScoreIcon } from "@/components/home/home-icons";
 import type { CategoryProduct } from "@/lib/categories";
 
 type RecommendationProductGridProps = {
@@ -39,19 +40,18 @@ export default function RecommendationProductGrid({
 }: RecommendationProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center">
-        <p className="text-lg font-black text-slate-800">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+        <p className="text-lg font-bold text-slate-900">
           Belum ada produk untuk {label}
         </p>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
-          Halaman ini akan terisi otomatis ketika produk published dengan harga
-          dan kategori yang sesuai tersedia di BelanjaLab.
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
+          Pilihan akan muncul otomatis setelah produk yang sesuai tersedia.
         </p>
         <Link
           href="/kategori"
-          className="mt-5 inline-flex rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Jelajahi Kategori
+          Jelajahi kategori
         </Link>
       </div>
     );
@@ -62,62 +62,64 @@ export default function RecommendationProductGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
         {products.map((product, index) => {
           const rank = firstPosition + index + 1;
 
           return (
             <article
               key={product.id}
-              className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="public-card group relative overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-lg"
             >
-              <div className="absolute left-3 top-3 z-10 flex h-8 min-w-8 items-center justify-center rounded-full bg-slate-950 px-2 text-xs font-black text-white shadow-sm">
+              <span className="absolute left-2.5 top-2.5 z-10 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-slate-950 px-2 text-xs font-semibold text-white shadow-sm">
                 #{rank}
-              </div>
+              </span>
 
-              <Link href={`/product/${product.slug}`}>
-                <div className="flex aspect-square items-center justify-center bg-slate-100 p-4 md:p-7">
+              <Link
+                href={`/product/${product.slug}`}
+                aria-label={`Lihat analisis ${product.name}`}
+                className="block h-full"
+              >
+                <div className="flex aspect-square items-center justify-center bg-slate-50 p-4 ring-1 ring-inset ring-slate-100 sm:p-5">
                   <img
                     src={product.imageUrl}
                     alt={product.name}
                     loading="lazy"
-                    className="h-full w-full object-contain"
+                    decoding="async"
+                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                 </div>
-              </Link>
 
-              <div className="p-3 md:p-5">
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 md:text-xs">
-                  {product.brand}
-                </p>
+                <div className="p-3 sm:p-4">
+                  <p className="truncate text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400 sm:text-xs">
+                    {product.brand}
+                  </p>
 
-                <Link href={`/product/${product.slug}`}>
-                  <h2 className="mt-1 line-clamp-2 min-h-10 text-xs font-black leading-5 text-slate-900 hover:text-orange-500 md:min-h-12 md:text-base md:leading-6">
+                  <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-amber-800 sm:min-h-12 sm:text-base sm:leading-6">
                     {product.name}
                   </h2>
-                </Link>
 
-                <p className="mt-2 line-clamp-2 text-[9px] leading-4 text-slate-500 md:text-xs md:leading-5">
-                  {product.shortDescription}
-                </p>
+                  <p className="mt-2 hidden line-clamp-2 text-xs leading-5 text-slate-500 sm:block">
+                    {product.shortDescription}
+                  </p>
 
-                <div className="mt-4 flex items-end justify-between gap-2">
-                  <div>
-                    <p className="text-[8px] text-slate-400 md:text-[10px]">
-                      Harga mulai
-                    </p>
-                    <p className="mt-1 text-xs font-black text-orange-500 md:text-base">
-                      {product.formattedPrice}
-                    </p>
+                  <div className="mt-3 flex items-end justify-between gap-2 border-t border-slate-100 pt-3 sm:mt-4">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium text-slate-400 sm:text-xs">
+                        Harga mulai
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-slate-950 sm:text-base">
+                        {product.formattedPrice}
+                      </p>
+                    </div>
+
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800 ring-1 ring-emerald-100 sm:px-2.5 sm:py-1.5 sm:text-xs">
+                      <ScoreIcon className="h-3.5 w-3.5" />
+                      {product.score !== null ? product.score.toFixed(1) : "—"}
+                    </span>
                   </div>
-
-                  <span className="shrink-0 rounded-full bg-green-50 px-2 py-1 text-[9px] font-black text-green-700 md:text-xs">
-                    {product.score !== null
-                      ? `${product.score.toFixed(1)}/10`
-                      : "Belum dinilai"}
-                  </span>
                 </div>
-              </div>
+              </Link>
             </article>
           );
         })}
@@ -132,7 +134,7 @@ export default function RecommendationProductGrid({
             <Link
               rel="prev"
               href={getPageHref(basePath, currentPage - 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+              className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 transition hover:border-amber-300 hover:text-amber-800"
             >
               Sebelumnya
             </Link>
@@ -145,15 +147,15 @@ export default function RecommendationProductGrid({
             return (
               <span key={page} className="contents">
                 {showGap && (
-                  <span className="px-1 text-xs text-slate-400">...</span>
+                  <span className="px-1 text-sm text-slate-400">…</span>
                 )}
                 <Link
                   href={getPageHref(basePath, page)}
                   aria-current={page === currentPage ? "page" : undefined}
-                  className={`flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-xs font-black ${
+                  className={`flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
                     page === currentPage
-                      ? "bg-orange-500 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-500"
+                      ? "bg-slate-950 text-white"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-amber-800"
                   }`}
                 >
                   {page}
@@ -166,7 +168,7 @@ export default function RecommendationProductGrid({
             <Link
               rel="next"
               href={getPageHref(basePath, currentPage + 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-orange-300 hover:text-orange-500"
+              className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 transition hover:border-amber-300 hover:text-amber-800"
             >
               Berikutnya
             </Link>
