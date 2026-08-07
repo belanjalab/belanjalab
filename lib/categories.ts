@@ -35,11 +35,13 @@ type CategoryProductRow = {
   product_prices?: PriceRelation[] | null;
 };
 
+export type CategoryIconKey = string;
+
 export type HomepageCategory = {
   id: string;
   name: string;
   slug: string;
-  icon: string;
+  icon: CategoryIconKey;
 };
 
 export type PublicCategory = HomepageCategory & {
