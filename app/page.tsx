@@ -84,6 +84,7 @@ export default async function Home() {
   const heroPriceLabel = heroProductPrice.startsWith("Rp")
     ? "Harga mulai"
     : "Informasi harga";
+  const heroScoreAvailable = Boolean(heroCardProduct?.score);
 
   const trustItems = [
     {
@@ -117,6 +118,10 @@ export default async function Home() {
       <SiteHeader active="home" />
 
       <main id="konten-utama" className="min-h-screen bg-[#f6f6f6] text-slate-900">
+        <h1 className="sr-only">
+          {hero?.title ?? "Bandingkan lebih cepat. Pilih tanpa ragu."} — BelanjaLab
+        </h1>
+
         <section
           id="kategori"
           className="scroll-mt-32 border-b border-slate-200 bg-white px-4 py-4 md:px-5 md:py-5"
@@ -133,7 +138,7 @@ export default async function Home() {
               </div>
               <a
                 href="/kategori"
-                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
+                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
               >
                 Cari lainnya <ArrowRightIcon />
               </a>
@@ -145,7 +150,7 @@ export default async function Home() {
                   <a
                     key={category.id}
                     href={`/kategori/${category.slug}`}
-                    className="category-card group flex min-h-24 w-24 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white px-2 py-3 text-center transition hover:border-amber-200 hover:bg-amber-50/50 sm:w-28 md:min-h-28 md:w-auto md:px-3"
+                    className="category-card group flex min-h-24 w-24 shrink-0 flex-col items-center justify-center rounded-xl border border-transparent bg-white px-2 py-3 text-center transition hover:border-amber-200 hover:bg-amber-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:w-28 md:min-h-28 md:w-auto md:px-3"
                   >
                     <span
                       aria-hidden="true"
@@ -191,14 +196,14 @@ export default async function Home() {
               </div>
               <a
                 href="/search"
-                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
+                className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
               >
                 Cari produk <ArrowRightIcon />
               </a>
             </div>
 
             {products.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                 {products.map((product) => (
                   <DecisionProductCard key={product.id} product={product} />
                 ))}
@@ -224,9 +229,9 @@ export default async function Home() {
                 Shopping Decision Platform
               </div>
 
-              <h1 className="brand-text-balance mt-4 max-w-3xl text-3xl font-bold leading-[1.12] tracking-[-0.035em] text-slate-950 sm:text-4xl md:text-4xl lg:text-5xl lg:leading-[1.08]">
+              <h2 className="brand-text-balance mt-4 max-w-3xl text-3xl font-bold leading-[1.12] tracking-[-0.035em] text-slate-950 sm:text-4xl md:text-4xl lg:text-5xl lg:leading-[1.08]">
                 {hero?.title ?? "Bandingkan lebih cepat. Pilih tanpa ragu."}
-              </h1>
+              </h2>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base md:leading-7">
                 {hero?.subtitle ??
@@ -252,13 +257,13 @@ export default async function Home() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
                   href={hero?.primary_button_url ?? "/search"}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                 >
                   {hero?.primary_button_text ?? "Cari produk"} <ArrowRightIcon />
                 </a>
                 <a
                   href={hero?.secondary_button_url ?? "/compare"}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                 >
                   <CompareIcon className="h-[18px] w-[18px]" />
                   {hero?.secondary_button_text ?? "Bandingkan"}
@@ -271,7 +276,7 @@ export default async function Home() {
                   <a
                     key={item}
                     href={`/search?q=${encodeURIComponent(item)}`}
-                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                   >
                     {item}
                   </a>
@@ -296,14 +301,38 @@ export default async function Home() {
                       {heroProductCategory}
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-right ring-1 ring-emerald-100">
-                    <p className="text-xs font-bold text-emerald-800">
+                  <div
+                    className={
+                      heroScoreAvailable
+                        ? "rounded-2xl bg-emerald-50 px-3 py-2 text-right ring-1 ring-emerald-100"
+                        : "rounded-2xl bg-slate-50 px-3 py-2 text-right ring-1 ring-slate-200"
+                    }
+                  >
+                    <p
+                      className={
+                        heroScoreAvailable
+                          ? "text-xs font-bold text-emerald-800"
+                          : "text-xs font-bold text-slate-500"
+                      }
+                    >
                       BelanjaLab Score
                     </p>
-                    <p className="mt-0.5 text-sm font-extrabold text-emerald-800">
+                    <p
+                      className={
+                        heroScoreAvailable
+                          ? "mt-0.5 text-sm font-extrabold text-emerald-800"
+                          : "mt-0.5 text-sm font-extrabold text-slate-600"
+                      }
+                    >
                       {heroProductScore}
                     </p>
-                    <p className="mt-0.5 text-xs font-semibold text-emerald-700">
+                    <p
+                      className={
+                        heroScoreAvailable
+                          ? "mt-0.5 text-xs font-semibold text-emerald-700"
+                          : "mt-0.5 text-xs font-semibold text-slate-500"
+                      }
+                    >
                       {heroProductVerdict}
                     </p>
                   </div>
@@ -319,9 +348,9 @@ export default async function Home() {
                   />
                 </div>
 
-                <h2 className="brand-text-balance mt-4 text-base font-semibold leading-6 text-slate-950 sm:text-lg">
+                <h3 className="brand-text-balance mt-4 text-base font-semibold leading-6 text-slate-950 sm:text-lg">
                   {heroProductName}
-                </h2>
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {heroProduct?.short_description ??
                     heroCardProduct?.shortDescription ??
@@ -369,7 +398,7 @@ export default async function Home() {
                   {heroProductSlug && (
                     <a
                       href={`/product/${heroProductSlug}`}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     >
                       Lihat analisis
                       <ArrowRightIcon />
@@ -382,12 +411,17 @@ export default async function Home() {
         </section>
 
         <section aria-label="Keunggulan BelanjaLab" className="px-4 pb-8 md:px-5 md:pb-12">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-3 sm:gap-3 md:grid-cols-4 md:p-4">
-            {trustItems.map(({ title, description, icon: Icon, href }) => (
+          <div className="mx-auto max-w-7xl">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
+              Kenapa BelanjaLab
+            </p>
+            <h2 className="sr-only">Keunggulan BelanjaLab</h2>
+            <div className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-3 sm:gap-3 md:grid-cols-4 md:p-4">
+              {trustItems.map(({ title, description, icon: Icon, href }) => (
               <a
                 key={title}
                 href={href}
-                className="flex gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50 sm:p-3"
+                className="flex gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:p-3"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
                   <Icon className="h-[18px] w-[18px]" />
@@ -401,7 +435,8 @@ export default async function Home() {
                   </p>
                 </div>
               </a>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
@@ -425,7 +460,7 @@ export default async function Home() {
                 </p>
                 <a
                   href="/compare"
-                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white transition-colors hover:bg-slate-800"
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                 >
                   Buka perbandingan <ArrowRightIcon />
                 </a>
@@ -459,7 +494,7 @@ export default async function Home() {
               </div>
               <a
                 href="/articles"
-                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm font-extrabold text-amber-700 transition-colors hover:bg-amber-50 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
               >
                 Lihat semua <ArrowRightIcon />
               </a>
@@ -471,7 +506,7 @@ export default async function Home() {
                   <a
                     key={article.id}
                     href={`/articles/${article.slug}`}
-                    className="group flex min-h-32 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-950/5 md:block md:rounded-3xl"
+                    className="group flex min-h-32 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 md:block md:rounded-3xl"
                   >
                     <div className="flex w-28 shrink-0 items-center justify-center overflow-hidden bg-slate-50 text-slate-400 ring-1 ring-inset ring-slate-100 sm:w-36 md:h-44 md:w-full">
                       {article.imageUrl ? (
@@ -496,7 +531,7 @@ export default async function Home() {
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-700">
                         Artikel
                       </p>
-                      <h3 className="mt-1.5 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base md:mt-2 md:text-base md:leading-6">
+                      <h3 className="mt-1.5 line-clamp-2 text-sm font-extrabold leading-5 tracking-[-0.01em] text-slate-950 sm:text-base md:mt-2 md:text-base md:leading-6">
                         {article.title}
                       </h3>
 
