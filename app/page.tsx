@@ -1,15 +1,55 @@
 import type { Metadata } from "next";
+import CategoryVisual from "@/components/home/category-visual";
+import DecisionProductCard from "@/components/home/decision-product-card";
+import {
+  ArrowRightIcon,
+  CompareIcon,
+  RefreshIcon,
+  ScoreIcon,
+  SearchIcon,
+  ShieldCheckIcon,
+} from "@/components/home/home-icons";
+import QuickComparison from "@/components/home/quick-comparison";
+import ScoreMethodology from "@/components/home/score-methodology";
+import MobileBottomNav from "@/components/site/mobile-bottom-nav";
+import SiteFooter from "@/components/site/site-footer";
+import SiteHeader from "@/components/site/site-header";
 import { getHomepageArticles } from "@/lib/articles";
-import { getHomepageCategories } from "@/lib/categories";
+import {
+  getHomepageCategories,
+  type CategoryIconKey,
+} from "@/lib/categories";
 import { getActiveSiteFooter } from "@/lib/footer";
 import { getActiveHero } from "@/lib/hero";
-import { getFeaturedProducts } from "@/lib/products";
+import {
+  getFeaturedProducts,
+  type FeaturedProduct,
+} from "@/lib/products";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
 export const revalidate = 3600;
+
+function getCategoryVisualKey(slug: string): CategoryIconKey {
+  if (slug === "rumah-tangga") return "rumah";
+  return slug;
+}
+
+function formatArticleDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Artikel BelanjaLab";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
 
 export default async function Home() {
   const [products, hero, categories, articles, footer] = await Promise.all([
@@ -27,582 +67,393 @@ export default async function Home() {
     "/images/products/product-placeholder.svg";
   const heroProductName =
     heroProduct?.name ?? products[0]?.name ?? "Produk pilihan BelanjaLab";
-  const companyLinks = [
-    { label: "Kontak", href: footer.contactUrl },
-    { label: "Karier", href: footer.careersUrl },
-  ].filter(
-    (link): link is { label: string; href: string } => Boolean(link.href),
-  );
-  const legalLinks = [
-    { label: "Kebijakan Privasi", href: footer.privacyUrl },
-    { label: "Syarat Penggunaan", href: footer.termsUrl },
-    { label: "Disclaimer", href: footer.disclaimerUrl },
-  ].filter(
-    (link): link is { label: string; href: string } => Boolean(link.href),
-  );
+
+  const quickComparisonProducts =
+    products.length >= 2
+      ? ([products[0], products[1]] as [FeaturedProduct, FeaturedProduct])
+      : null;
 
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 md:px-5 md:py-4">
-          <details className="relative mr-3 md:hidden">
-            <summary
-              aria-label="Buka menu"
-              className="cursor-pointer list-none text-lg"
-            >
-              ☰
-            </summary>
+    <main className="min-h-screen bg-[#f8f8f7] pb-20 text-slate-900 md:pb-0">
+      <a
+        href="#konten-utama"
+        className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Lewati ke konten utama
+      </a>
 
-            <nav className="absolute left-0 top-9 z-50 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+      <SiteHeader active="home" />
+
+      <div id="konten-utama">
+        <section
+          id="kategori"
+          aria-labelledby="kategori-title"
+          className="border-b border-slate-200 bg-white px-4 py-5 md:px-5 md:py-7"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Mulai dari kebutuhanmu
+                </p>
+                <h1
+                  id="kategori-title"
+                  className="mt-1 text-xl font-semibold tracking-[-0.03em] text-slate-950 md:text-2xl"
+                >
+                  Jelajahi Kategori
+                </h1>
+              </div>
+
               <a
                 href="/kategori"
-                className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
               >
-                Kategori
+                Lihat semua <ArrowRightIcon />
               </a>
-
-              <a
-                href="/compare"
-                className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
-              >
-                Perbandingan
-              </a>
-
-              <a
-                href="/articles"
-                className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
-              >
-                Artikel
-              </a>
-
-              <a
-                href="#tentang"
-                className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
-              >
-                Tentang Kami
-              </a>
-            </nav>
-          </details>
-
-          <a href="/" className="flex items-center gap-2">
-            <img
-              src="/images/logo-belanjalab.png"
-              alt="BelanjaLab"
-              className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
-            />
-
-            <span className="text-base font-black tracking-tight md:text-xl">
-              Belanja<span className="text-orange-500">Lab</span>
-            </span>
-          </a>
-
-          <nav className="ml-8 hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <a href="/kategori" className="hover:text-slate-950">
-              Kategori
-            </a>
-            <a href="/compare" className="hover:text-slate-950">
-              Perbandingan
-            </a>
-            <a href="/articles" className="hover:text-slate-950">
-              Artikel
-            </a>
-            <a href="#tentang" className="hover:text-slate-950">
-              Tentang Kami
-            </a>
-          </nav>
-
-          <a
-            href="/search"
-            aria-label="Cari"
-            className="ml-auto text-lg md:hidden"
-          >
-            ⌕
-          </a>
-
-          <form
-            action="/search"
-            method="get"
-            className="ml-auto hidden max-w-sm flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 md:flex"
-          >
-            <input
-              type="search"
-              name="q"
-              required
-              placeholder="Cari produk, kategori, atau brand..."
-              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-            />
-            <button
-              type="submit"
-              aria-label="Cari"
-              className="ml-3 rounded-lg bg-orange-500 px-3 py-1.5 text-white"
-            >
-              🔍
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <section className="px-4 py-5 md:px-5 md:py-12">
-        <div className="mx-auto max-w-7xl md:grid md:grid-cols-[1.2fr_0.8fr] md:gap-10 md:overflow-hidden md:rounded-3xl md:bg-slate-50 md:px-12 md:py-16">
-          <div className="flex flex-col justify-center">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500 md:mb-4 md:text-xs md:tracking-[0.22em]">
-              Keputusan belanja
-            </p>
-
-            <h1 className="max-w-2xl text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-6xl">
-              {hero?.title ?? "Yang Lebih Cerdas"}
-            </h1>
-
-            <p className="mt-3 max-w-xl text-xs leading-5 text-slate-500 md:mt-5 md:text-lg md:leading-7 md:text-slate-600">
-              {hero?.subtitle ??
-                "Review jujur, perbandingan lengkap, dan rekomendasi terpercaya untuk membantu kamu memilih produk terbaik."}
-            </p>
-
-            <form
-              action="/search"
-              method="get"
-              className="mt-5 flex items-center rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:mt-8 md:max-w-xl md:p-2"
-            >
-              <input
-                type="search"
-                name="q"
-                required
-                placeholder="Cari produk, kategori, atau brand..."
-                className="min-w-0 flex-1 px-3 text-xs outline-none md:text-sm"
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 md:px-4 md:text-sm"
-              >
-                🔍
-              </button>
-            </form>
-
-            <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-500 md:mt-5 md:text-xs">
-              <span>Contoh:</span>
-              {["Air Fryer", "Laptop", "Headset", "Xiaomi"].map((item) => (
-                <a
-                  key={item}
-                  href={`/search?q=${encodeURIComponent(item)}`}
-                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1 md:px-3 md:py-1.5"
-                >
-                  {item}
-                </a>
-              ))}
             </div>
 
-            {(hero?.primary_button_text || hero?.secondary_button_text) && (
-              <div className="mt-5 flex flex-wrap gap-3">
-                {hero?.primary_button_text && hero?.primary_button_url && (
+            {categories.length > 0 ? (
+              <div className="category-rail -mx-4 mt-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0 lg:grid-cols-6">
+                {categories.map((category) => (
                   <a
-                    href={hero.primary_button_url}
-                    className="rounded-lg bg-orange-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-orange-600 md:text-sm"
+                    key={category.id}
+                    href={`/kategori/${category.slug}`}
+                    className="category-card public-card group flex min-w-[132px] flex-col items-center rounded-xl border border-slate-200 bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md md:min-w-0"
                   >
-                    {hero.primary_button_text}
+                    <span className="category-visual-shell relative flex h-16 w-16 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-100">
+                      <CategoryVisual
+                        icon={getCategoryVisualKey(category.slug)}
+                        className="h-12 w-12"
+                      />
+                    </span>
+                    <span className="mt-2.5 line-clamp-2 text-sm font-semibold leading-5 text-slate-800 group-hover:text-slate-950">
+                      {category.name}
+                    </span>
                   </a>
-                )}
-
-                {hero?.secondary_button_text && hero?.secondary_button_url && (
-                  <a
-                    href={hero.secondary_button_url}
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 md:text-sm"
-                  >
-                    {hero.secondary_button_text}
-                  </a>
-                )}
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
+                Kategori akan tampil setelah data tersedia.
               </div>
             )}
-
-            <div className="mt-5 flex h-52 items-center justify-center rounded-2xl bg-slate-100 text-xs font-semibold text-slate-400 md:hidden">
-              <img
-                src={heroProductImage}
-                alt={heroProductName}
-                className="h-full w-full object-contain p-6"
-              />
-            </div>
           </div>
+        </section>
 
-          <div className="relative hidden min-h-72 md:block">
-            <div className="absolute left-0 top-10 rounded-2xl bg-white p-5 shadow-xl">
-              <div className="text-3xl">🎧</div>
-            </div>
-
-            <div className="absolute right-0 top-0 w-[82%] rounded-3xl bg-white p-5 shadow-xl">
-              <p className="text-xs font-semibold text-orange-500">
-                Produk Pilihan
+        <section className="px-4 py-6 md:px-5 md:py-10">
+          <div className="hero-surface relative mx-auto grid max-w-7xl overflow-hidden rounded-2xl border border-slate-200 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
+            <div className="relative z-10 flex flex-col justify-center p-5 sm:p-8 lg:p-11">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
+                Shopping Decision Platform
               </p>
 
-              <h2 className="mt-1 text-lg font-bold">{heroProductName}</h2>
+              <h2 className="brand-text-balance mt-2 max-w-3xl text-3xl font-semibold tracking-[-0.045em] text-slate-950 sm:text-4xl lg:text-5xl lg:leading-[1.08]">
+                {hero?.title ?? "Pilih produk dengan alasan yang lebih jelas."}
+              </h2>
 
-              <p className="mt-1 text-xs text-slate-500">
-                {heroProduct?.short_description ??
-                  products[0]?.category ??
-                  "Rekomendasi produk terbaik"}
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                {hero?.subtitle ??
+                  "Bandingkan skor, fitur, dan harga dari beberapa marketplace sebelum menentukan pilihan."}
               </p>
 
-              <div className="mt-5 flex h-44 items-center justify-center rounded-2xl bg-slate-100">
-                <img
-                  src={heroProductImage}
-                  alt={heroProductName}
-                  className="h-full w-full object-contain p-5"
+              <form
+                action="/search"
+                method="get"
+                className="mt-6 flex max-w-2xl items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+              >
+                <SearchIcon className="ml-2 h-5 w-5 shrink-0 text-slate-400" />
+                <input
+                  type="search"
+                  name="q"
+                  required
+                  aria-label="Cari produk"
+                  placeholder="Cari produk, kategori, atau merek"
+                  className="min-h-11 min-w-0 flex-1 bg-transparent px-1 text-sm text-slate-900 outline-none placeholder:text-slate-400"
                 />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Cari
+                </button>
+              </form>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {["HP Samsung", "Gaming", "Elektronik", "Rumah Tangga"].map(
+                  (keyword) => (
+                    <a
+                      key={keyword}
+                      href={`/search?q=${encodeURIComponent(keyword)}`}
+                      className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white/80 px-3 text-xs font-medium text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                    >
+                      {keyword}
+                    </a>
+                  ),
+                )}
               </div>
 
-              {heroProduct?.slug && (
-                <a
-                  href={`/product/${heroProduct.slug}`}
-                  className="mt-4 inline-flex text-xs font-bold text-orange-500 hover:text-orange-600"
-                >
-                  Lihat produk →
-                </a>
+              {(hero?.primary_button_text || hero?.secondary_button_text) && (
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {hero?.primary_button_text && hero?.primary_button_url && (
+                    <a
+                      href={hero.primary_button_url}
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      {hero.primary_button_text}
+                    </a>
+                  )}
+                  {hero?.secondary_button_text && hero?.secondary_button_url && (
+                    <a
+                      href={hero.secondary_button_url}
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      {hero.secondary_button_text}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
 
-            <div className="absolute bottom-2 right-0 rounded-2xl bg-white p-5 text-3xl shadow-xl">
-              📱
+            <div className="border-t border-slate-200 bg-white/70 p-5 sm:p-8 lg:border-l lg:border-t-0">
+              <article className="hero-product-card flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.11em] text-amber-700">
+                      Pilihan untuk dianalisis
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-base font-semibold text-slate-950 sm:text-lg">
+                      {heroProductName}
+                    </p>
+                  </div>
+                  <span className="inline-flex min-h-9 shrink-0 items-center rounded-full bg-emerald-50 px-3 text-xs font-semibold text-emerald-800">
+                    Data transparan
+                  </span>
+                </div>
+
+                <div className="mt-4 flex min-h-56 flex-1 items-center justify-center rounded-xl bg-slate-50 p-5 ring-1 ring-slate-100 sm:min-h-64">
+                  <img
+                    src={heroProductImage}
+                    alt={heroProductName}
+                    className="max-h-64 w-full object-contain"
+                  />
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm leading-6 text-slate-500">
+                    {heroProduct?.short_description ??
+                      products[0]?.shortDescription ??
+                      "Lihat skor, harga, dan detail analisis sebelum membeli."}
+                  </p>
+
+                  {heroProduct?.slug ? (
+                    <a
+                      href={`/product/${heroProduct.slug}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                    >
+                      Lihat analisis <ArrowRightIcon />
+                    </a>
+                  ) : products[0] ? (
+                    <a
+                      href={`/product/${products[0].slug}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                    >
+                      Lihat analisis <ArrowRightIcon />
+                    </a>
+                  ) : null}
+                </div>
+              </article>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="px-4 md:px-5">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-3 md:grid-cols-4 md:p-5">
-          {[
-            ["✓", "Review Jujur", "Riset dan pengalaman"],
-            ["✓", "BelanjaLab Score", "Skor objektif"],
-            ["✓", "Perbandingan", "Bandingkan produk"],
-            ["✓", "Harga Update", "Selalu relevan"],
-          ].map(([icon, title, desc]) => (
-            <div key={title} className="flex gap-2 rounded-xl p-2">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[10px] text-orange-500 md:h-8 md:w-8">
-                {icon}
-              </div>
-              <div>
-                <h3 className="text-[10px] font-bold md:text-sm">{title}</h3>
-                <p className="mt-1 text-[9px] leading-4 text-slate-500 md:text-xs md:leading-5">
-                  {desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="kategori" className="px-4 py-7 md:px-5 md:py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-4 flex items-end justify-between md:mb-6">
-            <h2 className="text-sm font-black md:text-2xl">Kategori Populer</h2>
-            <a
-              href="/kategori"
-              className="text-[10px] font-semibold text-orange-500 md:text-sm"
-            >
-              Lihat semua →
-            </a>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
-              {categories.map((category) => (
-              <a
-                key={category.id}
-                href={`/kategori/${category.slug}`}
-                className="rounded-xl border border-slate-200 bg-white p-2 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md md:rounded-2xl md:p-5"
+        <section className="px-4 pb-8 md:px-5 md:pb-12">
+          <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-3">
+            {[
+              {
+                title: "BelanjaLab Score",
+                description: "Lima aspek utama diringkas dalam skor yang mudah dibandingkan.",
+                icon: ScoreIcon,
+              },
+              {
+                title: "Harga dari beberapa sumber",
+                description: "Lihat harga mulai dan kapan datanya terakhir diperbarui.",
+                icon: RefreshIcon,
+              },
+              {
+                title: "Analisis transparan",
+                description: "Bandingkan alasan, bukan hanya popularitas atau harga termurah.",
+                icon: ShieldCheckIcon,
+              },
+            ].map(({ title, description, icon: Icon }) => (
+              <article
+                key={title}
+                className="public-card flex gap-3 rounded-xl border border-slate-200 bg-white p-4"
               >
-                <div className="text-lg md:text-3xl">{category.icon}</div>
-                <p className="mt-2 text-[9px] font-semibold md:mt-3 md:text-xs">
-                  {category.name}
-                </p>
-              </a>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-              <p className="text-sm font-bold text-slate-700">
-                Belum ada kategori.
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Tambahkan kategori dari dashboard admin.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section id="produk" className="px-4 pb-8 md:px-5 md:pb-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-4 flex items-end justify-between md:mb-6">
-            <h2 className="text-sm font-black md:text-2xl">Produk Trending</h2>
-            <a
-              href="/search"
-              className="text-[10px] font-semibold text-orange-500 md:text-sm"
-            >
-              Lihat semua →
-            </a>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-800">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    {description}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
+        </section>
 
-          {products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
-              {products.map((product) => (
-                <article
-                  key={product.id}
-                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:rounded-2xl"
-                >
-                  <div className="p-2 md:p-3">
-                    <div className="flex h-32 items-center justify-center rounded-lg bg-slate-100 md:h-44 md:rounded-xl">
+        <section id="produk" className="scroll-mt-28 px-4 py-8 md:px-5 md:py-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-amber-700">
+                  Pilihan berdasarkan data
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Produk yang layak dipertimbangkan
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                  Mulai dari skor, kekuatan utama, harga, sampai kesegaran data.
+                </p>
+              </div>
+
+              <a
+                href="/rekomendasi"
+                className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-700 transition hover:bg-white hover:text-slate-950"
+              >
+                Lihat rekomendasi <ArrowRightIcon />
+              </a>
+            </div>
+
+            {products.length > 0 ? (
+              <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+                {products.map((product) => (
+                  <DecisionProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-7 text-center">
+                <p className="text-base font-semibold text-slate-900">
+                  Belum ada produk pilihan.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Produk published dan featured akan tampil di bagian ini.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {quickComparisonProducts && (
+          <section className="px-4 py-8 md:px-5 md:py-12">
+            <div className="mx-auto max-w-7xl">
+              <QuickComparison products={quickComparisonProducts} />
+            </div>
+          </section>
+        )}
+
+        <section id="metodologi" className="scroll-mt-28 px-4 py-8 md:px-5 md:py-12">
+          <div className="mx-auto max-w-7xl">
+            <ScoreMethodology />
+          </div>
+        </section>
+
+        <section className="px-4 py-8 md:px-5 md:py-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-amber-700">
+                  Panduan belanja
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Artikel terbaru
+                </h2>
+              </div>
+              <a
+                href="/articles"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-700 transition hover:bg-white hover:text-slate-950"
+              >
+                Semua artikel <ArrowRightIcon />
+              </a>
+            </div>
+
+            {articles.length > 0 ? (
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {articles.map((article) => (
+                  <a
+                    key={article.id}
+                    href={`/articles/${article.slug}`}
+                    className="public-card group overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="aspect-[16/9] overflow-hidden bg-slate-100">
                       <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="h-full w-full object-contain p-3"
+                        src={
+                          article.imageUrl ??
+                          "/images/products/product-placeholder.svg"
+                        }
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                       />
                     </div>
-                  </div>
-
-                  <div className="p-3 pt-0 md:p-4 md:pt-1">
-                    <p className="text-[9px] text-slate-400 md:text-xs">
-                      {product.category}
-                    </p>
-                    <h3 className="mt-1 min-h-10 text-[11px] font-bold leading-4 md:min-h-10 md:text-sm md:leading-5">
-                      {product.name}
-                    </h3>
-                    <p className="mt-2 text-[11px] font-black text-green-600 md:mt-3 md:text-base">
-                      {product.score}
-                    </p>
-                    <p className="mt-1 text-[10px] font-black text-orange-500 md:text-base">
-                      {product.price}
-                    </p>
-
-                    <a
-                      href={`/product/${product.slug}`}
-                      className="mt-3 block w-full rounded-md bg-orange-500 py-2 text-center text-[9px] font-bold text-white hover:bg-orange-600 md:mt-4 md:rounded-lg md:py-2.5 md:text-xs"
-                    >
-                      Lihat
-                    </a>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-              <p className="text-sm font-bold text-slate-700">
-                Belum ada produk published.
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Publish produk dari dashboard admin agar tampil di sini.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section id="perbandingan" className="hidden px-5 pb-16 md:block">
-        <div className="mx-auto max-w-7xl rounded-3xl bg-slate-50 p-10">
-          <div className="mb-7">
-            <h2 className="text-2xl font-black">Perbandingan Unggulan</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Bandingkan produk populer dalam satu tampilan.
-            </p>
-          </div>
-
-          <div className="grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-400">
-                {products[0]?.name ?? "Produk pertama"}
-              </p>
-              <p className="mt-3 text-3xl font-black text-green-600">
-                {products[0]?.score ?? "—"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                {products[0]?.price ?? "Harga belum tersedia"}
-              </p>
-            </div>
-
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 font-black text-white">
-              VS
-            </div>
-
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-400">
-                {products[1]?.name ?? "Produk kedua"}
-              </p>
-              <p className="mt-3 text-3xl font-black text-green-600">
-                {products[1]?.score ?? "—"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                {products[1]?.price ?? "Harga belum tersedia"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="artikel" className="px-4 pb-8 md:px-5 md:pb-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-4 flex items-end justify-between md:mb-6">
-            <h2 className="text-sm font-black md:text-2xl">Artikel Terbaru</h2>
-            <a
-              href="/articles"
-              className="text-[10px] font-semibold text-orange-500 md:text-sm"
-            >
-              Lihat semua →
-            </a>
-          </div>
-
-          {articles.length > 0 ? (
-            <div className="space-y-3 md:grid md:grid-cols-3 md:gap-5 md:space-y-0">
-              {articles.map((article) => (
-                <a
-                  key={article.id}
-                  href={`/articles/${article.slug}`}
-                  className="flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md md:block md:rounded-2xl"
-                >
-                  <div className="flex w-24 shrink-0 items-center justify-center overflow-hidden bg-slate-100 text-[9px] font-semibold text-slate-400 md:h-40 md:w-full md:text-xs">
-                    {article.imageUrl ? (
-                      <img
-                        src={article.imageUrl}
-                        alt={article.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      "GAMBAR"
-                    )}
-                  </div>
-
-                  <div className="p-3 md:p-5">
-                    <p className="text-[8px] text-slate-400 md:text-xs">
-                      Artikel
-                    </p>
-
-                    <h3 className="mt-1 text-[10px] font-bold leading-4 md:mt-2 md:text-sm md:leading-6">
-                      {article.title}
-                    </h3>
-
-                    {article.excerpt && (
-                      <p className="mt-2 line-clamp-2 text-[9px] leading-4 text-slate-500 md:text-xs md:leading-5">
-                        {article.excerpt}
-                      </p>
-                    )}
-
-                    <p className="mt-2 text-[8px] text-slate-400 md:mt-3 md:text-xs">
-                      {article.readingTime}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-              <p className="text-sm font-bold text-slate-700">
-                Belum ada artikel published.
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Artikel akan tampil setelah dipublikasikan dari CMS.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <footer
-        id="tentang"
-        className="hidden bg-slate-950 px-5 py-12 text-white md:block"
-      >
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
-          <div>
-            <a href="/" className="flex items-center gap-3">
-              <img
-                src="/images/logo-belanjalab.png"
-                alt="BelanjaLab"
-                className="h-10 w-10 rounded-full object-cover"
-              />
-
-              <span className="text-xl font-black">
-                Belanja<span className="text-orange-500">Lab</span>
-              </span>
-            </a>
-
-            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">
-              {footer.companyDescription}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-bold">Produk</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <a href="#produk" className="block hover:text-white">
-                Rekomendasi
-              </a>
-              <a href="/compare" className="block hover:text-white">
-                Perbandingan
-              </a>
-              <a href="/kategori" className="block hover:text-white">
-                Kategori
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-bold">Perusahaan</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              <a href="#tentang" className="block hover:text-white">
-                Tentang Kami
-              </a>
-              {companyLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="block hover:text-white"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-bold">Legal</h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-400">
-              {legalLinks.length > 0 ? (
-                legalLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    className="block hover:text-white"
-                  >
-                    {link.label}
+                    <div className="p-4">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
+                        <span>{formatArticleDate(article.publishedAt)}</span>
+                        <span>{article.readingTime}</span>
+                      </div>
+                      <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-6 text-slate-950">
+                        {article.title}
+                      </h3>
+                      {article.excerpt && (
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">
+                          {article.excerpt}
+                        </p>
+                      )}
+                    </div>
                   </a>
-                ))
-              ) : (
-                <p>Belum tersedia</p>
-              )}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-7 text-center">
+                <p className="text-base font-semibold text-slate-900">
+                  Artikel sedang disiapkan.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Panduan terbaru akan muncul setelah artikel dipublikasikan.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
-        <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-6 text-xs text-slate-500">
-          © {new Date().getFullYear()} BelanjaLab. All rights reserved.
-        </div>
-      </footer>
+        <section className="px-4 py-8 md:px-5 md:py-12">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                Masih ragu?
+              </p>
+              <h2 className="mt-1 text-xl font-semibold text-slate-950 sm:text-2xl">
+                Bandingkan pilihanmu sebelum membeli.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Lihat perbedaan skor, harga, dan spesifikasi dalam satu tampilan.
+              </p>
+            </div>
+            <a
+              href="/compare"
+              className="inline-flex min-h-11 w-fit shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              <CompareIcon className="h-4 w-4" />
+              Mulai bandingkan
+            </a>
+          </div>
+        </section>
+      </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 md:hidden">
-        {[
-          ["⌂", "Beranda", "/"],
-          ["▦", "Kategori", "/kategori"],
-          ["⌕", "Cari", "/search"],
-          ["⇄", "Compare", "/compare"],
-          ["▤", "Artikel", "#artikel"],
-        ].map(([icon, label, href], index) => (
-          <a
-            key={label}
-            href={href}
-            className={`flex flex-col items-center gap-1 text-[9px] ${
-              index === 0 ? "text-orange-500" : "text-slate-500"
-            }`}
-          >
-            <span className="text-base">{icon}</span>
-            <span>{label}</span>
-          </a>
-        ))}
-      </nav>
+      <SiteFooter footer={footer} />
+      <MobileBottomNav active="home" />
     </main>
   );
 }
